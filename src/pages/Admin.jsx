@@ -300,7 +300,7 @@ export default function Admin() {
                                             background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem'
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                                                <div style={{ flex: 1, minWidth: '300px' }}>
+                                                <div style={{ flex: 1, minWidth: '100%' }}>
                                                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--c-black)', marginBottom: '0.5rem' }}>
                                                         {article.category || 'Article'} • By {article.name || 'Anonymous'} • {article.date ? new Date(article.date).toLocaleDateString() : ''}
                                                     </div>
@@ -412,7 +412,7 @@ export default function Admin() {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                                 <label style={labelStyle}>Venue</label>
                                                 <input type="text" required placeholder="Seminar Hall B" value={eventForm.venue} onChange={e => setEventForm(p => ({ ...p, venue: e.target.value }))} style={inputStyle} />

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
+import useAutoHover from '../../hooks/useAutoHover';
 
 const ChromaGrid = ({
     items,
@@ -17,20 +18,8 @@ const ChromaGrid = ({
     const pos = useRef({ x: 0, y: 0 });
     const navigate = useNavigate();
 
-    const demo = [
-        {
-            image: 'https://i.pravatar.cc/300?img=8',
-            title: 'Dr. Alex Rivera',
-            subtitle: 'Professor, Data Science',
-            handle: '@alexrivera',
-            borderColor: 'var(--c-yellow)',
-            gradient: 'linear-gradient(145deg, var(--c-black), #222)',
-            url: '#'
-        },
-        // ... (demo data fallback is ignored when items provided)
-    ];
-
     const data = items?.length ? items : demo;
+    const activeHoverIndex = useAutoHover(data.length, 2500);
 
     useEffect(() => {
         const el = rootRef.current;
@@ -114,10 +103,11 @@ const ChromaGrid = ({
         >
             <style>{`
                 .chroma-masonry {
-                    column-count: 1;
+                    column-count: 2;
                     column-gap: 2rem;
                 }
-                @media (min-width: 768px) { .chroma-masonry { column-count: 2; } }
+                @media (max-width: 480px) { .chroma-masonry { column-gap: 1rem; } }
+                @media (min-width: 768px) { .chroma-masonry { column-count: 3; } }
                 @media (min-width: 1024px) { .chroma-masonry { column-count: 3; } }
                 @media (min-width: 1440px) { .chroma-masonry { column-count: 4; } }
                 
@@ -141,20 +131,25 @@ const ChromaGrid = ({
                 return (
                     <article
                         key={i}
-                        className="chroma-masonry-item"
+                        className={`chroma-masonry-item ${activeHoverIndex === i ? 'auto-hover-active' : ''}`}
                         onMouseMove={handleCardMove}
                         onClick={() => handleCardClick(c.url)}
                         style={{
                             background: c.gradient || 'var(--c-black)',
                             border: `2px solid ${c.borderColor || 'var(--c-black)'}`,
                             '--box-shadow-color': 'var(--c-black)',
-                            boxShadow: '4px 4px 0 var(--box-shadow-color)'
+                            boxShadow: activeHoverIndex === i ? '8px 8px 0 var(--box-shadow-color)' : '4px 4px 0 var(--box-shadow-color)',
+                            transform: activeHoverIndex === i ? 'translate(-4px, -4px)' : 'translate(0, 0)',
+                            transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                         }}
                         onMouseEnter={(e) => {
+                            // Only apply hover interactions if not controlled by auto-hover
+                            if (activeHoverIndex !== null) return;
                             e.currentTarget.style.transform = 'translate(-4px, -4px)';
                             e.currentTarget.style.boxShadow = '8px 8px 0 var(--box-shadow-color)';
                         }}
                         onMouseLeave={(e) => {
+                            if (activeHoverIndex !== null) return;
                             e.currentTarget.style.transform = 'translate(0, 0)';
                             e.currentTarget.style.boxShadow = '4px 4px 0 var(--box-shadow-color)';
                         }}
@@ -193,21 +188,21 @@ const ChromaGrid = ({
                             gap: '0.25rem',
                             flex: 1
                         }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                <h3 style={{ margin: 0, fontSize: 'clamp(0.85rem, 3vw, 1.1rem)', fontWeight: 'bold', textTransform: 'uppercase', lineHeight: 1.2 }}>
                                     {c.title}
                                 </h3>
                                 {c.handle && (
-                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>
+                                    <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>
                                         {c.handle}
                                     </span>
                                 )}
                             </div>
-                            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8 }}>
+                            <p style={{ margin: 0, fontSize: 'clamp(0.75rem, 2.5vw, 0.85rem)', opacity: 0.8 }}>
                                 {c.subtitle}
                             </p>
                             {c.location && (
-                                <span style={{ fontSize: '0.85rem', opacity: 0.8, alignSelf: 'flex-end' }}>
+                                <span style={{ fontSize: '0.75rem', opacity: 0.8, alignSelf: 'flex-end' }}>
                                     {c.location}
                                 </span>
                             )}

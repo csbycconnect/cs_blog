@@ -192,9 +192,9 @@ export default function Events() {
     };
 
     return (
-        <div style={{ position: 'relative', minHeight: '100vh' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             <Navbar />
-            <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2.5rem 5rem' }}>
+            <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5% 5rem', width: '100%' }}>
                 <BackButton />
 
                 {/* Page Header */}

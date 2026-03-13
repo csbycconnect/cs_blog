@@ -138,9 +138,9 @@ export default function BlogPost() {
     if (!article) return null;
 
     return (
-        <div style={{ position: 'relative', minHeight: '100vh' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             <Navbar />
-            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 2.5rem 6rem', position: 'relative', zIndex: 10 }}>
+            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
                 <div style={{ marginTop: '2rem' }}>
                     <BackButton />
                 </div>
@@ -179,12 +179,12 @@ export default function BlogPost() {
                     </div>
                 </header>
 
-                <div style={{ maxWidth: 860, margin: '0 auto' }}>
-                    <article style={{
+                <div style={{ maxWidth: 860, margin: '0 auto', width: '100%' }}>
+                    <article className="blog-post-article" style={{
                         background: 'var(--c-white)',
                         border: '2px solid var(--c-black)',
                         boxShadow: '10px 10px 0 var(--c-yellow)',
-                        padding: '2.5rem 3rem',
+                        padding: 'min(2.5rem, 5vw) min(3rem, 6vw)',
                         color: '#1a1a1a',
                         fontFamily: 'var(--font-serif, Georgia, serif)',
                         fontSize: '1.1rem',
@@ -241,7 +241,7 @@ export default function BlogPost() {
                         )}
 
                         {/* Article Footer / Actions */}
-                        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--c-black)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--c-black)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--c-black)' }}>
                                     👁 {article.views || 0} views

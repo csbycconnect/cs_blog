@@ -5,6 +5,7 @@ import FloatingLines from '../shared/FloatingLines';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import AuthGateModal from '../shared/AuthGateModal';
+import ExpandableText from '../shared/ExpandableText';
 
 export default function WelcomeHero() {
     const { user } = useAuth();
@@ -21,11 +22,11 @@ export default function WelcomeHero() {
     };
 
     return (
-        <div className="welcome-hero-wrapper" style={{ position: 'relative', width: '100%', marginBottom: '4rem' }}>
+        <div className="welcome-hero-wrapper" style={{ position: 'relative', width: '100%', marginBottom: 'clamp(2rem, 5vw, 4rem)' }}>
             {showGate && <AuthGateModal action="write for us" onClose={() => setShowGate(false)} />}
-            <div className="article-wrapper" style={{ minHeight: '500px' }}>
+            <div className="article-wrapper" style={{ minHeight: 'clamp(300px, 60vh, 500px)' }}>
                 <div className="article-shadow" style={{ top: '15px', left: '15px' }}></div>
-                <div className="article-card" style={{ padding: 0, position: 'relative', overflow: 'visible', minHeight: '500px', display: 'flex', alignItems: 'center', backgroundColor: 'var(--c-dark-blue)', border: 'none' }}>
+                <div className="article-card" style={{ padding: 0, position: 'relative', overflow: 'visible', minHeight: 'clamp(300px, 60vh, 500px)', display: 'flex', alignItems: 'center', backgroundColor: 'var(--c-dark-blue)', border: 'none' }}>
 
                     {/* Staggered Menu — top-right of the hero */}
                     <StaggeredMenu />
@@ -46,13 +47,12 @@ export default function WelcomeHero() {
                     </div>
 
                     {/* Foreground brutalist typography overlay */}
-                    <div style={{ position: 'relative', zIndex: 2, padding: '4rem', width: '100%', maxWidth: '800px', pointerEvents: 'auto' }}>
-                        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(3rem, 6vw, 5rem)', color: 'var(--c-white)', lineHeight: 1.1, marginBottom: '1.5rem', textShadow: '2px 2px 0 #000' }}>
+                    <div style={{ position: 'relative', zIndex: 2, padding: 'clamp(1.5rem, 5vw, 4rem)', width: '100%', maxWidth: '800px', pointerEvents: 'auto' }}>
+                        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(2rem, 8vw, 5rem)', color: 'var(--c-white)', lineHeight: 1.1, marginBottom: '1.5rem', textShadow: '2px 2px 0 #000' }}>
                             Welcome to ByteBoard<span className="blinking-cursor">_</span>
                         </h1>
                         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'rgba(255,255,255,0.9)', marginBottom: '2rem', lineHeight: 1.6, maxWidth: '600px', textShadow: '1px 1px 0 #000' }}>
-                            The official editorial board of the Department of Computer Science, CHRIST (Deemed to be University).
-                            Where logic meets narrative.
+                            <ExpandableText mobileThreshold={80}>The official editorial board of the Department of Computer Science, CHRIST (Deemed to be University). Where logic meets narrative.</ExpandableText>
                         </p>
                         <a
                             href="/write-for-us"

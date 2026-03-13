@@ -7,6 +7,7 @@ export default function Navbar() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     // Close dropdown when clicking outside
@@ -21,7 +22,10 @@ export default function Navbar() {
     }, []);
 
     // Close on navigation
-    useEffect(() => { setDropdownOpen(false); }, [location.pathname]);
+    useEffect(() => { 
+        setDropdownOpen(false); 
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
 
     return (
         <div className="top-nav-container" style={{ position: 'relative', zIndex: 9999, flexShrink: 0, width: '100%' }}>
@@ -36,12 +40,12 @@ export default function Navbar() {
                 <div className="nav-links">
                     <Link to="/" className={location.pathname === '/' ? 'active' : ''}>Home</Link>
                     <Link to="/blogs" className={location.pathname.startsWith('/blogs') ? 'active' : ''}>Blog</Link>
-                    <Link to="/gallery" className={location.pathname.startsWith('/gallery') ? 'active' : ''}>Gallery</Link>
+                    <Link to="/events" className={location.pathname.startsWith('/events') ? 'active' : ''}>Events</Link>
                     <Link to="/cs-connect" className={location.pathname.startsWith('/cs-connect') ? 'active' : ''}>CS-Connect</Link>
                 </div>
 
                 {/* ── Profile / Login area ─────────────────────────────── */}
-                <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <div ref={dropdownRef} style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     {user ? (
                         <>
                             {/* Avatar button */}
@@ -168,7 +172,7 @@ export default function Navbar() {
                         </>
                     ) : (
                         /* Not logged in — show Login and Register links */
-                        <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                             <Link
                                 to="/login"
                                 style={{
@@ -209,8 +213,48 @@ export default function Navbar() {
                             </Link>
                         </div>
                     )}
+
+                    {/* Mobile Hamburger Toggle */}
+                    <button 
+                        className="mobile-menu-btn"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        style={{
+                            background: 'var(--c-yellow)',
+                            border: '2px solid var(--c-black)',
+                            boxShadow: '2px 2px 0 var(--c-black)',
+                            padding: '0.4rem',
+                            cursor: 'pointer',
+                            marginLeft: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--c-black)" strokeWidth="2" strokeLinecap="square">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
                 </div>
             </nav>
+
+            {/* Mobile Dropdown Menu rendered absolutely */}
+            {mobileMenuOpen && (
+                <div className="mobile-nav-dropdown" style={{
+                    position: 'absolute', top: '100%', left: 0, width: '100%',
+                    background: 'var(--c-white)', borderBottom: '2px solid var(--c-black)',
+                    borderLeft: '2px solid var(--c-black)', borderRight: '2px solid var(--c-black)',
+                    display: 'flex', flexDirection: 'column', 
+                    zIndex: 9998,
+                    animation: 'fadeSlideDown 0.15s ease'
+                }}>
+                    <Link to="/" onClick={() => setMobileMenuOpen(false)} style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--c-black)', textDecoration: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)' }}>Home</Link>
+                    <Link to="/blogs" onClick={() => setMobileMenuOpen(false)} style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--c-black)', textDecoration: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)' }}>Blog</Link>
+                    <Link to="/events" onClick={() => setMobileMenuOpen(false)} style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--c-black)', textDecoration: 'none', borderBottom: '2px solid rgba(0,0,0,0.1)' }}>Events</Link>
+                    <Link to="/cs-connect" onClick={() => setMobileMenuOpen(false)} style={{ padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--c-black)', textDecoration: 'none' }}>CS-Connect</Link>
+                </div>
+            )}
 
             {/* Keyframe for dropdown animation */}
             <style>{`

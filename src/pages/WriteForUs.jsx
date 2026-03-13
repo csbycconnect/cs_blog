@@ -154,7 +154,7 @@ export default function WriteForUs() {
         else if (form.title.trim().length < 10) e.title = 'Title must be at least 10 characters.';
         if (!form.category.trim()) e.category = 'Category is required.';
         if (!form.excerpt.trim()) e.excerpt = 'A summary is required.';
-        else if (form.excerpt.trim().length > 50) e.excerpt = 'Keep it under 50 characters.';
+        else if (form.excerpt.trim().length > 150) e.excerpt = 'Keep it under 150 characters.';
         // validate rich-text editor instead of raw markdown
         if (!stripHtml(editorHtml)) e.content = 'Article content is required.';
         else if (wordCount > 1000) e.content = `Only ${wordCount} words — maximum is 1000.`;
@@ -277,9 +277,9 @@ export default function WriteForUs() {
     // ── Success State ─────────────────────────────────────────────────────────
     if (submitted) {
         return (
-            <div style={{ position: 'relative', minHeight: '100vh' }}>
+            <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
                 <Navbar />
-                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 2.5rem 6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
+                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 5% 6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', width: '100%' }}>
                     <BackButton />
                     <div style={{ maxWidth: 580, width: '100%' }}>
                         <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '12px 12px 0 #f7d000', overflow: 'hidden' }}>
@@ -330,9 +330,9 @@ export default function WriteForUs() {
 
     // ── Form ──────────────────────────────────────────────────────────────────
     return (
-        <div style={{ position: 'relative', minHeight: '100vh' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             <Navbar />
-            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 2.5rem 6rem', position: 'relative', zIndex: 10 }}>
+            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
                 <BackButton />
 
                 {/* Page Header */}
@@ -350,8 +350,8 @@ export default function WriteForUs() {
                     </div>
                 </AnimateOnScroll>
 
-                {/* Two-column layout */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2.5rem', alignItems: 'start' }}>
+                {/* Two-column layout that collapses on mobile */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
 
                     {/* ─── FORM CARD ─── */}
                     <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.02}>
@@ -367,7 +367,7 @@ export default function WriteForUs() {
                                 {/* ── SECTION 01: Author Information ────────── */}
                                 <SectionHead num="01" title="Author Information" />
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
                                     <Field label="Full Name" required error={touched.name && errors.name}>
                                         <input type="text" placeholder="e.g. Vishnu Sharma" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} maxLength={80} />
                                     </  Field>
@@ -394,7 +394,7 @@ export default function WriteForUs() {
                                     </Field>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
                                     <Field label="Category" required error={touched.category && errors.category}>
                                         <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
                                     </Field>
@@ -417,14 +417,14 @@ export default function WriteForUs() {
                                     required
                                     error={touched.excerpt && errors.excerpt}
                                     hint="This is displayed on the blog card. Keep it punchy."
-                                    counter={{ val: form.excerpt.length, max: 50, over: form.excerpt.length > 50 }}
+                                    counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}
                                 >
                                     <textarea
                                         placeholder="A 1–3 sentence hook that makes readers want to read more…"
                                         value={form.excerpt}
                                         onChange={set('excerpt')}
                                         rows={3}
-                                        maxLength={60}
+                                        maxLength={150}
                                         style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }}
                                     />
                                 </Field>

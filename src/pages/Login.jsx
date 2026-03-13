@@ -238,7 +238,7 @@ export default function Login() {
                                                 <ShuffleText text={loading ? "Processing..." : isRegisterMode ? "Register as Student →" : "Login as Student →"} />
                                             </button>
 
-                                            {/* social providers (only shown during login mode) */}
+                                            {/* social providers (only shown during login mode) 
                                             {!isRegisterMode && !showVerification && (
                                                 <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
                                                     <p style={{ fontFamily: 'var(--font-mono)', color: '#555', margin: '0 0 0.5rem' }}>or continue with</p>
@@ -262,7 +262,8 @@ export default function Login() {
                                                         ))}
                                                     </div>
                                                 </div>
-                                            )}
+                                            )}x
+                                            */}
                                         </>
                                     )}
                                     {!showVerification && (

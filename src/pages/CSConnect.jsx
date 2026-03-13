@@ -4,6 +4,8 @@ import Footer from '../components/layout/Footer';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import BackButton from '../components/shared/BackButton';
 import ChromaGrid from '../components/shared/ChromaGrid';
+import useAutoHover from '../hooks/useAutoHover';
+import ExpandableText from '../components/shared/ExpandableText';
 
 // A simple interactive marquee component
 const BrutalistMarquee = () => {
@@ -49,6 +51,8 @@ import facultyDataRaw from '../data/faculty.json';
 
 export default function CSConnect() {
     const brutalistColors = ['var(--c-yellow)', 'var(--c-black)'];
+    // We have 3 interactive elements in the CTA area: the container itself, and 2 buttons.
+    const activeHoverIndex = useAutoHover(3, 2000);
 
     const facultyData = facultyDataRaw.map((faculty, index) => {
         // Format the name into a URL-friendly slug (e.g., lowercase alphanumeric with dashes)
@@ -84,7 +88,7 @@ export default function CSConnect() {
             {/* Removed the flex column property to ensure Navbar spans 100% properly like other pages */}
             <Navbar />
 
-            <main style={{ padding: '0 2rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+            <main style={{ padding: '0 5%', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
                 <BackButton />
 
                 <AnimateOnScroll animationClass="animate-slide-up" delay={0.1}>
@@ -94,7 +98,7 @@ export default function CSConnect() {
                             CS-Connect<span style={{ color: 'var(--c-yellow)' }}>.</span>
                         </h1>
                         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', marginTop: '1rem', maxWidth: '600px', color: 'var(--c-white)', opacity: 0.9 }}>
-                            Connect with our esteemed faculty members. Discover their specialization, research interests, and get in touch.
+                            <ExpandableText mobileThreshold={70}>Connect with our esteemed faculty members. Discover their specialization, research interests, and get in touch.</ExpandableText>
                         </p>
                     </div>
                 </AnimateOnScroll>
@@ -110,7 +114,7 @@ export default function CSConnect() {
                         minHeight: '800px',
                         position: 'relative',
                         border: '2px solid var(--c-black)',
-                        padding: '3rem',
+                        padding: 'clamp(1.5rem, 5vw, 3rem)',
                         backgroundColor: '#f5f5f5', /* Slightly off-white background to contrast with cards */
                         boxShadow: '8px 8px 0 var(--c-white)'
                     }}>
@@ -131,22 +135,25 @@ export default function CSConnect() {
                         className="interactive-cta"
                         style={{
                             margin: '4rem 0',
-                            padding: '3rem',
+                            padding: 'clamp(1.5rem, 5vw, 3rem)',
                             backgroundColor: 'var(--c-black)',
                             color: 'var(--c-white)',
                             border: '2px solid var(--c-yellow)',
                             fontFamily: 'var(--font-mono)',
                             position: 'relative',
                             overflow: 'hidden',
-                            boxShadow: '8px 8px 0 var(--c-white)',
+                            boxShadow: activeHoverIndex === 0 ? '12px 12px 0 var(--c-yellow)' : '8px 8px 0 var(--c-white)',
                             cursor: 'crosshair',
-                            transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                            transform: activeHoverIndex === 0 ? 'scale(1.02)' : 'scale(1)',
+                            transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s'
                         }}
                         onMouseEnter={(e) => {
+                            if (activeHoverIndex !== null) return;
                             e.currentTarget.style.transform = 'scale(1.02)';
                             e.currentTarget.style.boxShadow = '12px 12px 0 var(--c-yellow)';
                         }}
                         onMouseLeave={(e) => {
+                            if (activeHoverIndex !== null) return;
                             e.currentTarget.style.transform = 'scale(1)';
                             e.currentTarget.style.boxShadow = '8px 8px 0 var(--c-white)';
                         }}
@@ -163,8 +170,7 @@ export default function CSConnect() {
                         <div style={{ position: 'relative', zIndex: 2 }}>
                             <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginBottom: '1rem', color: 'var(--c-yellow)' }}>Join the Network</h2>
                             <p style={{ maxWidth: '800px', lineHeight: 1.6, fontSize: '1.2rem', marginBottom: '2rem' }}>
-                                Are you an external professor, researcher, or industry professional looking to collaborate with the CHRIST CS Department?
-                                Reach out to our administrative office to explore partnership opportunities.
+                                <ExpandableText mobileThreshold={90}>Are you an external professor, researcher, or industry professional looking to collaborate with the CHRIST CS Department? Reach out to our administrative office to explore partnership opportunities.</ExpandableText>
                             </p>
 
                             <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
@@ -177,14 +183,17 @@ export default function CSConnect() {
                                     fontSize: '1rem',
                                     textTransform: 'uppercase',
                                     cursor: 'pointer',
-                                    boxShadow: '4px 4px 0 var(--c-white)',
+                                    boxShadow: activeHoverIndex === 1 ? '8px 8px 0 var(--c-white)' : '4px 4px 0 var(--c-white)',
+                                    transform: activeHoverIndex === 1 ? 'translate(-4px, -4px)' : 'translate(0, 0)',
                                     transition: 'transform 0.1s, box-shadow 0.1s'
                                 }}
                                     onMouseEnter={e => {
+                                        if (activeHoverIndex !== null) return;
                                         e.target.style.transform = 'translate(-4px, -4px)';
                                         e.target.style.boxShadow = '8px 8px 0 var(--c-white)';
                                     }}
                                     onMouseLeave={e => {
+                                        if (activeHoverIndex !== null) return;
                                         e.target.style.transform = 'translate(0, 0)';
                                         e.target.style.boxShadow = '4px 4px 0 var(--c-white)';
                                     }}>
@@ -193,9 +202,11 @@ export default function CSConnect() {
 
                                 <button style={{
                                     padding: '1rem 2rem',
-                                    backgroundColor: 'transparent',
-                                    color: 'var(--c-white)',
-                                    border: '2px dashed var(--c-white)',
+                                    backgroundColor: activeHoverIndex === 2 ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                    color: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                    borderColor: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                    borderStyle: 'dashed',
+                                    borderWidth: '2px',
                                     fontWeight: 'bold',
                                     fontSize: '1rem',
                                     textTransform: 'uppercase',
@@ -203,11 +214,13 @@ export default function CSConnect() {
                                     transition: 'all 0.2s'
                                 }}
                                     onMouseEnter={e => {
+                                        if (activeHoverIndex !== null) return;
                                         e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
                                         e.target.style.borderColor = 'var(--c-yellow)';
                                         e.target.style.color = 'var(--c-yellow)';
                                     }}
                                     onMouseLeave={e => {
+                                        if (activeHoverIndex !== null) return;
                                         e.target.style.backgroundColor = 'transparent';
                                         e.target.style.borderColor = 'var(--c-white)';
                                         e.target.style.color = 'var(--c-white)';

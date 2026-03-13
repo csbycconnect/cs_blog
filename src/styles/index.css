@@ -23,6 +23,11 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   background-color: var(--c-dark-blue);
   color: var(--c-black);
@@ -91,7 +96,18 @@ h3,
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Scale down rem values on mobile */
+  }
+
   body {
     padding: 1rem;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 12px; /* Further scale down for very small devices */
   }
 }

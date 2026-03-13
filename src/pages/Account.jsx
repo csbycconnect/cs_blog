@@ -43,7 +43,7 @@ export default function Account() {
             {showGate && <AuthGateModal action="access your account" onClose={() => { setShowGate(false); window.location.href = '/'; }} />}
             <Navbar />
 
-            <main style={{ maxWidth: '900px', margin: '0 auto', padding: '0 2.5rem 5rem', flex: 1, width: '100%' }}>
+            <main style={{ maxWidth: '900px', margin: '0 auto', padding: '0 5% 5rem', flex: 1, width: '100%' }}>
                 <BackButton />
 
                 <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.05}>
@@ -63,7 +63,7 @@ export default function Account() {
                 </AnimateOnScroll>
 
                 {user && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '2rem', alignItems: 'start' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'start' }}>
 
                         {/* Left Column: Identity details */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
