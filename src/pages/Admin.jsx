@@ -8,6 +8,7 @@ import Footer from '../components/layout/Footer';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import { useAuth } from '../context/AuthContext';
 
+
 export default function Admin() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
