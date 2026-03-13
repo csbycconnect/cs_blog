@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "D:\csbyc-blog\update_faculty.py", line 161, in <module>
+    process_file('d:/csbyc-blog/src/data/faculty.json')
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\csbyc-blog\update_faculty.py", line 127, in process_file
+    data = json.load(f)
+  File "C:\Python313\Lib\json\__init__.py", line 293, in load
+    return loads(fp.read(),
+                 ~~~~~~~^^
+  File "C:\Python313\Lib\encodings\cp1252.py", line 23, in decode
+    return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 23674: character maps to <undefined>

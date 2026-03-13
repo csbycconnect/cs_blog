@@ -24,12 +24,12 @@ export default function Navbar() {
     useEffect(() => { setDropdownOpen(false); }, [location.pathname]);
 
     return (
-        <div className="top-nav-container" style={{ position: 'relative', zIndex: 9999 }}>
+        <div className="top-nav-container" style={{ position: 'relative', zIndex: 9999, flexShrink: 0, width: '100%' }}>
             <div className="nav-shadow"></div>
             <nav className="brutal-navbar">
                 <div className="logo-container">
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                        <img src="/christ-logo.jpg" alt="CHRIST University Logo" style={{ height: '55px', objectFit: 'contain' }} />
+                        <img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" alt="CHRIST University Logo" style={{ height: '55px', objectFit: 'contain' }} />
                     </Link>
                 </div>
 
@@ -98,13 +98,33 @@ export default function Navbar() {
                                             <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.3, marginTop: 2 }}>
                                                 {user.email}
                                             </div>
+                                            {user.role && user.role !== 'student' && (
+                                                <div style={{
+                                                    display: 'inline-block',
+                                                    marginTop: '4px',
+                                                    padding: '2px 6px',
+                                                    background: 'var(--c-yellow)',
+                                                    color: 'var(--c-black)',
+                                                    fontFamily: 'Space Mono, monospace',
+                                                    fontSize: '0.55rem',
+                                                    fontWeight: 700,
+                                                    borderRadius: '3px',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {user.role} Admin
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     {/* Menu items */}
                                     {[
-                                        { label: 'Account Details', icon: '👤', action: () => navigate('/login') },
-                                        { label: 'Settings', icon: '⚙️', action: () => { } },
+                                        { label: 'Your Blogs', icon: '📝', action: () => navigate('/your-blogs') },
+                                        { label: 'Account Details', icon: '👤', action: () => navigate('/account') },
+                                        ...(user.role && user.role !== 'student'
+                                            ? [{ label: 'Admin Dashboard', icon: '🛡️', action: () => navigate('/admin') }]
+                                            : []),
+                                        { label: 'Settings', icon: '⚙️', action: () => navigate('/settings') },
                                     ].map(item => (
                                         <button
                                             key={item.label}

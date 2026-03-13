@@ -1,0 +1,48 @@
+# Node.js dependencies
+node_modules/
+
+# Build outputs
+dist/
+.build/
+coverage/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs / editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Misc
+*.log
+*.tmp
+
+# Mac / Linux
+/locales/
+
+# OneDrive temp
+~$*
+
+# Vite
+/.vite/
+
+# Optional: lockfiles (if you manage dependencies differently)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

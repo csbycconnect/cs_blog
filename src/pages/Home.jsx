@@ -8,21 +8,50 @@ import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import ShuffleText from '../components/shared/ShuffleText';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
+import ConfirmationModal from '../components/shared/ConfirmationModal';
 import '../styles/index.css';
 import '../styles/components.css';
 
 export default function Home() {
     const { user } = useAuth();
     const [showGate, setShowGate] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
-    const handleTransmission = () => {
-        if (!user) { setShowGate(true); return false; }
-        return true;
+    // Form state
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+
+    const handleTransmissionRequest = (e) => {
+        e.preventDefault();
+        // Check auth first
+        if (!user) {
+            setShowGate(true);
+            return;
+        }
+        // If logged in and form is submitted (validation passed implicitly by required attrs)
+        setShowConfirm(true);
+    };
+
+    const executeTransmission = () => {
+        setShowConfirm(false);
+        const subject = encodeURIComponent('ByteBoard Contact Form');
+        const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+
+        // Open Gmail's compose window directly
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=csbyc.connect@christuniversity.in&su=${subject}&body=${body}`;
+        window.open(gmailUrl, '_blank');
+
+        // Optional: clear form
+        setName('');
+        setEmail('');
+        setMessage('');
     };
 
     return (
         <div>
             {showGate && <AuthGateModal action="send a message" onClose={() => setShowGate(false)} />}
+            {showConfirm && <ConfirmationModal onConfirm={executeTransmission} onCancel={() => setShowConfirm(false)} />}
             <Navbar />
 
             <main className="main-layout-full" style={{ position: 'relative', zIndex: 10, maxWidth: '1400px', margin: '0 auto', padding: '0 2.5rem' }}>
@@ -65,10 +94,9 @@ export default function Home() {
                                         </p>
                                         <a href="#connect" className="explore-btn"><ShuffleText text="INQUIRE NOW" /></a>
                                     </div>
-                                    <div style={{ width: '100%', aspectRatio: '1/1', border: '2px solid var(--c-black)', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f0f0', position: 'relative' }}>
+                                    <div style={{ width: '100%', aspectRatio: '1/1', border: '2px solid var(--c-black)', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
                                         {/* Striped placeholder patterned background */}
-                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 2px, transparent 8px)' }}></div>
-                                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', zIndex: 1 }}>FIGURE 1: CS DEPT</span>
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 100, background: 'url(https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/77659a7b157b7edf61fb3257c621e6ffc13c4b54/banners/CS_BYC_Banner.jpg) center/cover no-repeat' }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -144,21 +172,41 @@ export default function Home() {
                                         </div>
                                     </div>
 
-                                    <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                    <form onSubmit={handleTransmissionRequest} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             <label style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', textTransform: 'uppercase' }}>Name</label>
-                                            <input type="text" placeholder="John Doe" style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none' }} />
+                                            <input
+                                                type="text"
+                                                placeholder="John Doe"
+                                                style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none' }}
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                required
+                                            />
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             <label style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', textTransform: 'uppercase' }}>Email</label>
-                                            <input type="email" placeholder="john@example.com" style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none' }} />
+                                            <input
+                                                type="email"
+                                                placeholder="john@example.com"
+                                                style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none' }}
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                required
+                                            />
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             <label style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', textTransform: 'uppercase' }}>Message</label>
-                                            <textarea rows={4} placeholder="Your message here..." style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none', resize: 'vertical' }}></textarea>
+                                            <textarea
+                                                rows={4}
+                                                placeholder="Your message here..."
+                                                style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none', resize: 'vertical' }}
+                                                value={message}
+                                                onChange={(e) => setMessage(e.target.value)}
+                                                required
+                                            ></textarea>
                                         </div>
-                                        <button type="button" className="explore-btn" style={{ alignSelf: 'flex-start', marginTop: '1rem' }}
-                                            onClick={handleTransmission}
+                                        <button type="submit" className="explore-btn" style={{ alignSelf: 'flex-start', marginTop: '1rem' }}
                                         ><ShuffleText text="SEND TRANSMISSION" /></button>
                                     </form>
 

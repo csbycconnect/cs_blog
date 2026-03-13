@@ -10,8 +10,14 @@ import Gallery from './pages/Gallery';
 import WriteForUs from './pages/WriteForUs';
 import CSConnect from './pages/CSConnect';
 import FacultyProfile from './pages/FacultyProfile';
+import Admin from './pages/Admin';
+import BlogPost from './pages/BlogPost';
+import YourBlogs from './pages/YourBlogs';
 import ByteboardLoader from './components/shared/ByteboardLoader';
 import GlobalBackground from './components/layout/GlobalBackground';
+import Account from './pages/Account';
+import Settings from './pages/Settings';
+import AdminRoute from './components/shared/AdminRoute';
 
 function App() {
     // Show the loader only once per browser session (not on every navigation).
@@ -40,6 +46,11 @@ function App() {
                     <Route path="/write-for-us" element={<WriteForUs />} />
                     <Route path="/cs-connect" element={<CSConnect />} />
                     <Route path="/cs-connect/:id" element={<FacultyProfile />} />
+                    <Route path="/blog/:id" element={<BlogPost />} />
+                    <Route path="/your-blogs" element={<YourBlogs />} />
+                    <Route path="/account" element={<Account />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
                 </Routes>
             </Router>
 

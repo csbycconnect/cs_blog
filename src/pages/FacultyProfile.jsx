@@ -30,8 +30,10 @@ export default function FacultyProfile() {
         return <div style={{ minHeight: '100vh', backgroundColor: 'var(--c-black)' }} />;
     }
 
-    // Resolve the Vite static asset URL
-    const imageUrl = new URL(`../assets/faculty/${faculty.imagePath}`, import.meta.url).href;
+    // Resolve the Vite static asset URL or use absolute external URL
+    const imageUrl = faculty.imagePath.startsWith('http')
+        ? faculty.imagePath
+        : new URL(`../assets/faculty/${faculty.imagePath}`, import.meta.url).href;
 
     return (
         <div style={{ position: 'relative', minHeight: '100vh', backgroundColor: 'var(--c-black)', color: 'var(--c-white)' }}>
@@ -62,7 +64,7 @@ export default function FacultyProfile() {
                                 <img
                                     src={imageUrl}
                                     alt={faculty.name}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
                                 />
                             </div>
 

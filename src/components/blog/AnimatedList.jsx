@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useInView } from 'motion/react';
-import { Heart, MoreVertical } from 'lucide-react';
+import { Heart, ThumbsUp } from 'lucide-react';
+import { ArticleAPI } from '../../lib/api';
 import '../../styles/components.css'; // ensure components.css is loaded
+import { useAuth } from '../../context/AuthContext';
 
 const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => {
     const ref = useRef(null);
@@ -23,23 +25,95 @@ const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => 
 };
 
 const BlogCard = ({ post }) => {
+    const { user } = useAuth();
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [hasLiked, setHasLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
+
+    useEffect(() => {
+        const favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+        setIsFavorite(favs.some(f => f.id === post.id));
+
+        const localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+        setHasLiked(localLikes.includes(post.id));
+        setLikesCount(post.likes || 0);
+    }, [post]);
+
+    const handleLikeClick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!user) {
+            alert('Please log in to like articles.');
+            return;
+        }
+
+        const newLiked = !hasLiked;
+        setHasLiked(newLiked);
+        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
+
+        try {
+            await ArticleAPI.toggleLike(post.id, newLiked);
+
+            let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            if (newLiked) {
+                if (!localLikes.includes(post.id)) localLikes.push(post.id);
+            } else {
+                localLikes = localLikes.filter(id => id !== post.id);
+            }
+            localStorage.setItem('bb_likes', JSON.stringify(localLikes));
+
+            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            const favIndex = favs.findIndex(f => f.id === post.id);
+            if (favIndex > -1) {
+                favs[favIndex].likes = newLiked ? (favs[favIndex].likes || 0) + 1 : (favs[favIndex].likes || 0) - 1;
+                localStorage.setItem('bb_favorites', JSON.stringify(favs));
+            }
+        } catch (error) {
+            console.error(error);
+            setHasLiked(!newLiked);
+            setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
+        }
+    };
+
+    const handleFavoriteClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!user) {
+            alert('Please log in to favorite articles.');
+            return;
+        }
+
+        let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+        const newIsFavorite = !isFavorite;
+
+        if (newIsFavorite) {
+            if (!favs.some(f => f.id === post.id)) {
+                favs.push({ ...post, likes: likesCount });
+            }
+        } else {
+            favs = favs.filter(f => f.id !== post.id);
+        }
+
+        localStorage.setItem('bb_favorites', JSON.stringify(favs));
+        setIsFavorite(newIsFavorite);
+    };
+
     return (
-        <div className="blog-card">
+        <div className="blog-card" style={{ transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
             <div className="blog-card-header">
                 <div className="blog-card-meta">
-                    <img src={post.avatar || "https://api.dicebear.com/9.x/initials/svg?seed=CS"} alt="Avatar" className="blog-avatar" />
+                    {/* Removed Avatar Image */}
                     <div className="blog-meta-text">
                         <span className="blog-author">{post.author}</span>
                         <div className="blog-date-time">
-                            <span>{post.date}</span>
+                            <span>{new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}</span>
                             <span className="bullet">•</span>
                             <span>{post.readTime}</span>
                         </div>
                     </div>
                 </div>
-                <button className="blog-menu-btn">
-                    <MoreVertical size={20} color="var(--c-white)" />
-                </button>
             </div>
 
             <div className="blog-card-content">
@@ -47,14 +121,45 @@ const BlogCard = ({ post }) => {
                 <p className="blog-excerpt">{post.excerpt}</p>
             </div>
 
-            <div className="blog-card-footer">
+            <div className="blog-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="blog-footer-stats">
-                    <span>{post.views} views</span>
-                    <span>{post.comments} comments</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>👁 {post.views || 0}</span>
                 </div>
-                <button className="blog-like-btn">
-                    <Heart size={20} color="#ff4d4d" />
-                </button>
+
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                        onClick={handleLikeClick}
+                        title="Like this article"
+                        style={{
+                            background: hasLiked ? '#ff4d4d' : 'transparent',
+                            border: hasLiked ? '2px solid #000' : '2px solid rgba(0,0,0,0.2)',
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.4rem 0.75rem', cursor: 'pointer',
+                            fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem',
+                            transition: 'all 0.2s',
+                            boxShadow: hasLiked ? '2px 2px 0 #000' : 'none',
+                            color: 'var(--c-white)'
+                        }}
+                    >
+                        <ThumbsUp size={16} color={hasLiked ? "#000" : "#ff4d4d"} fill={hasLiked ? "#000" : "none"} />
+                        <span style={{ color: hasLiked ? '#000' : 'var(--c-white)' }}>{likesCount}</span>
+                    </button>
+
+                    <button
+                        onClick={handleFavoriteClick}
+                        title="Save to favorites"
+                        style={{
+                            background: isFavorite ? '#ff4d4d' : 'transparent',
+                            border: isFavorite ? '2px solid #000' : '2px solid rgba(0,0,0,0.2)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: '0.4rem', cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: isFavorite ? '2px 2px 0 #000' : 'none'
+                        }}
+                    >
+                        <Heart size={18} color={isFavorite ? "#000" : "#ff4d4d"} fill={isFavorite ? "#ff4d4d" : "none"} />
+                    </button>
+                </div>
             </div>
         </div>
     );

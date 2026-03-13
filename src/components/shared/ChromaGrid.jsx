@@ -15,7 +15,6 @@ const ChromaGrid = ({
     const setX = useRef(null);
     const setY = useRef(null);
     const pos = useRef({ x: 0, y: 0 });
-    const [hoveredIndex, setHoveredIndex] = useState(null);
     const navigate = useNavigate();
 
     const demo = [
@@ -132,11 +131,11 @@ const ChromaGrid = ({
                     overflow: hidden;
                     cursor: pointer;
                     transition: all 0.3s ease;
+                    transform: translate(0, 0);
                 }
             `}</style>
 
             {data.map((c, i) => {
-                const isHovered = hoveredIndex === i;
                 const imgHeight = heights[i % heights.length];
 
                 return (
@@ -144,14 +143,20 @@ const ChromaGrid = ({
                         key={i}
                         className="chroma-masonry-item"
                         onMouseMove={handleCardMove}
-                        onMouseEnter={() => setHoveredIndex(i)}
-                        onMouseLeave={() => setHoveredIndex(null)}
                         onClick={() => handleCardClick(c.url)}
                         style={{
                             background: c.gradient || 'var(--c-black)',
                             border: `2px solid ${c.borderColor || 'var(--c-black)'}`,
-                            boxShadow: isHovered ? '8px 8px 0 var(--c-black)' : '4px 4px 0 var(--c-black)',
-                            transform: isHovered ? 'translate(-4px, -4px)' : 'translate(0, 0)',
+                            '--box-shadow-color': 'var(--c-black)',
+                            boxShadow: '4px 4px 0 var(--box-shadow-color)'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translate(-4px, -4px)';
+                            e.currentTarget.style.boxShadow = '8px 8px 0 var(--box-shadow-color)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translate(0, 0)';
+                            e.currentTarget.style.boxShadow = '4px 4px 0 var(--box-shadow-color)';
                         }}
                     >
 
@@ -170,7 +175,8 @@ const ChromaGrid = ({
                                 style={{
                                     width: '100%',
                                     height: '100%',
-                                    objectFit: 'cover'
+                                    objectFit: 'cover',
+                                    objectPosition: 'top center'
                                 }}
                             />
                         </div>

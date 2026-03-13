@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArticleAPI } from '../lib/api';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimatedList from '../components/blog/AnimatedList';
@@ -6,44 +8,6 @@ import BackButton from '../components/shared/BackButton';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
 
-const ALL_POSTS = [
-    {
-        id: 1,
-        author: 'CS-BYC Admin',
-        date: 'Jul 30, 2025',
-        readTime: '8 min read',
-        title: 'Multimodal exploration for scientific discovery - Shorya Rawal 2241347',
-        excerpt: 'Multimodal exploration for scientific discovery Introduction Modern science is no longer confined to isolated experiments or...',
-        views: 6,
-        comments: 0,
-        category: 'AI / ML',
-        avatar: 'https://api.dicebear.com/9.x/initials/svg?seed=Admin1&backgroundColor=0d2142&textColor=ffffff'
-    },
-    {
-        id: 2,
-        author: 'CS-BYC Admin',
-        date: 'Jul 30, 2025',
-        readTime: '6 min read',
-        title: "Does My Phone Listen to Me? Here's the Unsettling Truth - Shambhavi Sinha 2241366",
-        excerpt: "Does My Phone Listen to Me? Here's the Unsettling Truth Imagine you are sitting and chatting with your friends, a casual chat, maybe...",
-        views: 4,
-        comments: 1,
-        category: 'Cybersecurity',
-        avatar: 'https://api.dicebear.com/9.x/initials/svg?seed=Admin2&backgroundColor=0d2142&textColor=ffffff'
-    },
-    {
-        id: 3,
-        author: 'CS-BYC Admin',
-        date: 'Jul 29, 2025',
-        readTime: '5 min read',
-        title: "The Future of Quantum Computing - Alex Chen 2241312",
-        excerpt: "Quantum supremacy has finally been achieved. What does this mean for the future of cryptography and scientific simulation? Allow me to expla...",
-        views: 12,
-        comments: 3,
-        category: 'Tech Trends',
-        avatar: 'https://api.dicebear.com/9.x/initials/svg?seed=Admin3&backgroundColor=0d2142&textColor=ffffff'
-    }
-];
 
 const READ_TIME_RANGES = [
     { label: '< 5 min', fn: rt => parseInt(rt) < 5 },
@@ -60,6 +24,8 @@ const SORT_OPTIONS = [
 function parseDate(str) { return new Date(str); }
 
 export default function Blogs() {
+    const [dbPosts, setDbPosts] = useState([]);
+    const [loadingPosts, setLoadingPosts] = useState(true);
     const [search, setSearch] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [selectedAuthor, setSelectedAuthor] = useState(null);
@@ -67,11 +33,32 @@ export default function Blogs() {
     const [selectedReadTime, setSelectedReadTime] = useState(null);
     const [sortBy, setSortBy] = useState('recent');
 
-    const authors = [...new Set(ALL_POSTS.map(p => p.author))];
-    const categories = [...new Set(ALL_POSTS.map(p => p.category))];
+    useEffect(() => {
+        const fetchAcceptedArticles = async () => {
+            try {
+                const items = await ArticleAPI.fetchByStatus('accepted');
+                const formattedPosts = items.map(item => ({
+                    ...item,
+                    author: item.name || 'Anonymous',
+                    avatar: item.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${item.name || 'A'}&backgroundColor=0d2142&textColor=ffffff`,
+                }));
+                // Set DB posts only
+                setDbPosts(formattedPosts);
+            } catch (error) {
+                console.error("Error fetching articles:", error);
+                setDbPosts([]);
+            } finally {
+                setLoadingPosts(false);
+            }
+        };
+        fetchAcceptedArticles();
+    }, []);
+
+    const authors = [...new Set(dbPosts.map(p => p.author))];
+    const categories = [...new Set(dbPosts.map(p => p.category))];
 
     const filtered = useMemo(() => {
-        let posts = [...ALL_POSTS];
+        let posts = [...dbPosts];
         if (search.trim()) {
             const q = search.toLowerCase();
             posts = posts.filter(p =>
@@ -81,11 +68,11 @@ export default function Blogs() {
         if (selectedAuthor) posts = posts.filter(p => p.author === selectedAuthor);
         if (selectedCategory) posts = posts.filter(p => p.category === selectedCategory);
         if (selectedReadTime !== null) posts = posts.filter(p => READ_TIME_RANGES[selectedReadTime].fn(p.readTime));
-        if (sortBy === 'views') posts.sort((a, b) => b.views - a.views);
-        if (sortBy === 'comments') posts.sort((a, b) => b.comments - a.comments);
-        if (sortBy === 'recent') posts.sort((a, b) => parseDate(b.date) - parseDate(a.date));
+        if (sortBy === 'views') posts.sort((a, b) => (b.views || 0) - (a.views || 0));
+        if (sortBy === 'comments') posts.sort((a, b) => (b.comments || 0) - (a.comments || 0));
+        if (sortBy === 'recent') posts.sort((a, b) => parseDate(b.date || 0) - parseDate(a.date || 0));
         return posts;
-    }, [search, selectedAuthor, selectedCategory, selectedReadTime, sortBy]);
+    }, [dbPosts, search, selectedAuthor, selectedCategory, selectedReadTime, sortBy]);
 
     const clearAll = () => {
         setSearch('');
@@ -100,10 +87,36 @@ export default function Blogs() {
 
     const { user } = useAuth();
     const [showGate, setShowGate] = useState(false);
+    const navigate = useNavigate();
 
     const handlePostSelect = (post, index) => {
         if (!user) { setShowGate(true); return; }
-        console.log(`Selected post: ${post.title} at index ${index}`);
+        navigate(`/blog/${post.id}`);
+    };
+
+    const handleLikeToggle = async (post, isLiking, callback) => {
+        if (!user) { setShowGate(true); return; }
+        try {
+            await ArticleAPI.toggleLike(post.id, isLiking);
+            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            if (isLiking) {
+                if (!favs.some(f => f.id === post.id)) {
+                    favs.push({ ...post, likes: (post.likes || 0) + 1 });
+                }
+            } else {
+                favs = favs.filter(f => f.id !== post.id);
+            }
+            localStorage.setItem('bb_favorites', JSON.stringify(favs));
+            // Update local state post optimistically
+            setDbPosts(current => current.map(p => {
+                if (p.id === post.id) return { ...p, likes: (p.likes || 0) + (isLiking ? 1 : -1) };
+                return p;
+            }));
+            if (callback) callback(true);
+        } catch (e) {
+            console.error("Failed to like post", e);
+            if (callback) callback(false);
+        }
     };
 
     return (
@@ -117,7 +130,7 @@ export default function Blogs() {
                 <div className="blog-page-header">
                     <h1 className="serif-heading" style={{ color: 'var(--c-white)' }}>All Posts</h1>
                     <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                        {filtered.length} of {ALL_POSTS.length} dispatches
+                        {loadingPosts ? "Loading dispatches..." : `${filtered.length} of ${dbPosts.length} dispatches`}
                     </p>
                 </div>
 
@@ -219,6 +232,7 @@ export default function Blogs() {
                             <AnimatedList
                                 items={filtered}
                                 onItemSelect={handlePostSelect}
+                                onLikeToggle={handleLikeToggle}
                                 showGradients={false}
                                 enableArrowNavigation={true}
                                 displayScrollbar={false}

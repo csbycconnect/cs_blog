@@ -8,6 +8,8 @@ export default function Footer() {
 
     return (
         <footer style={{
+            position: 'relative',
+            zIndex: 10,
             backgroundColor: 'var(--c-black)',
             color: 'var(--c-white)',
             padding: '4rem 2rem',
@@ -19,7 +21,7 @@ export default function Footer() {
                 {/* Brand / Logo Section */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <img src="/christ-logo.jpg" alt="CHRIST University Logo" style={{ height: '60px', objectFit: 'contain', backgroundColor: '#fff', padding: '5px', borderRadius: '4px' }} />
+                        <img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo.png" alt="CHRIST University Logo" style={{ height: '60px', objectFit: 'contain', backgroundColor: '#000000ff', padding: '5px', borderRadius: '4px' }} />
                     </div>
                     <p style={{ opacity: 0.7, fontSize: '0.9rem', lineHeight: 1.5 }}>
                         Department of Computer Science<br />

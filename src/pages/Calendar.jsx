@@ -3,6 +3,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import BackButton from '../components/shared/BackButton';
+import { useEffect } from 'react';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
@@ -10,100 +11,13 @@ const MONTH_NAMES = [
     'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-// ─── EVENTS ────────────────────────────────────────────────────────────────────
-// Keyed by "YYYY-MM-DD". All relevant to 2026 so they fall in the current view.
-const EVENTS = {
-    '2026-03-05': {
-        title: 'ByteBoard Editorial Meet',
-        tag: 'ByteBoard', tagColor: '#f7d000',
-        time: '4:00 PM – 5:30 PM',
-        venue: 'Room 102, CS Block',
-        desc: 'Monthly editorial board meeting to review article submissions and plan the next issue. All writers and editors expected to attend.',
-    },
-    '2026-03-08': {
-        title: 'International Women\'s Day — Tech Panel',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: '10:00 AM – 12:00 PM',
-        venue: 'Seminar Hall B',
-        desc: 'Panel discussion featuring women leaders in technology. Open to all students. Registration required via the CS Department portal.',
-    },
-    '2026-03-15': {
-        title: 'Hackathon 2026 — Registration Deadline',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: 'All Day',
-        venue: 'Online',
-        desc: 'Last day to register teams for the annual 24-hour Hackathon. Teams of 2–4 members. Problem statements will be revealed at the event.',
-    },
-    '2026-03-20': {
-        title: 'React Deep Dive Workshop',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: '2:00 PM – 5:00 PM',
-        venue: 'Lab 3, CS Block',
-        desc: 'Hands-on workshop covering React hooks, context API, and performance optimisation. Bring your laptops. Prerequisites: basic JavaScript.',
-    },
-    '2026-03-22': {
-        title: 'Guest Lecture: AI Ethics',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: '11:00 AM – 12:30 PM',
-        venue: 'Auditorium',
-        desc: 'Prof. Ananya Iyer from IISc Bengaluru speaks on ethical considerations in modern AI systems — bias, fairness, and accountability.',
-    },
-    '2026-03-28': {
-        title: 'Hackathon 2026',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: '9:00 AM (24 hrs)',
-        venue: 'CS Block — All Labs',
-        desc: '24-hour coding marathon. Themes: Healthcare Tech, FinTech, and Sustainability. Prizes worth ₹50,000. Meals and refreshments provided.',
-    },
-    '2026-04-02': {
-        title: 'ByteBoard Article Submissions Open',
-        tag: 'ByteBoard', tagColor: '#f7d000',
-        time: 'All Day',
-        venue: 'Online (byteboard.csbyc.in)',
-        desc: 'The submission window for the April edition opens today. Accepted categories: Technical, Opinion, Research Review, and Career. Deadline: April 10.',
-    },
-    '2026-04-05': {
-        title: 'ByteBoard Pitch Session',
-        tag: 'ByteBoard', tagColor: '#f7d000',
-        time: '3:30 PM – 5:00 PM',
-        venue: 'Seminar Hall A',
-        desc: 'Writers pitch their article ideas to the editorial board. New contributors especially welcome. Shortlisted pitches move to the writing phase.',
-    },
-    '2026-04-10': {
-        title: 'Article Submission Deadline',
-        tag: 'ByteBoard', tagColor: '#f7d000',
-        time: '11:59 PM',
-        venue: 'Online',
-        desc: 'Hard deadline for April edition article submissions. Late submissions will be considered for May edition only.',
-    },
-    '2026-04-12': {
-        title: 'Web Dev Workshop — Part II',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: '2:00 PM – 5:00 PM',
-        venue: 'Lab 2, CS Block',
-        desc: 'Continuation of the Web Dev workshop series. Topics: REST APIs, authentication with JWT, and deploying to Vercel. Attendance from Part I preferred.',
-    },
-    '2026-04-18': {
-        title: 'Department Day 2026',
-        tag: 'CS Dept', tagColor: '#0A192F',
-        time: '9:00 AM – 6:00 PM',
-        venue: 'CS Block & Open Grounds',
-        desc: 'Annual CS Department Day featuring project expo, cultural performances, alumni talks, and the ByteBoard magazine launch. All are welcome.',
-    },
-    '2026-04-25': {
-        title: 'End Semester Exams Begin',
-        tag: 'Academic', tagColor: '#333',
-        time: 'As per timetable',
-        venue: 'Exam Halls',
-        desc: 'End semester examinations commence. Check the academic calendar for your specific subject schedule. All club activities are suspended during the exam period.',
-    },
-    '2026-05-10': {
-        title: 'Results Day',
-        tag: 'Academic', tagColor: '#333',
-        time: '10:00 AM onwards',
-        venue: 'Online (exam portal)',
-        desc: 'Semester results declared. Log in to the student portal to view grades and marksheets. Revaluation requests accepted within 7 days.',
-    },
+import { ArticleAPI } from '../lib/api';
+
+const categoryColors = {
+    Competition: { bg: '#f7d000', text: '#000' },
+    Lecture: { bg: '#fff9db', text: '#000' },
+    Editorial: { bg: '#0A192F', text: '#fff' },
+    Workshop: { bg: '#000', text: '#fff' },
 };
 
 function getDaysInMonth(year, month) { return new Date(year, month + 1, 0).getDate(); }
@@ -134,7 +48,33 @@ export default function Calendar() {
     const dateKey = (d) => `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`;
     const isToday = (d) => d === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear();
 
-    const selectedEvent = selected ? EVENTS[dateKey(selected)] : null;
+    const [eventsMap, setEventsMap] = useState({});
+    const [loading, setLoading] = useState(true);
+
+
+    useEffect(() => {
+        const fetchDynamicEvents = async () => {
+            try {
+                const data = await ArticleAPI.fetchAllEvents();
+                const grouped = {};
+                data.forEach(ev => {
+                    const dateObj = new Date(ev.date);
+                    // Standardize the key into YYYY-MM-DD
+                    const standardKey = `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}`;
+                    if (!grouped[standardKey]) grouped[standardKey] = [];
+                    grouped[standardKey].push(ev);
+                });
+                setEventsMap(grouped);
+            } catch (err) {
+                console.error("Failed to map dynamic events for calendar:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDynamicEvents();
+    }, []);
+
+    const selectedEventsArr = selected ? (eventsMap[dateKey(selected)] || []) : [];
 
     return (
         <div style={{ position: 'relative', minHeight: '100vh' }}>
@@ -180,10 +120,11 @@ export default function Calendar() {
                                 {cells.map((day, i) => {
                                     if (!day) return <div key={`e-${i}`} />;
                                     const key = dateKey(day);
-                                    const hasEvent = !!EVENTS[key];
-                                    const event = EVENTS[key];
+                                    const dayEvents = eventsMap[key] || [];
+                                    const hasEvent = dayEvents.length > 0;
                                     const isSelected = selected === day;
                                     const todayDay = isToday(day);
+                                    const topEventTagColor = hasEvent ? (categoryColors[dayEvents[0].category] ? categoryColors[dayEvents[0].category].bg : 'var(--c-black)') : null;
 
                                     return (
                                         <div
@@ -209,7 +150,7 @@ export default function Calendar() {
                                             {hasEvent && (
                                                 <span style={{
                                                     width: 5, height: 5, borderRadius: '50%',
-                                                    backgroundColor: isSelected ? '#f7d000' : event.tagColor || 'var(--c-black)',
+                                                    backgroundColor: isSelected ? '#f7d000' : topEventTagColor,
                                                     position: 'absolute', bottom: 4,
                                                 }} />
                                             )}
@@ -227,36 +168,50 @@ export default function Calendar() {
                                     <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem', letterSpacing: '0.08em' }}>
                                         {MONTH_NAMES[viewMonth]} {selected}, {viewYear}
                                     </p>
-                                    {selectedEvent ? (
-                                        <div style={{ border: '2px solid #000', boxShadow: '5px 5px 0 ' + (selectedEvent.tagColor || '#000') }}>
-                                            {/* Event header */}
-                                            <div style={{ background: selectedEvent.tagColor || '#0A192F', padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                                                <div>
-                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: selectedEvent.tagColor === '#f7d000' ? '#000' : 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
-                                                        {selectedEvent.tag}
+                                    {selectedEventsArr.length > 0 ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                            {selectedEventsArr.map(ev => {
+                                                const catColors = categoryColors[ev.category] || { bg: '#0A192F', text: '#fff' };
+                                                let timeDisplay = '';
+                                                if (ev.time && typeof ev.time === 'object') {
+                                                    timeDisplay = `${ev.time.start} – ${ev.time.end}`;
+                                                } else if (ev.timeStart) {
+                                                    timeDisplay = `${ev.timeStart} – ${ev.timeEnd}`;
+                                                }
+
+                                                return (
+                                                    <div key={ev.id} style={{ border: '2px solid #000', boxShadow: '5px 5px 0 ' + catColors.bg }}>
+                                                        {/* Event header */}
+                                                        <div style={{ background: catColors.bg, padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                                                            <div>
+                                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: catColors.text, marginBottom: 2, opacity: 0.8 }}>
+                                                                    {ev.category || 'Event'}
+                                                                </div>
+                                                                <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.2rem', fontWeight: 700, color: catColors.text, lineHeight: 1.2 }}>
+                                                                    {ev.title}
+                                                                </div>
+                                                            </div>
+                                                            <button onClick={() => setSelected(null)} style={{ background: 'none', border: '1.5px solid rgba(0,0,0,0.2)', color: catColors.text, cursor: 'pointer', padding: '0.2rem 0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', flexShrink: 0 }}>✕</button>
+                                                        </div>
+                                                        {/* Event body */}
+                                                        <div style={{ background: '#fff', padding: '1.25rem' }}>
+                                                            <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                                                                <div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', color: '#999', letterSpacing: '0.1em', marginBottom: 2 }}>🕐 Time</div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#000', fontWeight: 700 }}>{timeDisplay}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', color: '#999', letterSpacing: '0.1em', marginBottom: 2 }}>📍 Venue</div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#000', fontWeight: 700 }}>{ev.venue}</div>
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#444', lineHeight: 1.6, borderTop: '1px solid #eee', paddingTop: '0.75rem' }}>
+                                                                {ev.description}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.2rem', fontWeight: 700, color: selectedEvent.tagColor === '#f7d000' ? '#000' : '#fff', lineHeight: 1.2 }}>
-                                                        {selectedEvent.title}
-                                                    </div>
-                                                </div>
-                                                <button onClick={() => setSelected(null)} style={{ background: 'none', border: '1.5px solid rgba(255,255,255,0.4)', color: selectedEvent.tagColor === '#f7d000' ? '#000' : '#fff', cursor: 'pointer', padding: '0.2rem 0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', flexShrink: 0 }}>✕</button>
-                                            </div>
-                                            {/* Event body */}
-                                            <div style={{ background: '#fff', padding: '1.25rem' }}>
-                                                <div style={{ display: 'flex', gap: '2rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                                                    <div>
-                                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', color: '#999', letterSpacing: '0.1em', marginBottom: 2 }}>🕐 Time</div>
-                                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#000', fontWeight: 700 }}>{selectedEvent.time}</div>
-                                                    </div>
-                                                    <div>
-                                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', color: '#999', letterSpacing: '0.1em', marginBottom: 2 }}>📍 Venue</div>
-                                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#000', fontWeight: 700 }}>{selectedEvent.venue}</div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#444', lineHeight: 1.6, borderTop: '1px solid #eee', paddingTop: '0.75rem' }}>
-                                                    {selectedEvent.desc}
-                                                </div>
-                                            </div>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#aaa', padding: '1rem', border: '1.5px dashed #ddd' }}>

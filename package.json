@@ -10,7 +10,17 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.1004.0",
+        "@aws-sdk/lib-dynamodb": "^3.1004.0",
+        "@emailjs/browser": "^4.4.1",
+        "@tiptap/extension-image": "^3.20.1",
+        "@tiptap/extension-link": "^3.20.1",
+        "@tiptap/extension-underline": "^3.20.1",
+        "@tiptap/react": "^3.20.1",
+        "@tiptap/starter-kit": "^3.20.1",
+        "amazon-cognito-identity-js": "^6.3.16",
         "animejs": "^3.2.2",
+        "dompurify": "^3.3.2",
         "gsap": "^3.14.2",
         "lucide-react": "^0.576.0",
         "motion": "^12.34.4",
@@ -18,7 +28,9 @@
         "postprocessing": "^6.38.3",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
+        "react-markdown": "^10.1.0",
         "react-router-dom": "^7.13.1",
+        "remark-gfm": "^4.0.1",
         "three": "^0.183.2"
     },
     "devDependencies": {
