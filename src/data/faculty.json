@@ -353,14 +353,6 @@
         "bio": []
     },
     {
-        "name": "Dr. Shrinath Bijjargi",
-        "designation": "Assistant Professor",
-        "imagePath": "/assets/faculties/shrinath-bijjargi.jpg",
-        "bio": [
-            "Dr. Bijjargi Shrinath Mahadev is an Assistant Professor in the Department of Statistics and Data Science at CHRIST (Deemed to be University), Yeshwanthpur Campus, Bengaluru. He earned his Ph.D. in Statistics from Karnatak University, Dharwad, under the supervision of Senior Professor (Smt.) S. V. Bhat. His doctoral research focused on nonparametric approaches to single regressor models. Dr. Shrinath has presented his work at several national and international conferences and published multiple papers in reputed journals, reflecting his expertise in regression analysis and statistical inference."
-        ]
-    },
-    {
         "name": "Dr. Sindhu V",
         "designation": "Assistant Professor",
         "imagePath": "/assets/faculties/sindhu.webp",
