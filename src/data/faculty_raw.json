@@ -2,7 +2,7 @@
     {
         "name": "Dr.B MANIMEKALA",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/manimekaala.JPG",
+        "imagePath": "/assets/faculties/manimekaala.JPG",
         "bio": [
             "Dr. B. Manimekala is an Assistant Professor in the Department of Computer Science at Christ (Deemed to be University), Yeshwanthpur Campus, Bengaluru. She has 17 years of teaching experience. She has published research articles in National and International journals. She has also presented 21 papers in National and International conferences. She has authored one book, three book chapters, and owns 2 patents. Her areas of interest are IoT, networking, machine learning, and AI."
         ]
@@ -10,7 +10,7 @@
     {
         "name": "Dr.Gayathry S Warrier",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/g3.JPG",
+        "imagePath": "/assets/faculties/g3.JPG",
         "bio": [
             "Dr. Gayathry S. Warrier is an accomplished academician with over 18 years of experience in Computer Science and Engineering, currently working as an Assistant Professor in the Department of Computer Science at CHRIST University, Bangalore. She holds a Ph.D. in Computer Science and Engineering from Noorul Islam Centre for Higher Education (NICHE), Tamil Nadu. Her primary research interests include image processing, machine learning, and cybersecurity. Dr. Warrier has published 11 research papers in reputed SCI and Scopus-indexed journals, contributed to 3 book chapters in the areas of biomedical imaging and AI applications, and holds 3 published patents. She has actively participated in and presented at several national and international conferences, sharing her insights on emerging technologies. In addition to her research achievements, she has contributed to academic development through syllabus design and has served as a valuation chairperson for APJ Abdul Kalam Technological University. She is also deeply committed to mentoring students and advancing interdisciplinary research."
         ]
@@ -18,25 +18,25 @@
     {
         "name": "Dr.Jayadurga R",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/jayadurga.JPG",
+        "imagePath": "/assets/faculties/jayadurga.JPG",
         "bio": [
-            "Vision for the Future:\nDr. Jayadurga R envisions a world where technology serves as a powerful tool to empower communities and drive meaningful change. She firmly believes that academic research should go beyond theory to address real-world challenges and fuel social innovation. For her, education is not just about imparting knowledge but about inspiring action\u2014nurturing students to become compassionate problem solvers and responsible global citizens who contribute positively to society."
+            "Vision for the Future:\nDr. Jayadurga R envisions a world where technology serves as a powerful tool to empower communities and drive meaningful change. She firmly believes that academic research should go beyond theory to address real-world challenges and fuel social innovation. For her, education is not just about imparting knowledge but about inspiring action—nurturing students to become compassionate problem solvers and responsible global citizens who contribute positively to society."
         ]
     },
     {
         "name": "Dr.Kalpana P",
-        "designation": "Dr. Kalpana P obtained her M.Sc., M.Phil., and Ph.D. in Computer Science from Bharathidasan University, Tiruchirappalli. She has completed her MBA(HRM) from Bharathidasan University. She has also qualified in the State Eligibility Test(SET) and National Eligibility Test(NET) examinations. She is currently working as an Assistant Professor in the Department of Computer Science, CHRIST (Deemed to be University), Yeshwanthpur Campus, Bangalore, Karnataka. She has more than 24 years of teaching and 14 years of research experience in the field of Computer Science. She has published many research articles in reputed National and International Journals and Conferences. She co-authored two books, viz., \"A Primer to Python Programming - Code Yourself\" and Python Programming Essentials \u2013 Learn by Doing, for Computer Science readers. She also published two book chapters through Nova Science and Wiley publishers. She is an active member of IAENG, Internet Society, IAAC, CSTA, IEEE, SCRS, and ACM. She got selected as the IGEN Ambassador for the IGEN Green Day 2024, organized by The Institution of Green Engineers (IGEN), as part of the #Pledge4Green initiative",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/kalpana.JPG",
+        "designation": "Dr. Kalpana P obtained her M.Sc., M.Phil., and Ph.D. in Computer Science from Bharathidasan University, Tiruchirappalli. She has completed her MBA(HRM) from Bharathidasan University. She has also qualified in the State Eligibility Test(SET) and National Eligibility Test(NET) examinations. She is currently working as an Assistant Professor in the Department of Computer Science, CHRIST (Deemed to be University), Yeshwanthpur Campus, Bangalore, Karnataka. She has more than 24 years of teaching and 14 years of research experience in the field of Computer Science. She has published many research articles in reputed National and International Journals and Conferences. She co-authored two books, viz., \"A Primer to Python Programming - Code Yourself\" and Python Programming Essentials – Learn by Doing, for Computer Science readers. She also published two book chapters through Nova Science and Wiley publishers. She is an active member of IAENG, Internet Society, IAAC, CSTA, IEEE, SCRS, and ACM. She got selected as the IGEN Ambassador for the IGEN Green Day 2024, organized by The Institution of Green Engineers (IGEN), as part of the #Pledge4Green initiative",
+        "imagePath": "/assets/faculties/kalpana.JPG",
         "bio": [
             "BRIEF PROFILE",
-            "Dr. Kalpana P obtained her M.Sc., M.Phil., and Ph.D. in Computer Science from Bharathidasan University, Tiruchirappalli. She has completed her MBA(HRM) from Bharathidasan University. She has also qualified in the State Eligibility Test(SET) and National Eligibility Test(NET) examinations. She is currently working as an Assistant Professor in the Department of Computer Science, CHRIST (Deemed to be University), Yeshwanthpur Campus, Bangalore, Karnataka. She has more than 24 years of teaching and 14 years of research experience in the field of Computer Science. She has published many research articles in reputed National and International Journals and Conferences. She co-authored two books, viz., \"A Primer to Python Programming - Code Yourself\" and Python Programming Essentials \u2013 Learn by Doing, for Computer Science readers. She also published two book chapters through Nova Science and Wiley publishers. She is an active member of IAENG, Internet Society, IAAC, CSTA, IEEE, SCRS, and ACM. She got selected as the IGEN Ambassador for the IGEN Green Day 2024, organized by The Institution of Green Engineers (IGEN), as part of the #Pledge4Green initiative",
+            "Dr. Kalpana P obtained her M.Sc., M.Phil., and Ph.D. in Computer Science from Bharathidasan University, Tiruchirappalli. She has completed her MBA(HRM) from Bharathidasan University. She has also qualified in the State Eligibility Test(SET) and National Eligibility Test(NET) examinations. She is currently working as an Assistant Professor in the Department of Computer Science, CHRIST (Deemed to be University), Yeshwanthpur Campus, Bangalore, Karnataka. She has more than 24 years of teaching and 14 years of research experience in the field of Computer Science. She has published many research articles in reputed National and International Journals and Conferences. She co-authored two books, viz., \"A Primer to Python Programming - Code Yourself\" and Python Programming Essentials – Learn by Doing, for Computer Science readers. She also published two book chapters through Nova Science and Wiley publishers. She is an active member of IAENG, Internet Society, IAAC, CSTA, IEEE, SCRS, and ACM. She got selected as the IGEN Ambassador for the IGEN Green Day 2024, organized by The Institution of Green Engineers (IGEN), as part of the #Pledge4Green initiative",
             "Her areas of interest include Data Structures and Algorithms, Data Mining, Big Data Analytics, Machine Learning, Cryptography and Network Security, Distributed Programming, R, and Python."
         ]
     },
     {
         "name": "Dr.Kavitha S",
         "designation": "Associate Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/kavitha.JPG",
+        "imagePath": "/assets/faculties/kavitha.JPG",
         "bio": [
             "Dr Kavitha,is an Associate Professor in the Department  of Computer Science at Christ (Deemed to be University), Yeshwanthpur, Bangalore. With over seventeen years of experience spanning teaching, research, and industry, she has published 30 research articles in Scopus and presented 29 papers at various conferences. She has authored one book, contributed to three book chapters, and has filed five patents.In addition to her research contributions, she has actively organized and served as a resource person for numerous workshops, faculty development programs, and seminars. She received a NPTEL STAR AWARD, PROGRAMMING DOMAIN award, ENTHUSIASTIC LEARNER from NPTEL. Worked as BOE-Chairman for Computer Science, Bangalore University(2018-19). BOS subject expert member for  various universities.  Also subject expert for BOE in various colleges."
         ]
@@ -44,7 +44,7 @@
     {
         "name": "Dr.Kokilavani T",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/kokilavani.JPG",
+        "imagePath": "/assets/faculties/kokilavani.JPG",
         "bio": [
             "Dr. T. KOKILAVANI is currently working as an Assistant Professor in the Department of Computer Science, CHRIST University, Bangalore, Yeshwanthpur Campus. She has 25 years of teaching experience and 14 years of research experience. She has cleared the TNSET and NET exams in Computer Science. She has given NET / SET coaching for students and faculties. She has published 20 papers in International Journals (3 Scopus Indexed) and presented 21 papers in National and International Conferences (4 Scopus Indexed). She has guided 13 M.Phil Scholars and is currently guiding 3 Ph.D. scholars. She has published 3 patents. She has authored 2 books. She has written 4 study materials for Bharathidasan University. She has served as a BOS member in 2 institutions. Currently, she is working as a research associate in 2 research projects. She has served as a resource person in various institutions."
         ]
@@ -52,13 +52,13 @@
     {
         "name": "Dr.Kousalya R",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/kousalya.jpg",
+        "imagePath": "/assets/faculties/kousalya.jpg",
         "bio": []
     },
     {
         "name": "Dr.Siva Balan R V",
         "designation": "Associate Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/sivabalan.JPG",
+        "imagePath": "/assets/faculties/sivabalan.JPG",
         "bio": [
             "Short CV",
             "Dr. R.V. Siva Balan",
@@ -66,13 +66,13 @@
             "Academic Qualifications",
             "- Ph.D. (Computer Applications), Anna University, 2012\n- M.Phil. (Computer Science), Periyar University, 2007\n- M.C.A. (Computer Applications), MS University, 2005\n- B.Sc. (Computer Science), MS University, 2002",
             "Professional Experience",
-            "- Associate Professor, CHRIST (Deemed-to-be University), Bangalore (2022\u2013Present)\n- Professor, JAIN (Deemed-to-be University), Bangalore (2021)\n- Associate Professor, Noorul Islam University (2012\u20132021)\n- Previous roles at Chandigarh University, Narayanaguru College of Engineering, Sri Krishna Arts & Science College, and SMS College",
+            "- Associate Professor, CHRIST (Deemed-to-be University), Bangalore (2022–Present)\n- Professor, JAIN (Deemed-to-be University), Bangalore (2021)\n- Associate Professor, Noorul Islam University (2012–2021)\n- Previous roles at Chandigarh University, Narayanaguru College of Engineering, Sri Krishna Arts & Science College, and SMS College",
             "Books & Patents",
             "- Author of 'A Handbook on Computer System Architecture' and 'Data Structures and Algorithms'\n- 1 Patent Granted, 2 Patents Published",
             "Funded Projects",
-            "- DST Funded: Remote Screening System for Diabetic Retinopathy\n- Seed Money (Christ University): Deep Learning for Lake Water Quality Analysis (2024\u201325)",
+            "- DST Funded: Remote Screening System for Diabetic Retinopathy\n- Seed Money (Christ University): Deep Learning for Lake Water Quality Analysis (2024–25)",
             "Roles & Memberships",
-            "- IEEE Member (2023\u20132025)\n- IEEE Branch Counselor (2024\u20132026)\n- Conference Chair, ICCIST 2025",
+            "- IEEE Member (2023–2025)\n- IEEE Branch Counselor (2024–2026)\n- Conference Chair, ICCIST 2025",
             "Ph.D. Supervision & Editorial Roles",
             "- Supervised several Ph.D. scholars in AI, Data Mining, and Security\n- Reviewer: Springer, Elsevier, SAGE, Inderscience\n- Guest Editor: International Journal of Web Portals (SCOPUS)"
         ]
@@ -80,7 +80,7 @@
     {
         "name": "Dr.Deepa B G",
         "designation": "Dr. Deepa B.G, currently serving as an Assistant Professor at CHRIST (Deemed to be University), is a distinguished academician and researcher with over 14 years of teaching experience. With more than 25+ research publications, Scopus-indexed book chapters, and patents to her name, she is a thought leader in Machine Learning and Deep Learning, especially in healthcare diagnostics. Her notable publications in Q1 and Q2 journals, including groundbreaking work on breast cancer and melanoma skin cancer prediction, showcase her deep commitment to impactful research.",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/deepabg.JPG",
+        "imagePath": "/assets/faculties/deepabg.JPG",
         "bio": [
             "Meet Dr. Deepa B.G: A Trailblazer in Computer Science and AI Research",
             "Dr. Deepa B.G, currently serving as an Assistant Professor at CHRIST (Deemed to be University), is a distinguished academician and researcher with over 14 years of teaching experience. With more than 25+ research publications, Scopus-indexed book chapters, and patents to her name, she is a thought leader in Machine Learning and Deep Learning, especially in healthcare diagnostics. Her notable publications in Q1 and Q2 journals, including groundbreaking work on breast cancer and melanoma skin cancer prediction, showcase her deep commitment to impactful research.",
@@ -90,7 +90,7 @@
     {
         "name": "Dr.Kannan M",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/kannan.JPG",
+        "imagePath": "/assets/faculties/kannan.JPG",
         "bio": [
             "Dr. Kannan M. is an Assistant Professor of Computer Science at CHRIST (Deemed to be University), Bengaluru, India, with nearly six years of teaching and research experience. He earned his Ph.D. in Computer Science from Vels Institute of Science, Technology, and Advanced Studies, focusing on early disease detection using ensemble deep learning models.",
             "Dr. Kannan has published 13 Scopus-indexed research articles, authored or co-authored 7 Scopus-indexed book chapters, and holds 3 patents related to health informatics and smart systems. His research interests span medical image analysis, electronic health data prediction, explainable AI, and IoT-based intelligent systems.",
@@ -100,7 +100,7 @@
     {
         "name": "Dr.Krishna Presannakumar",
         "designation": "Dr. Krishna Presannakumar holds a Ph.D. in Computer Science from Mahatma Gandhi University, with her doctoral research focusing on sound signal processing. Her research interests lie at the intersection of multimodal data processing, with a particular emphasis on text and audio analysis. She is passionate about exploring the integration of linguistic and acoustic features for applications in natural language processing, speech understanding, and affective computing.",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/krishna.jpg",
+        "imagePath": "/assets/faculties/krishna.jpg",
         "bio": [
             "About Me",
             "Dr. Krishna Presannakumar holds a Ph.D. in Computer Science from Mahatma Gandhi University, with her doctoral research focusing on sound signal processing. Her research interests lie at the intersection of multimodal data processing, with a particular emphasis on text and audio analysis. She is passionate about exploring the integration of linguistic and acoustic features for applications in natural language processing, speech understanding, and affective computing.",
@@ -112,20 +112,20 @@
     {
         "name": "Dr.Mithun DSouza",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/mithund.png",
+        "imagePath": "/assets/faculties/mithund.png",
         "bio": [
-            "Dr. Mithun D\u2019Souza is an accomplished academician and researcher currently serving as an Assistant Professor in the Department of Computer Science at Christ University, Bangalore. With over a decade of extensive teaching and research experience across renowned institutions, he specializes in Cloud Computing, Artificial Intelligence, Big Data Analytics, Edge Computing, Machine Learning, and Image Processing. He holds a Ph.D. in Cloud Computing from Bharathiar University, Tamil Nadu, where his doctoral research focused on energy-efficient resource management in cloud data centers. His academic qualifications also include a Master of Computer Applications (MCA) with a specialization in Computer Network Engineering and a Bachelor of Science in Electronics, Mathematics, and Computer Science.",
-            "Prior to joining Christ University, Dr. Mithun D\u2019Souza held key academic roles at St. Joseph\u2019s University, AIMS Institutes, PES Institute of Advanced Management Studies, St. Aloysius College (AIMIT) Mangalore, and Sir MV Government Science College, Bhadravathi. Throughout his career, he has served in diverse capacities such as Internship and Placement Coordinator, Coordinator for ICT Academy and Innovation Councils, Research Cell Coordinator, and Editorial Board Member for departmental newsletters. He has also played an active role in institutional development through student clubs, entrepreneurship cells, NAAC accreditation, and industry-academia engagement.",
-            "Dr. Mithun D\u2019Souza is a prolific researcher, having published over 30 research papers in reputed Scopus-indexed journals, IEEE conferences, and UGC Care-listed journals. His scholarly contributions include research in hybrid deep learning models for cloud scheduling, AI-enabled healthcare diagnostics, digital HR systems, and energy optimization in smart grids. In addition to his research, he has authored two academic textbooks: Cloud Computing Unveiled \u2013 A Detailed Exploration of Paradigms, Services, and Industry Solutions (2024), and Role of Artificial Intelligence, Data Science in Real World Systems (2024). He has also contributed to innovation through multiple patent filings, including a lung cancer diagnostic system using lightweight CNN, an edge computing optimization framework using deep reinforcement learning, and a patented medical device for diabetic neuropathy detection.",
+            "Dr. Mithun D’Souza is an accomplished academician and researcher currently serving as an Assistant Professor in the Department of Computer Science at Christ University, Bangalore. With over a decade of extensive teaching and research experience across renowned institutions, he specializes in Cloud Computing, Artificial Intelligence, Big Data Analytics, Edge Computing, Machine Learning, and Image Processing. He holds a Ph.D. in Cloud Computing from Bharathiar University, Tamil Nadu, where his doctoral research focused on energy-efficient resource management in cloud data centers. His academic qualifications also include a Master of Computer Applications (MCA) with a specialization in Computer Network Engineering and a Bachelor of Science in Electronics, Mathematics, and Computer Science.",
+            "Prior to joining Christ University, Dr. Mithun D’Souza held key academic roles at St. Joseph’s University, AIMS Institutes, PES Institute of Advanced Management Studies, St. Aloysius College (AIMIT) Mangalore, and Sir MV Government Science College, Bhadravathi. Throughout his career, he has served in diverse capacities such as Internship and Placement Coordinator, Coordinator for ICT Academy and Innovation Councils, Research Cell Coordinator, and Editorial Board Member for departmental newsletters. He has also played an active role in institutional development through student clubs, entrepreneurship cells, NAAC accreditation, and industry-academia engagement.",
+            "Dr. Mithun D’Souza is a prolific researcher, having published over 30 research papers in reputed Scopus-indexed journals, IEEE conferences, and UGC Care-listed journals. His scholarly contributions include research in hybrid deep learning models for cloud scheduling, AI-enabled healthcare diagnostics, digital HR systems, and energy optimization in smart grids. In addition to his research, he has authored two academic textbooks: Cloud Computing Unveiled – A Detailed Exploration of Paradigms, Services, and Industry Solutions (2024), and Role of Artificial Intelligence, Data Science in Real World Systems (2024). He has also contributed to innovation through multiple patent filings, including a lung cancer diagnostic system using lightweight CNN, an edge computing optimization framework using deep reinforcement learning, and a patented medical device for diabetic neuropathy detection.",
             "His excellence in academia has been recognized through the Research Excellence Award from the Scientific International Publishing House, under the Ministry of SME, Government of India (2023). He holds lifetime professional memberships with reputed bodies such as the International Association of Engineers (IAENG), ISACA (Information Systems Audit and Control Association), the Computer Science Teachers Association (CSTA), and the Scientific Research Publishing House.",
-            "Dr. Mithun D\u2019Souza is also widely regarded as a seasoned resource person. He has delivered invited talks and workshops on topics such as Big Data Analytics, Cloud Computing, and Digital Transformation at various institutions. He has served as a reviewer for the Springer CCIS-series conference ICAIH 2025, advisory board member for the International Conference on Advanced IT, Engineering and Management (SACAIM 2024), and paper setter, evaluator, and examiner for multiple universities including Bangalore University, Mount Carmel College(Autonomous), Surana Autonomous College, St Aloysius College (Autonomous), AIMIT Mangalore, and Kuvempu University.",
-            "His areas of interest span Cloud Computing, Big Data, Edge and Fog Computing, Deep Learning, Image Processing, Computer Networks, and Data Structures. Dr. Mithun D\u2019Souza believes in holistic education that empowers students both technically and ethically. He is also passionate about extracurricular involvement and has actively represented his institutions in football and cricket tournaments at inter-collegiate and university levels. With a commitment to student-centered learning, academic excellence, and continuous innovation, Dr. Mithun D\u2019Souza continues to make impactful contributions to the academic community at Christ University and beyond."
+            "Dr. Mithun D’Souza is also widely regarded as a seasoned resource person. He has delivered invited talks and workshops on topics such as Big Data Analytics, Cloud Computing, and Digital Transformation at various institutions. He has served as a reviewer for the Springer CCIS-series conference ICAIH 2025, advisory board member for the International Conference on Advanced IT, Engineering and Management (SACAIM 2024), and paper setter, evaluator, and examiner for multiple universities including Bangalore University, Mount Carmel College(Autonomous), Surana Autonomous College, St Aloysius College (Autonomous), AIMIT Mangalore, and Kuvempu University.",
+            "His areas of interest span Cloud Computing, Big Data, Edge and Fog Computing, Deep Learning, Image Processing, Computer Networks, and Data Structures. Dr. Mithun D’Souza believes in holistic education that empowers students both technically and ethically. He is also passionate about extracurricular involvement and has actively represented his institutions in football and cricket tournaments at inter-collegiate and university levels. With a commitment to student-centered learning, academic excellence, and continuous innovation, Dr. Mithun D’Souza continues to make impactful contributions to the academic community at Christ University and beyond."
         ]
     },
     {
         "name": "Dr.Praveen V P",
         "designation": "Dr. Praveen V. P. is a dedicated statistician, academician, and research professional with over 14 years of experience in teaching, data consultancy, and research in the field of Statistics, Data Science, Inventory control and Supply chain management. He is currently serving as an Assistant Professor in Department of Statistics and Data science at CHRIST (Deemed to be University), Bangalore Yeshwanthpur campus. Dr. Praveen earned his Ph.D. in Statistics from the University of Calicut, with his research focusing on supply chain processes and inventory control models. He has published in several reputed Scopus-indexed journals, including the Infosys Science Foundation Series (Springer), Central European Journal of Operational Research, and the International Journal of Operational Research.",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/praveenp.jpg",
+        "imagePath": "/assets/faculties/praveenp.jpg",
         "bio": [
             "Dr. Praveen V. P.",
             "Dr. Praveen V. P. is a dedicated statistician, academician, and research professional with over 14 years of experience in teaching, data consultancy, and research in the field of Statistics, Data Science, Inventory control and Supply chain management. He is currently serving as an Assistant Professor in Department of Statistics and Data science at CHRIST (Deemed to be University), Bangalore Yeshwanthpur campus. Dr. Praveen earned his Ph.D. in Statistics from the University of Calicut, with his research focusing on supply chain processes and inventory control models. He has published in several reputed Scopus-indexed journals, including the Infosys Science Foundation Series (Springer), Central European Journal of Operational Research, and the International Journal of Operational Research.",
@@ -138,7 +138,7 @@
     {
         "name": "Dr.Stephen R",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/stephen%20r.JPG",
+        "imagePath": "/assets/faculties/stephen r.JPG",
         "bio": [
             "Dr. Stephen R. is an Assistant Professor of Computer Science at CHRIST University, Bangalore, India. With seven years of teaching experience and over a decade of research expertise, he has made significant contributions to the field of computing sciences. He has authored 20 research articles in national and international journals and presented more than 15 papers at various conferences. Additionally, he holds three patents in the field of the Internet of Things (IoT). He has served as a resource person at multiple institutions, sharing his knowledge and expertise in IoT, communication networks, network security, Python programming, and artificial intelligence. His research and academic endeavors continue to advance innovation in these domains."
         ]
@@ -146,13 +146,13 @@
     {
         "name": "Dr.Hemanth.K.S",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/hemanth.JPG",
+        "imagePath": "/assets/faculties/hemanth.JPG",
         "bio": []
     },
     {
         "name": "Dr.Margaret Savitha",
         "designation": "Artistic personality with very good communication skills, handwriting, drawing, craft as well as participating and organising cultural activities. Interested and proficient in organising academic meetings , seminars and has the natural tendency to be dynamic creative and innovative.Has matured as a teacher and is a continuous reader and leaner.Looks at life optimistically and cherishes in building a community of learned students by imparting education and value.",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/margaret.JPG",
+        "imagePath": "/assets/faculties/margaret.JPG",
         "bio": [
             "PERSONAL STATEMENT",
             "Artistic personality with very good communication skills, handwriting, drawing, craft as well as participating and organising cultural activities. Interested and proficient in organising academic meetings , seminars and has the natural tendency to be dynamic creative and innovative.Has matured as a teacher and is a continuous reader and leaner.Looks at life optimistically and cherishes in building a community of learned students by imparting education and value.",
@@ -165,10 +165,10 @@
             "Sound knowledge of teaching methodologies",
             "Familiarity with scripting and computer programming operations",
             "CERTIFICATIONS : 7",
-            "Diploma in Advanced Learning Interaction System Online \"Teaching Skills for Educators\u201dAlison institute, United Kingdom",
-            "Online course authorized by Rhyme and offered through Coursera \u201cIntroduction to Relational Database and SQL\u201d",
-            "Online course authorized by University of Michigan and offered through Coursera \u201cProgramming for Everybody (Getting Started with Python)\u201d",
-            "Online course authorized by Johns Hopkins University and offered through Coursera \u201cThe Data Scientist\u2019s Toolbox \u201c",
+            "Diploma in Advanced Learning Interaction System Online \"Teaching Skills for Educators”Alison institute, United Kingdom",
+            "Online course authorized by Rhyme and offered through Coursera “Introduction to Relational Database and SQL”",
+            "Online course authorized by University of Michigan and offered through Coursera “Programming for Everybody (Getting Started with Python)”",
+            "Online course authorized by Johns Hopkins University and offered through Coursera “The Data Scientist’s Toolbox “",
             "024-2025 - 3",
             "Innovating With Google Cloud Ai, \n18/06/2024",
             "Generative AI for Educators Certificate, 24/07/2024",
@@ -180,12 +180,12 @@
             "IBM RAG and Agentic AI,2025/09/07",
             "The Complete Quantum Computing Course for Beginners,2025/10/22",
             "FACULTY DEVELOPMENT PROGRAMMES:12",
-            "Attended a Five Days Online Faculty Development Programme on \u201cData Science using Python\u201d organized by Department of Computer Science and Engineering, Kongu Engineering College from 20th to 24th May 2020.",
+            "Attended a Five Days Online Faculty Development Programme on “Data Science using Python” organized by Department of Computer Science and Engineering, Kongu Engineering College from 20th to 24th May 2020.",
             "Attended a training in Python 3.4.3 organised at SRM Institute of Science and Technology ,Ramapuram Campus,Chennai with Spoken Tutorial Project,IIT Bombay, funded by the National Mission on Education through ICT,MHRD,Govt. of India,2020.",
             "One week online International Faculty Development Program (FDP) on Artificial Intelligence and IoT- Heuristic Transdisciplinary perspectives, Holy Cross College ,Tiruchirapalli on 4th  to 10th July 2020",
             "5-Day Online Faculty Development Programme on \" Blockchain Technology\" scheduled during 22-26 June 2020 by the Department of MCA, Jyoti Nivas College Autonomous.",
-            "5-Day Online Faculty Development Programme on \u201cE-Content:Teaching and Learning\u201dorganised by IQAC,Jyoti Nivas College Autonomous from 9th to 13th June 2020",
-            "5-Day Online Faculty Development Programme on \u201cReconfiguring the Mind:Post COVID Consciousness\u201d,organised by IQAC,Jyoti Nivas College Autonomous, from 23rd to 27th June 2020.",
+            "5-Day Online Faculty Development Programme on “E-Content:Teaching and Learning”organised by IQAC,Jyoti Nivas College Autonomous from 9th to 13th June 2020",
+            "5-Day Online Faculty Development Programme on “Reconfiguring the Mind:Post COVID Consciousness”,organised by IQAC,Jyoti Nivas College Autonomous, from 23rd to 27th June 2020.",
             "2024-25 - 6",
             "Two day workshop on GenAI for Educators-Transforming Education , 26/07/2024\nAdvanced Statistical Techniques for Academic Excellence in Data Analytics, 28/10/2024",
             "Mastering Regression in R Classical and Robust Approaches, 07/02/2025",
@@ -193,13 +193,13 @@
             "Artificial Intelligence, Machine Learning & Deep Learning\n24/01/2025",
             "Inculcating Universal Human Values in Technical Education, 14/03/2025",
             "PUBLICATIONS: 11- (Scopus indexed : 4)",
-            "P Margaret Savitha, and Dr. M Pushpa Rani (2019) \"Global integration of Electronic medical records and Big data analytics \"International Journal of Scientific Research in Computer Science Applications and Management Studies (IJSRCSAMS) \u2013 UGC Journal Ref.No. 63611ISSN : 2319-1953 Volume: 8 Issue: 1",
-            "P Margaret Savitha (2019) \u201cApplication of Speech Synthesis Techniques & AI to analyse Drug-Drug interactions\u201d International Journal of information Technology BJIT. D-19-00741R2 .",
-            "P Margaret Savitha (2019) \u201cApplication of Speech Synthesis Techniques & AI to analyse Drug-Drug interactions\u201d International Conference on Soft Computing and Optimising Techniques ICSO \u201919, Organized By Kamaraja College-Thoothukudi-Conference proceedings,09th and 10th August 2019",
-            "P Margaret Savitha, and Dr. M Pushpa Rani (2019) \u201cPredictive analytics using 3DQSAR for Drug-Drug interaction\u201d,ICCS2019,-149 Organized By Alagappa University, Karaikudi -Conference proceedings.23rd and 24th October 2019",
-            "P Margaret Savitha, and Dr. M Pushpa Rani (2020) \u201cPredictive analytics using 3DQSAR for Drug-Drug interaction\u201d National Conference certificate on Exploring The Expectations And Executions In Scientific Research - \u2018Eeesr-2020'  Organized By The Departments Of Biotechnology, Chemistry, Computer Science, Home Science, Mathematics, Physics & Library Science, Mother Teresa Women's University, Kodaikanal-Conference proceedings,16th July, 2020",
-            "P Margaret Savitha, and Dr. M Pushpa Rani (2020) \u201dA 3D-Approach for Modeling Drug-Drug Interaction\u201d One day International E-Conference on \u201cInnovations in Information Technology\u201d(IECIIT-2020)organized by the Department of Information Technology,  Bharathiar University, Coimbatore, Tamilnadu, India-Conference proceedings,29th August 2020",
-            "P Margaret Savitha, and Dr. M Pushpa Rani (2020)\u201dA novel algorithm for predicting adverse Drug-Drug\u201d National Conference on Emerging Trends in IT(EIT-2020) organized by Departments of Computer Science and Statistics, CHRIST(Deemed to be University)-Conference proceedings,25th September,2020.",
+            "P Margaret Savitha, and Dr. M Pushpa Rani (2019) \"Global integration of Electronic medical records and Big data analytics \"International Journal of Scientific Research in Computer Science Applications and Management Studies (IJSRCSAMS) – UGC Journal Ref.No. 63611ISSN : 2319-1953 Volume: 8 Issue: 1",
+            "P Margaret Savitha (2019) “Application of Speech Synthesis Techniques & AI to analyse Drug-Drug interactions” International Journal of information Technology BJIT. D-19-00741R2 .",
+            "P Margaret Savitha (2019) “Application of Speech Synthesis Techniques & AI to analyse Drug-Drug interactions” International Conference on Soft Computing and Optimising Techniques ICSO ’19, Organized By Kamaraja College-Thoothukudi-Conference proceedings,09th and 10th August 2019",
+            "P Margaret Savitha, and Dr. M Pushpa Rani (2019) “Predictive analytics using 3DQSAR for Drug-Drug interaction”,ICCS2019,-149 Organized By Alagappa University, Karaikudi -Conference proceedings.23rd and 24th October 2019",
+            "P Margaret Savitha, and Dr. M Pushpa Rani (2020) “Predictive analytics using 3DQSAR for Drug-Drug interaction” National Conference certificate on Exploring The Expectations And Executions In Scientific Research - ‘Eeesr-2020'  Organized By The Departments Of Biotechnology, Chemistry, Computer Science, Home Science, Mathematics, Physics & Library Science, Mother Teresa Women's University, Kodaikanal-Conference proceedings,16th July, 2020",
+            "P Margaret Savitha, and Dr. M Pushpa Rani (2020) ”A 3D-Approach for Modeling Drug-Drug Interaction” One day International E-Conference on “Innovations in Information Technology”(IECIIT-2020)organized by the Department of Information Technology,  Bharathiar University, Coimbatore, Tamilnadu, India-Conference proceedings,29th August 2020",
+            "P Margaret Savitha, and Dr. M Pushpa Rani (2020)”A novel algorithm for predicting adverse Drug-Drug” National Conference on Emerging Trends in IT(EIT-2020) organized by Departments of Computer Science and Statistics, CHRIST(Deemed to be University)-Conference proceedings,25th September,2020.",
             "2024-25-3",
             "LSTM-MGTO: a novel early breast cancer detection using long short term memory based modified gorilla troops optimization algorithm - https://www.scopus.com/sourceid/21100781975\n20/02/2025",
             "Dysgraphia Disorder Detection and Classification Using Deep Learning Technique  https://www.scopus.com/sourceid/21101083109 21/02/2025",
@@ -209,44 +209,44 @@
             "An enhancement of Machine Learning  model performance in disease prediction with synthetic dataset. :https://www.nature.com/srep/ 29-Sep-2025",
             "Enhancing image compression through a novel SFWE model - https://www.sciencedirect.com/journal/methodsx - 01-Dec-2025",
             "PRESENTATIONS: 11",
-            "P Margaret Savitha presented a paper named \u201cApplication of Speech Synthesis Techniques & AI to analyse Drug-Drug interactions\u201d International Conference on Soft Computing and Optimising Techniques ICSO \u201919, Organized By Kamaraja College-Thoothukudi ,09th and 10th August 2019",
-            "P Margaret Savitha presented a paper named \u201c \u201cPredictive analytics using 3DQSAR for Drug-Drug interaction\u201d,ICCS2019,-149 Organized By Alagappa University, Karaikudi. 23rd and 24th October 2019",
-            "P Margaret Savitha presented a paper named \u201cPredictive analytics using 3DQSAR for Drug-Drug interaction\u201d National Conference certificate on Exploring The Expectations And Executions In Scientific Research - \u2018Eeesr-2020'  Organized By The Departments Of Biotechnology, Chemistry, Computer Science, Home Science, Mathematics, Physics & Library Science, Mother Teresa Women's University, Kodaikanal ,16th July, 2020",
-            "P Margaret Savitha presented a paper named  \u201dA 3D-Approach for Modeling Drug-Drug Interaction\u201d One day International E-Conference on \u201cInnovations in Information Technology\u201d(IECIIT-2020)organized by the Department of Information Technology,  Bharathiar University, Coimbatore, Tamilnadu, India,29th August 2020",
-            "P Margaret Savitha presented a paper named \u201cA novel algorithm for predicting adverse Drug-Drug\u201d National Conference on Emerging Trends in IT(EIT-2020) organized by Departments of Computer Science and Statistics, CHRIST(Deemed to be University),25th September,2020.",
+            "P Margaret Savitha presented a paper named “Application of Speech Synthesis Techniques & AI to analyse Drug-Drug interactions” International Conference on Soft Computing and Optimising Techniques ICSO ’19, Organized By Kamaraja College-Thoothukudi ,09th and 10th August 2019",
+            "P Margaret Savitha presented a paper named “ “Predictive analytics using 3DQSAR for Drug-Drug interaction”,ICCS2019,-149 Organized By Alagappa University, Karaikudi. 23rd and 24th October 2019",
+            "P Margaret Savitha presented a paper named “Predictive analytics using 3DQSAR for Drug-Drug interaction” National Conference certificate on Exploring The Expectations And Executions In Scientific Research - ‘Eeesr-2020'  Organized By The Departments Of Biotechnology, Chemistry, Computer Science, Home Science, Mathematics, Physics & Library Science, Mother Teresa Women's University, Kodaikanal ,16th July, 2020",
+            "P Margaret Savitha presented a paper named  ”A 3D-Approach for Modeling Drug-Drug Interaction” One day International E-Conference on “Innovations in Information Technology”(IECIIT-2020)organized by the Department of Information Technology,  Bharathiar University, Coimbatore, Tamilnadu, India,29th August 2020",
+            "P Margaret Savitha presented a paper named “A novel algorithm for predicting adverse Drug-Drug” National Conference on Emerging Trends in IT(EIT-2020) organized by Departments of Computer Science and Statistics, CHRIST(Deemed to be University),25th September,2020.",
             "2024-2025 - 3",
             "A Multimodal Deep Learning Framework for Colorectal Cancer Risk Assessment Using Clinical and Histopathological Data by Emerging trends and research frontiers in Artificial Intelligence- 08/01/2025",
             "Comparative analysis on early detection methods for Lung cancer using Machine Learning and Deep Learning models",
             "International Conference on Current trends in Information Technology- 10/03/2025",
             "2025-26 -3",
-            "Towards Sustainable AI: Green Machine Learning Systems for Energy-Efficient And Eco-Friendly Model Deployment -SaaAI\u201925 -2025/07/04",
+            "Towards Sustainable AI: Green Machine Learning Systems for Energy-Efficient And Eco-Friendly Model Deployment -SaaAI’25 -2025/07/04",
             "Utkarsh-2026 -",
             "ICIICI1-2026 -",
             "CONFERENCES/WORKSHOPS/WEBINARS",
             "Attended a International Conference on Mathematics and Computer Science, organised by Jyoti Nivas College Autonomous,Bangalore on  16th to 18th February 2017",
             "Attended a National Seminar on Machine Learning ,organised by Department of Computer Science,Jyoti Nivas College on 29th November 2018",
             "Attended a International Conference on Advances in Computer Science and Technology, organised by ST.Francis DeSales College,Ben\tgalore on 24 January 2018",
-            "Attended a one day workshop on \u201cPython Data Science\u201d conducted by Deparment of Computer Science ,New Horizon College,Bangalore on 24th September 2018",
+            "Attended a one day workshop on “Python Data Science” conducted by Deparment of Computer Science ,New Horizon College,Bangalore on 24th September 2018",
             "Attended a one day workshop on National Institute Ranking Framework (NIRF), Focus on Data Capturing System for Higher Educational Institutions, NMKRV College of Women, 20th November 2019.",
-            "Attended a three days National Workshop on \u201cML Using Python in Data Analytics \u2013A Way Forward\u201d organized Christ Academy for Advanced Studies in association with Rooman Technologies, Bengaluru 0n 07-09 February 2020",
-            "Attended a Webinar on \u201cRecent trends in Computer Science\u201d organised by Department of Computer Science and the Department of Information Technology,St.Joseph\u2019s College autonomous ,Tirchurappalli on 24th and 25th April 2020assss`.",
-            "Attended a Online Seminar, \u201cTrackling COVID 19-A Biblical Perspective\u201d organised by Women\u2019s Christian College ,Chennai, on 1st June 2020",
-            "Attended a International Webinar on \u201cBlock Chain Technology\u201dorganised by ComSTAC(Computer Science Technical Association ) on 12th June 2020.",
-            "Attended a International Webinar on \u201cBlock Chain Technology\u201d organised by the department of Computer Science ,Jyoti NIVAS college Autonomous from 9th to 13th June 2020.",
-            "Attended a Two day National Webinar \u201cTrajectory of Academic Development :The Thrust of National Education Policy NEP 2020\u201dorganised by IQAC Cell, on 22nd and 23rd September 2020",
+            "Attended a three days National Workshop on “ML Using Python in Data Analytics –A Way Forward” organized Christ Academy for Advanced Studies in association with Rooman Technologies, Bengaluru 0n 07-09 February 2020",
+            "Attended a Webinar on “Recent trends in Computer Science” organised by Department of Computer Science and the Department of Information Technology,St.Joseph’s College autonomous ,Tirchurappalli on 24th and 25th April 2020assss`.",
+            "Attended a Online Seminar, “Trackling COVID 19-A Biblical Perspective” organised by Women’s Christian College ,Chennai, on 1st June 2020",
+            "Attended a International Webinar on “Block Chain Technology”organised by ComSTAC(Computer Science Technical Association ) on 12th June 2020.",
+            "Attended a International Webinar on “Block Chain Technology” organised by the department of Computer Science ,Jyoti NIVAS college Autonomous from 9th to 13th June 2020.",
+            "Attended a Two day National Webinar “Trajectory of Academic Development :The Thrust of National Education Policy NEP 2020”organised by IQAC Cell, on 22nd and 23rd September 2020",
             "Attended a International Webinar on Mathematical Models in Machine Learning & Electric cars & the future of transformation organised by department of Mathematics ,18 June 2020.",
-            "Attended a two day International workshop on \u201dMachine Learning Techniques, Mother Teresa Women\u2019s University ,Madurai Centre on 3rd &4th December 2019",
+            "Attended a two day International workshop on ”Machine Learning Techniques, Mother Teresa Women’s University ,Madurai Centre on 3rd &4th December 2019",
             "Attended a Seminar on Women Empowerment and Leadership jointly organized by the Society for Professional Ethics and Management (SPEM) and the Internal Quality Assurance Cell, Jyoti Nivas College Autonomous, 29th November 2019.",
             "National Seminar on \"Current Issues Confronting Principals and Heads of the Institutions in India\" by USA,19th to 21st February 2020",
             "2024-2025",
             "The Cyber Path to Viksit Bharat@2047, 17/02/2025\nInternational Conference on Current trends in Information Technology - 10/03/2025",
             "Comparative analysis on early detection methods for Lung cancer using Machine Learning and Deep Learning models",
             "International Conference on Current trends in Information Technology- 10/03/2025",
-            "SaaAI\u201925",
-            "ICCIST\u201925",
+            "SaaAI’25",
+            "ICCIST’25",
             "2025-26",
-            "Utkarsh\u201926",
-            "ICIICI\u201926",
+            "Utkarsh’26",
+            "ICIICI’26",
             "ADMINISTRATIVE APPOINTMENTS",
             "Website Coordinator of Jyoti Nivas College Autonomous (2018-2021)",
             "ACADEMIC APPOINTMENTS /EXPERIENCES",
@@ -264,7 +264,7 @@
     {
         "name": "Dr.Rajasekaran N",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/rajasekarn.jpg",
+        "imagePath": "/assets/faculties/rajasekarn.jpg",
         "bio": [
             "Dr. N. Rajasekaran is a dedicated academician and researcher with over 15 years of teaching experience and two years of industry experience in the field of Computer Science and Information Technology. Currently serving as an Assistant Professor in the Department of Computer Science at CHRIST(Deemed to be University), Bangalore (BYC).",
             "Dr. Rajasekaran earned his Ph.D. in Computer Science from Bharathiar University in January 2024. He holds additional qualifications including an M.Phil. in Computer Science, Master of Computer Applications (MCA), B.Ed., and BCA. His research interests span software architecture, Agile, DevOps and machine learning. He has published extensively in Scopus and Web of Science indexed journals and has contributed a book chapter on deep learning applications in agriculture.",
@@ -278,7 +278,7 @@
     {
         "name": "Dr.Thontadari C",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/thondadari.JPG",
+        "imagePath": "/assets/faculties/thondadari.JPG",
         "bio": [
             "Dr. Thontadari C is a computer scientist with a strong foundation in research and teaching. He received an M.Sc Computer Science Degree from Kuvempu University, Shimogga in 2010, and Ph.D in Computer Science from Kuvempu University, Shimogga in 2018. Presently, working as an Assistant Professor in the Department of Computer Science at CHRIST University's Yeshwanthpur Campus in Bangalore. In the classroom, he brings his knowledge to life, covering subjects like Operating Systems, Computer Networks, Digital Image Processing, and Pattern Recognition. His dedication extends beyond the classroom. He is a prolific researcher, having authored over 10+ articles in prestigious international journals. Furthermore, he actively contributes to the academic community by serving as a reviewer for reputable journals, ensuring the quality and advancement of research in the field."
         ]
@@ -286,13 +286,13 @@
     {
         "name": "Dr.Umamaheswari",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/umamaheshwari.JPG",
+        "imagePath": "/assets/faculties/umamaheshwari.JPG",
         "bio": []
     },
     {
         "name": "Dr.J Jayapriya",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/jayapriya.JPG",
+        "imagePath": "/assets/faculties/jayapriya.JPG",
         "bio": [
             "Dr. Jayapriya J is working as an Assistant Professor, a dynamic researcher whose interdisciplinary expertise spans cybersecurity, computational intelligence, and bioinformatics, currently leading a government-funded project while having successfully completed a major Australian research initiative. As an educator, she revolutionises traditional teaching through gamification strategies, creating immersive cybersecurity simulations and interactive bioinformatics challenges that engage students while advancing research in intelligent security systems. Published 39 papers in Scopus-indexed journals and conferences. Cleared NET and GATE exams and also served as a Resource person and Reviewer."
         ]
@@ -300,19 +300,19 @@
     {
         "name": "Dr.JULIET ROZARIO",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/julietr.JPG",
+        "imagePath": "/assets/faculties/julietr.JPG",
         "bio": []
     },
     {
         "name": "Dr.Loveline Zeema",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/loveline.JPG",
+        "imagePath": "/assets/faculties/loveline.JPG",
         "bio": []
     },
     {
         "name": "Dr.Mahalakshmi J",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/mahalakshmi.JPG",
+        "imagePath": "/assets/faculties/mahalakshmi.JPG",
         "bio": [
             "Dr J.Mahalakshmi is working as an Assistant Professor in the Department of Computer Science, CHRIST (Deemed to be University)- Bangalore Yeshwanthpur Campus, Nagasandra, Karnataka, India. She has received her Ph.D in Computer Science from Alagappa University, Karaikudi, Tamilnadu in the year 2017 in the area of Data Security in Cloud Computing. She has 7 years of teaching experience at PG& UG level in the field of Computer Science. She has also Cleared the TNSET examination in the year 2016. Her research lab, collaborated with Universidad Veracruzara University, Mexico.",
             "She also awarded with DAAD Germany Government Fellowship for short Term Research in Germany. She has organized Various National and International conferences, International Seminars for the Students. Also, she currently act as a Reviewer for Various Web of Science and Scopus Journals. Apart from this, she also acts as a member in Board of Studies Committee headed by her working Institution.",
@@ -320,8 +320,8 @@
             "Agriculture, Algorithms, Cloud Computing, Applied Cryptography and Optimization.",
             "Research Publications",
             "Distinctive Achievements",
-            "Granted with the Alagappa University Research Fellowship (AURF), through Alagappa University from November 2015 \u2013 September 2017.",
-            "Granted as DAAD Fellow- A part of Postdoctoral Networking Program \u2013 Offered by Germany Government at Berlin, Germany during September 2019.",
+            "Granted with the Alagappa University Research Fellowship (AURF), through Alagappa University from November 2015 – September 2017.",
+            "Granted as DAAD Fellow- A part of Postdoctoral Networking Program – Offered by Germany Government at Berlin, Germany during September 2019.",
             "Granted with Virtual International Collaboration with Universidad Veracurzara, Mexico, September 2019.",
             "Research Data",
             "https://www.researchgate.net/profile/Dr_Jeyabalu?ev=hdr_xprf&_sg=6SwNW21D4- ne2pJUx2acVpaZD0HVdadXm72FHmEockkDtgQbFrRj4nw8m_bRVFcGQ832qi4VWMF B5G48nGW qHM7W",
@@ -337,13 +337,13 @@
     {
         "name": "Dr.PRIYA STELLA MARY I",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/priya%20stella.JPG",
+        "imagePath": "/assets/faculties/priya stella.JPG",
         "bio": []
     },
     {
         "name": "Dr.S Ramkumar",
         "designation": "Associate Professor,",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/ramkumar.JPG",
+        "imagePath": "/assets/faculties/ramkumar.JPG",
         "bio": [
             "Dr.S.Ramkumar",
             "Associate Professor,",
@@ -357,7 +357,7 @@
     {
         "name": "Dr.Shrinath Bijjargi",
         "designation": "Assistant Professor",
-        "imagePath": "/src/assets/faculty/shrinath-bijjargi.jpg",
+        "imagePath": "/assets/faculties/shrinath-bijjargi.jpg",
         "bio": [
             "Dr. Bijjargi Shrinath Mahadev is an Assistant Professor in the Department of Statistics and Data Science at CHRIST (Deemed to be University), Yeshwanthpur Campus, Bengaluru. He earned his Ph.D. in Statistics from Karnatak University, Dharwad, under the supervision of Senior Professor (Smt.) S. V. Bhat. His doctoral research focused on nonparametric approaches to single regressor models. Dr. Shrinath has presented his work at several national and international conferences and published multiple papers in reputed journals, reflecting his expertise in regression analysis and statistical inference."
         ]
@@ -365,7 +365,7 @@
     {
         "name": "Dr.Sindhu V",
         "designation": "Assistant Professor",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/sindhu.JPG",
+        "imagePath": "/assets/faculties/sindhu.JPG",
         "bio": [
             "Dr. V. Sindhu is a dedicated academician with over 13 years of experience in the field of Computer Science and Engineering. She is currently serving as an Assistant Professor in the Department of Computer Science. She holds a Ph.D. in Computer Science, and her research interests include machine learning, deep learning, and image processing. Dr. Sindhu has published 10 research papers in reputed Scopus-indexed journals and international conferences and holds 3 published patents in the domain of intelligent computing and data analytics. She has also contributed to book chapters focusing on AI-driven solutions for real-world problems. Dr. Sindhu is actively involved in curriculum development, academic coordination, and student mentoring. Her commitment to research and teaching continues to inspire innovation and interdisciplinary collaboration."
         ]
@@ -373,7 +373,7 @@
     {
         "name": "Dr.Smruti Dilip Dabhole",
         "designation": "She has published 8+ research articles in various journals, international conferences and book chapters.",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/smruthi.jpg",
+        "imagePath": "/assets/faculties/smruthi.jpg",
         "bio": [
             "Dr. Smruti Dilip Dabhole, MSc,MPhil,PhD. Completed her PhD from Karnataka State Akkamahadevi Women University Vijayapura.",
             "She has published 8+ research articles in various journals, international conferences and book chapters.",
@@ -383,7 +383,7 @@
     {
         "name": "Dr.Vinay M",
         "designation": "Head of the Department",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/vinaym.JPG",
+        "imagePath": "/assets/faculties/vinaym.JPG",
         "bio": [
             "Dr. Vinay M is an accomplished academic leader, researcher, and educator with expertise in Augmented Reality, Virtual Reality, Generative AI, Cybersecurity, and Digital Transformation. As Head of the Department of Computer Science, Data Science & Statistics at CHRIST (Deemed to be University), Yeshwanthpur Campus, he drives curriculum innovation, interdisciplinary collaboration, and strategic academic development. He has successfully led an international research initiative in collaboration with an Australian Consulate , Major Research project impact of ICT on higher education and currently manages a government-funded project, reflecting strong leadership in research and institutional advancement. His scholarly work focuses on the integration of immersive technologies with AI-enhanced cybersecurity frameworks, contributing to secure and future-ready digital ecosystems. A Google Certified Trainer and champion, he actively designs and delivers cutting-edge pedagogical models that blend emerging technologies with academic rigor, preparing students and faculty for leadership in the evolving landscape of digital security and transformative education."
         ]
@@ -391,85 +391,85 @@
     {
         "name": "Dr.Ravi Dandu",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/ravidandu.jpg",
+        "imagePath": "/assets/faculties/ravidandu.jpg",
         "bio": []
     },
     {
         "name": "Dr.Balakrishnan C",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/BK.JPG",
+        "imagePath": "/assets/faculties/BK.JPG",
         "bio": []
     },
     {
         "name": "Dr.Anusha James",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/anusha.JPG",
+        "imagePath": "/assets/faculties/anusha.JPG",
         "bio": []
     },
     {
         "name": "Dr.Deepa S",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/deepas.JPG",
+        "imagePath": "/assets/faculties/deepas.JPG",
         "bio": []
     },
     {
         "name": "Dr.Gayathry S Warriar",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/g3.JPG",
+        "imagePath": "/assets/faculties/g3.JPG",
         "bio": []
     },
     {
         "name": "Dr.Gopinath R",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/gopi.JPG",
+        "imagePath": "/assets/faculties/gopi.JPG",
         "bio": []
     },
     {
         "name": "Dr.Jayapriya J",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/jayapriya.JPG",
+        "imagePath": "/assets/faculties/jayapriya.JPG",
         "bio": []
     },
     {
         "name": "Dr.Krishna Presanakumar",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/krishna.jpg",
+        "imagePath": "/assets/faculties/krishna.jpg",
         "bio": []
     },
     {
         "name": "Dr.Laxmi Basappa Dharmannavar",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/laxmi%20d.JPG",
+        "imagePath": "/assets/faculties/laxmi d.JPG",
         "bio": []
     },
     {
         "name": "Dr.Manimekala",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/manimekaala.JPG",
+        "imagePath": "/assets/faculties/manimekaala.JPG",
         "bio": []
     },
     {
         "name": "Dr.Praveen P",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/praveenp.jpg",
+        "imagePath": "/assets/faculties/praveenp.jpg",
         "bio": []
     },
     {
         "name": "Dr.Raju Ramakrishna Gondkar",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/rajuRGONDKAR.JPG",
+        "imagePath": "/assets/faculties/rajuRGONDKAR.JPG",
         "bio": []
     },
     {
         "name": "Dr.Suganthi J",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/sugandhi.JPG",
+        "imagePath": "/assets/faculties/sugandhi.JPG",
         "bio": []
     },
     {
         "name": "Dr.Teena Jose",
         "designation": "Faculty",
-        "imagePath": "https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/acf73d1ca844373010a44e652e991a7a9159e332/teena.JPG",
+        "imagePath": "/assets/faculties/teena.JPG",
         "bio": []
     }
 ]

@@ -33,7 +33,7 @@ export default function Navbar() {
             <nav className="brutal-navbar">
                 <div className="logo-container">
                     <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                        <img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" alt="CHRIST University Logo" style={{ height: '55px', objectFit: 'contain' }} />
+                        <img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" alt="CHRIST University Logo" style={{ height: '55px', objectFit: 'contain' }} fetchpriority="high" decoding="async" />
                     </Link>
                 </div>
 

@@ -9,4 +9,15 @@ export default defineConfig({
     // necessary for amazon-cognito-identity-js
     global: 'window',
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'vendor-react';
+          }
+        }
+      }
+    }
+  }
 })

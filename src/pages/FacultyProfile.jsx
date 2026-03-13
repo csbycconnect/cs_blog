@@ -31,7 +31,7 @@ export default function FacultyProfile() {
     }
 
     // Resolve the Vite static asset URL or use absolute external URL
-    const imageUrl = faculty.imagePath.startsWith('http')
+    const imageUrl = faculty.imagePath.startsWith('http') || faculty.imagePath.startsWith('/')
         ? faculty.imagePath
         : new URL(`../assets/faculty/${faculty.imagePath}`, import.meta.url).href;
 

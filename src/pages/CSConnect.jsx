@@ -59,7 +59,7 @@ export default function CSConnect() {
         const slug = faculty.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
         return {
-            image: faculty.imagePath.startsWith('http') ? faculty.imagePath : new URL(`../assets/faculty/${faculty.imagePath}`, import.meta.url).href,
+            image: faculty.imagePath.startsWith('http') || faculty.imagePath.startsWith('/') ? faculty.imagePath : new URL(`../assets/faculty/${faculty.imagePath}`, import.meta.url).href,
             title: faculty.name,
             subtitle: faculty.designation,
             handle: "@christ.cs",

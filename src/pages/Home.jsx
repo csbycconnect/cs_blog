@@ -126,7 +126,12 @@ export default function Home() {
                                     </div>
                                     <div style={{ width: '100%', aspectRatio: '1/1', border: '2px solid var(--c-black)', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
                                         {/* Striped placeholder patterned background */}
-                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 100, background: 'url(https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/77659a7b157b7edf61fb3257c621e6ffc13c4b54/banners/CS_BYC_Banner.jpg) center/cover no-repeat' }}></div>
+                                        <img 
+                                            src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/77659a7b157b7edf61fb3257c621e6ffc13c4b54/banners/CS_BYC_Banner.jpg" 
+                                            alt="ByteBoard Banner"
+                                            loading="lazy"
+                                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+                                        />
                                     </div>
                                 </div>
                             </div>
