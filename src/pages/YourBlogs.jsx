@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 const stripHtml = (html = '') => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArticleAPI } from '../lib/api';
+import { ArticlesService } from '../services/articles';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
@@ -35,7 +35,7 @@ export default function YourBlogs() {
 
         const fetchAuthorPosts = async () => {
             try {
-                const authorPosts = await ArticleAPI.fetchByAuthor(user.name);
+                const authorPosts = await ArticlesService.fetchByStatus(user.name);
                 setPosts(authorPosts);
             } catch (error) {
                 console.error("Error fetching author posts:", error);
@@ -75,6 +75,14 @@ export default function YourBlogs() {
             setEditingBio(false);
         } catch (err) {
             alert('Failed to save bio.');
+        }
+    };
+
+    const handleDeleteDraft = (draftIndex) => {
+        if (window.confirm('Are you sure you want to delete this draft?')) {
+            const updatedDrafts = drafts.filter((_, idx) => idx !== draftIndex);
+            setDrafts(updatedDrafts);
+            localStorage.setItem('bb_drafts', JSON.stringify(updatedDrafts));
         }
     };
 
@@ -238,16 +246,48 @@ export default function YourBlogs() {
 
                             {/* Status badge for pending/drafts */}
                             {activeTab !== 'published' && (
-                                <div style={{
-                                    padding: '0.5rem 1rem',
-                                    border: '2px solid var(--c-black)',
-                                    background: activeTab === 'pending' ? '#FFA500' : '#ccc',
-                                    fontFamily: 'var(--font-mono)',
-                                    fontWeight: 700,
-                                    fontSize: '0.85rem',
-                                    textTransform: 'uppercase'
-                                }}>
-                                    {activeTab === 'pending' ? 'Reviewing' : 'Draft'}
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <div style={{
+                                        padding: '0.5rem 1rem',
+                                        border: '2px solid var(--c-black)',
+                                        background: activeTab === 'pending' ? '#FFA500' : '#ccc',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 700,
+                                        fontSize: '0.85rem',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        {activeTab === 'pending' ? 'Reviewing' : 'Draft'}
+                                    </div>
+                                    {activeTab === 'drafts' && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteDraft(i);
+                                            }}
+                                            style={{
+                                                padding: '0.5rem 1rem',
+                                                border: '2px solid #c53030',
+                                                background: '#fff',
+                                                color: '#c53030',
+                                                fontFamily: 'var(--font-mono)',
+                                                fontWeight: 700,
+                                                fontSize: '0.85rem',
+                                                cursor: 'pointer',
+                                                textTransform: 'uppercase',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.background = '#c53030';
+                                                e.currentTarget.style.color = '#fff';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background = '#fff';
+                                                e.currentTarget.style.color = '#c53030';
+                                            }}
+                                        >
+                                            Delete
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
