@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import emailjs from '@emailjs/browser';
 import { useNavigate } from 'react-router-dom';
@@ -30,6 +30,7 @@ export default function Admin() {
     // Tab 2: Manage Blogs
     const [acceptedBlogs, setAcceptedBlogs] = useState([]);
     const [loadingBlogs, setLoadingBlogs] = useState(false);
+    const [blogSearchQuery, setBlogSearchQuery] = useState('');
 
     // Tab 3: Events
     const [eventSubTab, setEventSubTab] = useState('create'); // 'create', 'manage'
@@ -42,6 +43,27 @@ export default function Admin() {
     // Tab 4: Users
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [cachedUsers, setCachedUsers] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Memoized user directory filter
+    const filteredUsers = useMemo(() => {
+        return users.filter(u => 
+            (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (u.id && u.id.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+    }, [users, searchQuery]);
+
+    // Memoized blog catalog filter
+    const filteredBlogs = useMemo(() => {
+        return acceptedBlogs.filter(blog => 
+            (blog.title || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
+            (blog.subtitle || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
+            (blog.category || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
+            (blog.authorName || '').toLowerCase().includes(blogSearchQuery.toLowerCase())
+        );
+    }, [acceptedBlogs, blogSearchQuery]);
 
     // Data Loaders
     useEffect(() => {
@@ -52,10 +74,24 @@ export default function Admin() {
         } else if (activeTab === 'events' && eventSubTab === 'manage') {
             fetchAdminEvents();
         } else if (activeTab === 'users') {
-            fetchUsersList();
+            if (cachedUsers.length > 0) {
+                setUsers(cachedUsers);
+                return;
+            }
+            setLoadingUsers(true);
+            UserService.fetchAll()
+                .then(data => {
+                    setUsers(data);
+                    setCachedUsers(data);
+                    setLoadingUsers(false);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setLoadingUsers(false);
+                });
         }
         // eslint-disable-next-line
-    }, [activeTab, eventSubTab, canReviewBlogs]);
+    }, [activeTab, eventSubTab, canReviewBlogs, cachedUsers]);
 
     const fetchPendingArticles = async () => {
         setLoadingReview(true);
@@ -178,6 +214,21 @@ export default function Admin() {
         }
     };
 
+    const handleTakedown = async (id, title) => {
+        if (!window.confirm(`CRITICAL_ACTION > Are you sure you want to take down and retract "${title}"?`)) return;
+        
+        try {
+            // Revert state back to draft on the serverless layer
+            await ArticlesService.updateStatus(id, 'draft');
+            
+            // Synchronously pull it from client-side state memory
+            setAcceptedBlogs(prev => prev.filter(blog => blog.id !== id));
+        } catch (err) {
+            alert("Failed to execute catalogue database override.");
+            console.error(err);
+        }
+    };
+
     const handleEventSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -205,6 +256,31 @@ export default function Admin() {
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const handleRoleChange = async (username, currentRole, direction) => {
+        const rolesOrder = ['User', 'AL1', 'AL0'];
+        let currentIndex = rolesOrder.indexOf(currentRole);
+        if (currentIndex === -1) currentIndex = 0; // Default fallback
+
+        let nextIndex = direction === 'promote' ? currentIndex + 1 : currentIndex - 1;
+        if (nextIndex < 0 || nextIndex >= rolesOrder.length) return; // Prevent index out of bounds
+
+        const targetRole = rolesOrder[nextIndex];
+
+        if (!window.confirm(`Are you sure you want to change this user's clearance level to ${targetRole}?`)) return;
+
+        try {
+            await UserService.updateUserRole(username, targetRole);
+            
+            // Synchronously update local react context memory states instantly
+            const updateArray = (prev) => prev.map(u => u.username === username ? { ...u, role: targetRole } : u);
+            setUsers(updateArray);
+            setCachedUsers(updateArray);
+        } catch (err) {
+            alert("Clearance transmission override failed.");
+            console.error(err);
+        }
     };
 
     // Shared Styles
@@ -340,35 +416,65 @@ export default function Admin() {
                         {/* TAB 2: MANAGE BLOGS */}
                         {activeTab === 'manage_blogs' && (
                             <>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <input 
+                                        type="text"
+                                        placeholder="SEARCH_CATALOGUE > Enter article title, club category, or author name..."
+                                        value={blogSearchQuery}
+                                        onChange={(e) => setBlogSearchQuery(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem 1rem',
+                                            background: '#040D1A',
+                                            border: '2px solid var(--c-yellow)',
+                                            color: '#fff',
+                                            fontFamily: 'var(--font-mono)',
+                                            fontSize: '0.8rem',
+                                            outline: 'none',
+                                            boxShadow: '4px 4px 0 #000'
+                                        }}
+                                    />
+                                </div>
+
                                 {loadingBlogs ? (
-                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>Loading accepted blogs...</p>
-                                ) : acceptedBlogs.length === 0 ? (
-                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No accepted blogs available.</p>
+                                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>READING CATALOGUE DATABASE CORES...</div>
+                                ) : filteredBlogs.length === 0 ? (
+                                    <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.5 }}>NO PUBLISHED ARTICLES MATCHING CRITERIA.</div>
                                 ) : (
-                                    acceptedBlogs.map(article => (
-                                        <div key={article.id} style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-black)', padding: '1.5rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                                                <div>
-                                                    <h3 className="serif-heading" style={{ fontSize: '1.4rem', margin: '0 0 0.25rem 0', color: 'var(--c-black)' }}>{article.title}</h3>
-                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#555' }}>
-                                                        By {article.name || 'Anonymous'} • {article.date ? new Date(article.date).toLocaleDateString() : ''}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                        {filteredBlogs.map((blog) => (
+                                            <div key={blog.id} style={{ background: '#0A192F', border: '2px solid var(--c-yellow)', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--c-yellow)', marginBottom: '0.25rem' }}>
+                                                        [{blog.category || 'GENERAL'}] By {blog.authorName || 'Anonymous'}
                                                     </div>
+                                                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{blog.title}</h3>
+                                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.subtitle}</p>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                                    {(isAL1 || isAL0) && (
-                                                        <button onClick={() => handleSoftDelete(article.id)} style={{ background: '#f0f0f0', border: '2px solid var(--c-black)', padding: '0.5rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>
-                                                            Hide / Remove
-                                                        </button>
-                                                    )}
-                                                    {isAL0 && (
-                                                        <button onClick={() => handleHardDelete(article.id)} style={{ background: '#c53030', color: 'white', border: '2px solid var(--c-black)', padding: '0.5rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}>
-                                                            PERMANENT DELETE
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                
+                                                {/* Administrative Controls Block */}
+                                                <button
+                                                    onClick={() => handleTakedown(blog.id, blog.title)}
+                                                    style={{
+                                                        padding: '0.5rem 1rem',
+                                                        background: '#1A0B0B',
+                                                        border: '2px solid #EF4444',
+                                                        color: '#FCA5A5',
+                                                        fontFamily: 'var(--font-mono)',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: 'bold',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '3px 3px 0 #000',
+                                                        whiteSpace: 'nowrap'
+                                                    }}
+                                                    onMouseEnter={(e) => { e.target.style.background = '#EF4444'; e.target.style.color = '#fff'; }}
+                                                    onMouseLeave={(e) => { e.target.style.background = '#1A0B0B'; e.target.style.color = '#FCA5A5'; }}
+                                                >
+                                                    🗑️ TAKEDOWN
+                                                </button>
                                             </div>
-                                        </div>
-                                    ))
+                                        ))}
+                                    </div>
                                 )}
                             </>
                         )}
@@ -517,22 +623,90 @@ export default function Admin() {
                         {/* TAB 4: USERS DIRECTORY */}
                         {activeTab === 'users' && (
                             <>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <input 
+                                        type="text"
+                                        placeholder="SEARCH_DIRECTORY > Enter user name, email, or sub ID..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '0.75rem 1rem',
+                                            background: '#040D1A',
+                                            border: '2px solid var(--c-yellow)',
+                                            color: '#fff',
+                                            fontFamily: 'var(--font-mono)',
+                                            fontSize: '0.8rem',
+                                            outline: 'none',
+                                            boxShadow: '4px 4px 0 #000'
+                                        }}
+                                    />
+                                </div>
+
                                 {loadingUsers ? (
-                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>Fetching directory...</p>
-                                ) : users.length === 0 ? (
-                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No users found.</p>
+                                    <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>INITIALIZING DIRECTORY PROTOCOL...</div>
+                                ) : filteredUsers.length === 0 ? (
+                                    <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.5 }}>NO DIRECTORY ENTRIES FOUND MATCHING CRITERIA.</div>
                                 ) : (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
-                                        {users.map((u, i) => (
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                        {filteredUsers.map((u, i) => (
                                             <div key={i} style={{ background: '#0A192F', border: '2px dashed var(--c-yellow)', padding: '1.5rem', color: 'var(--c-white)' }}>
-                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--c-yellow)', wordBreak: 'break-all', marginBottom: '0.5rem' }}>
-                                                    {u.id}
+                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--c-yellow)', marginBottom: '0.25rem' }}>
+                                                    {u.name}
                                                 </div>
+                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', opacity: 0.7, marginBottom: '0.5rem' }}>
+                                                    {u.email} | <span style={{ color: '#64ffda' }}>{u.role}</span>
+                                                </div>
+                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#8892b0', wordBreak: 'break-all', marginBottom: '0.5rem' }}>
+                                                    ID: {u.id}
+                                                </div>
+                                                {isAL0 && (
+                                                    <div style={{ 
+                                                        display: 'flex', 
+                                                        gap: '0.5rem', 
+                                                        marginTop: '0.75rem', 
+                                                        paddingTop: '0.75rem', 
+                                                        borderTop: '1px dashed rgba(250, 204, 21, 0.2)' 
+                                                    }}>
+                                                        <button
+                                                            onClick={() => handleRoleChange(u.username, u.role, 'demote')}
+                                                            disabled={u.role === 'User'}
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '0.25rem 0.5rem',
+                                                                background: u.role === 'User' ? '#111' : '#1A0B0B',
+                                                                border: u.role === 'User' ? '1px solid #333' : '1px solid #EF4444',
+                                                                color: u.role === 'User' ? '#555' : '#FCA5A5',
+                                                                fontFamily: 'var(--font-mono)',
+                                                                fontSize: '0.6rem',
+                                                                cursor: u.role === 'User' ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            ▼ DEMOTE
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRoleChange(u.username, u.role, 'promote')}
+                                                            disabled={u.role === 'AL0'}
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '0.25rem 0.5rem',
+                                                                background: u.role === 'AL0' ? '#111' : '#0B1A0E',
+                                                                border: u.role === 'AL0' ? '1px solid #333' : '1px solid #22C55E',
+                                                                color: u.role === 'AL0' ? '#555' : '#86EFAC',
+                                                                fontFamily: 'var(--font-mono)',
+                                                                fontSize: '0.6rem',
+                                                                cursor: u.role === 'AL0' ? 'not-allowed' : 'pointer'
+                                                            }}
+                                                        >
+                                                            ▲ PROMOTE
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 <div style={{ fontFamily: 'var(--font-serif)', fontSize: '0.9rem', color: '#ddd' }}>
                                                     {u.bio ? (
                                                         <span style={{ fontStyle: 'italic' }}>"{u.bio}"</span>
                                                     ) : (
-                                                        <span style={{ opacity: 0.5 }}>No bio set.</span>
+                                                        <span style={{ opacity: 0.3, fontSize: '0.8rem' }}>No telemetry bio logged.</span>
                                                     )}
                                                 </div>
                                             </div>

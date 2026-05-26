@@ -24,5 +24,25 @@ export const UserService = {
         const res = await fetch("/api/users/list");
         if (!res.ok) throw new Error("Failed to retrieve system users directory");
         return await res.json();
+    },
+
+    getAllUsers: async () => {
+        const response = await fetch('/api/admin/users', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (!response.ok) throw new Error('Failed to load user records from the network.');
+        return response.json();
+    },
+
+    // Add inside the UserService object in src/services/users.js
+    updateUserRole: async (username, targetRole) => {
+        const response = await fetch('/api/admin/update-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, targetRole })
+        });
+        if (!response.ok) throw new Error('Security clearance override authorization denied.');
+        return response.json();
     }
 };

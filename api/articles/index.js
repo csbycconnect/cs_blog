@@ -1,6 +1,7 @@
 // api/articles/index.js
 import { dynamoDb } from "../lib/aws/dynamodb.js";
 import { PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
 import { 
     getAcceptedArticles, 
     getAllArticles, 
@@ -89,6 +90,48 @@ export default async function handler(req, res) {
                         ":gpk": `STATUS#${body.status}`
                     }
                 }));
+
+                if (body.status === "accepted") {
+                    try {
+                        const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || "us-east-1" });
+                        const listUsersCmd = new ListUsersCommand({
+                            UserPoolId: process.env.COGNITO_USER_POOL_ID
+                        });
+                        const cognitoData = await cognitoClient.send(listUsersCmd);
+                        const subscriberEmails = [];
+
+                        if (cognitoData.Users) {
+                            for (const user of cognitoData.Users) {
+                                const attributes = {};
+                                user.Attributes?.forEach(attr => {
+                                    attributes[attr.Name] = attr.Value;
+                                });
+
+                                if (attributes['custom:dispatchAlerts'] !== 'false' && attributes['email']) {
+                                    subscriberEmails.push(attributes['email']);
+                                }
+                            }
+                        }
+
+                        if (subscriberEmails.length > 0) {
+                            await fetch(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/send-email`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    templateType: 'dispatch_alert',
+                                    toEmail: subscriberEmails,
+                                    templateData: {
+                                        postTitle: body.title || "New Technical Manual",
+                                        authorName: body.authorName || "Community Contributor",
+                                        blogUrl: `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/blog/${body.id}`
+                                    }
+                                })
+                            });
+                        }
+                    } catch (broadcastError) {
+                        console.error("Mailing loop error bypassed to prevent blocking DB status update:", broadcastError);
+                    }
+                }
 
                 return res.status(200).json({ success: true });
             }
