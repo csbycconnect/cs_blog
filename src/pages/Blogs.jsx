@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
 
 
+
 const READ_TIME_RANGES = [
     { label: '< 5 min', fn: rt => parseInt(rt) < 5 },
     { label: '5–8 min', fn: rt => parseInt(rt) >= 5 && parseInt(rt) <= 8 },
@@ -37,7 +38,7 @@ export default function Blogs() {
         const fetchAcceptedArticles = async () => {
             try {
                 // Fetch from backend API instead of direct DynamoDB
-                const response = await fetch('/api/articles');
+                const response = await fetch(`${window.location.origin}/api/articles`);
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch articles');
