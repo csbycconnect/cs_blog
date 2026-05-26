@@ -1,5 +1,11 @@
 // api/articles/index.js
-import { ArticlesAPI } from "../lib/db/articles.js"; 
+import { 
+    getAcceptedArticles, 
+    getAllArticles, 
+    getArticleById, 
+    toggleLike, 
+    incrementViews 
+} from "../lib/db/articles.js"; 
 
 export default async function handler(req, res) {
     // Enable CORS headers
@@ -15,9 +21,9 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
-    // Determine the action based on the request URL
+    // Determine the action based on the request URL path structure
     const urlParts = req.url.split("?")[0].split("/");
-    const action = urlParts[urlParts.length - 1]; // e.g., "like", "views", or "articles"
+    const action = urlParts[urlParts.length - 1]; // Resolves to "like", "views", or "articles"
 
     // ─── 1. HANDLE POST REQUESTS (LIKE & VIEWS) ────────────────────────────
     if (req.method === "POST") {
@@ -27,19 +33,22 @@ export default async function handler(req, res) {
                 const { id } = req.body;
                 if (!id) return res.status(400).json({ error: "Missing article ID" });
 
-                const updated = await ArticlesAPI.incrementViews(id);
-                return res.status(200).json(updated);
+                await incrementViews(id);
+                return res.status(200).json({ success: true, id });
             }
 
             // Case B: Toggling Likes
             if (action === "like") {
-                const { id, userId } = req.body;
-                if (!id || !userId) {
-                    return res.status(400).json({ error: "Missing article ID or userId" });
+                const { id, isLiking } = req.body; // Expects a boolean flag from frontend tracking state
+                if (!id) {
+                    return res.status(400).json({ error: "Missing article ID" });
                 }
 
-                const updated = await ArticlesAPI.toggleLike(id, userId);
-                return res.status(200).json(updated);
+                // If your frontend isn't passing `isLiking` explicitly yet, default it to true
+                const checkLiking = typeof isLiking === "boolean" ? isLiking : true;
+
+                await toggleLike(id, checkLiking);
+                return res.status(200).json({ success: true, id });
             }
 
             return res.status(404).json({ error: "Action route not found" });
@@ -52,16 +61,25 @@ export default async function handler(req, res) {
     // ─── 2. HANDLE GET REQUESTS (FETCH ARTICLES) ───────────────────────────
     if (req.method === "GET") {
         try {
-            const { status } = req.query;
+            const { status, id } = req.query;
             
-            // If checking a status filter (e.g. pending/approved)
-            if (status) {
-                const articles = await ArticlesAPI.fetchByStatus(status);
-                return res.status(200).json(articles);
+            // If fetching a single specific article by ID
+            if (id) {
+                const article = await getArticleById(id);
+                if (!article) return res.status(404).json({ error: "Article not found" });
+                return res.status(200).json(article);
+            }
+
+            // If checking an administrative status filter (e.g., pending review)
+            if (status && status !== "accepted") {
+                const allArticles = await getAllArticles();
+                // Filter items manually if they match the desired status criteria
+                const filtered = allArticles.filter(item => item.status === status || item.GSI3PK === `STATUS#${status}`);
+                return res.status(200).json(filtered);
             }
             
-            // Default: Fetch all approved articles
-            const articles = await ArticlesAPI.fetchAllApproved();
+            // Default home view: Fetch all accepted articles dynamically via GSI Index query
+            const articles = await getAcceptedArticles();
             return res.status(200).json(articles);
         } catch (error) {
             console.error("GET ARTICLES ERROR:", error);
@@ -69,6 +87,6 @@ export default async function handler(req, res) {
         }
     }
 
-    // Fallback if a method other than GET or POST is used
+    // Fallback if an unexpected method is used
     return res.status(405).json({ error: `Method ${req.method} not allowed` });
 }
