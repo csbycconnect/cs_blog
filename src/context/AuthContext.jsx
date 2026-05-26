@@ -96,6 +96,10 @@ export function AuthProvider({ children }) {
                         avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${attributesMap.name || 'U'}&backgroundColor=0A192F&textColor=f7d000`,
                         role: groups.length > 0 ? groups[0] : 'student',
                         groups: groups,
+                        preferences: {
+                            emailNewsletter: attributesMap['custom:emailNewsletter'] === 'true',
+                            dispatchAlerts: attributesMap['custom:dispatchAlerts'] !== 'false'
+                        },
                         bio
                     });
                     setLoading(false);
@@ -182,6 +186,10 @@ export function AuthProvider({ children }) {
                             avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${attributesMap.name || 'U'}&backgroundColor=0A192F&textColor=f7d000`,
                             role: groups.length > 0 ? groups[0] : 'student',
                             groups: groups,
+                            preferences: {
+                                emailNewsletter: attributesMap['custom:emailNewsletter'] === 'true',
+                                dispatchAlerts: attributesMap['custom:dispatchAlerts'] !== 'false'
+                            },
                             bio
                         });
                         resolve(result);
@@ -216,6 +224,34 @@ export function AuthProvider({ children }) {
         }
     };
 
+    const updatePreferences = async (newPrefs) => {
+        const cognitoUser = userPool.getCurrentUser();
+        if (!cognitoUser) return;
+
+        return new Promise((resolve, reject) => {
+            cognitoUser.getSession((err, session) => {
+                if (err) { reject(err); return; }
+
+                const attributeList = [
+                    new CognitoUserAttribute({ Name: 'custom:emailNewsletter', Value: String(newPrefs.emailNewsletter) }),
+                    new CognitoUserAttribute({ Name: 'custom:dispatchAlerts', Value: String(newPrefs.dispatchAlerts) })
+                ];
+
+                cognitoUser.updateAttributes(attributeList, (updateErr, result) => {
+                    if (updateErr) {
+                        reject(updateErr);
+                    } else {
+                        setUser(current => ({
+                            ...current,
+                            preferences: newPrefs
+                        }));
+                        resolve(result);
+                    }
+                });
+            });
+        });
+    };
+
     /**
      * Redirects the browser to the Cognito hosted UI with the given
      * identity provider (Google, Facebook, LoginWithAmazon, Apple, etc.).
@@ -230,7 +266,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, register, confirmRegistration, login, logout, signInWithProvider, updateBio }}>
+        <AuthContext.Provider value={{ user, loading, register, confirmRegistration, login, logout, signInWithProvider, updateBio, updatePreferences }}>
             {!loading && children}
         </AuthContext.Provider>
     );

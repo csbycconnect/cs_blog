@@ -8,7 +8,7 @@ import AuthGateModal from '../components/shared/AuthGateModal';
 import { Settings as SettingsIcon, Bell, Mail, Monitor, Shield } from 'lucide-react';
 
 export default function Settings() {
-    const { user } = useAuth();
+    const { user, updatePreferences } = useAuth();
     const [showGate, setShowGate] = useState(false);
 
     // Preferences state (mocked with localStorage)
@@ -30,11 +30,33 @@ export default function Settings() {
         }
     }, [user]);
 
-    const handleToggle = (key) => {
-        const newPrefs = { ...prefs, [key]: !prefs[key] };
-        setPrefs(newPrefs);
-        if (user) {
-            localStorage.setItem(`bb_prefs_${user.sub}`, JSON.stringify(newPrefs));
+    const handleToggle = async (settingKey) => {
+        // Create the updated state payload based on your current preferences object
+        const currentPrefs = user?.preferences || { emailNewsletter: false, dispatchAlerts: true };
+
+        const nextPrefs = {
+            ...currentPrefs,
+            [settingKey]: !currentPrefs[settingKey]
+        };
+
+        try {
+            // 1. Commit the change directly to AWS Cognito attributes
+            await updatePreferences(nextPrefs);
+
+            // 2. If ByteBoard Newsletter was flipped to TRUE, fire the instant Welcome Wire!
+            if (settingKey === 'emailNewsletter' && nextPrefs.emailNewsletter === true) {
+                // Fire-and-forget background fetch so the UI stays snappy
+                fetch('/api/send-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        templateType: 'newsletter_welcome',
+                        toEmail: user.email
+                    })
+                }).catch(err => console.error("Background mail engine lag:", err));
+            }
+        } catch (error) {
+            alert("Failed to sync system preferences to your profile cloud.");
         }
     };
 
