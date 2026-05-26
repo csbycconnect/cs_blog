@@ -581,7 +581,7 @@ export default function WriteForUs() {
                                 <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f7d000', margin: '1.25rem 0 0.85rem' }}>
                                     🕵️‍♂️ What We Look For
                                 </div>
-                                {ADDITIONLINFORMATION.map((c, i) => (
+                                {ADDITIONALINFORMATION.map((c, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.5rem' }}>
                                         <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, color: '#f7d000', flexShrink: 0, minWidth: 16 }}>
                                             {['①', '②', '③'][i]}
