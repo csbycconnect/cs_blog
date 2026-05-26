@@ -23,7 +23,14 @@ const GUIDELINES = [
     'Technical articles must include code or examples',
     'All submissions reviewed within 3–5 business days',
     'Published authors receive an editorial badge',
-    'Images must be copyright-free or your own',
+    'Images must be copyright-free or your own, Please note: all images provided must be hosted in a safe manner (e.g., Imgur, AWS S3) and not embedded as base64 data to ensure optimal loading performance and security compliance. If you have images in base64 format, please upload them to a hosting service and provide the direct URL in your submission.',
+];
+
+const ADDITIONALINFORMATION = [
+    'All your information within the `Author Information` is automatically pulled from your profile. To update, go to your Account Settings',
+    'Addition of any link that promotes illegal websites, or malicious content is strictly prohibited.',
+    'Include a compelling headline and meta description',
+    'Follow our style guide for consistent formatting'
 ];
 
 // ─── REUSABLE FIELD WRAPPER ───────────────────────────────────────────────────
@@ -567,6 +574,19 @@ export default function WriteForUs() {
                                 {GUIDELINES.map((g, i) => (
                                     <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.76rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, paddingLeft: '0.75rem', borderLeft: '2px solid rgba(247,208,0,0.5)', marginBottom: '0.7rem' }}>
                                         {g}
+                                    </div>
+                                ))}
+
+                            <div style={{ marginTop: '1.5rem', height: 2, background: 'rgba(255,255,255,0.1)' }} />
+                                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f7d000', margin: '1.25rem 0 0.85rem' }}>
+                                    🕵️‍♂️ What We Look For
+                                </div>
+                                {ADDITIONLINFORMATION.map((c, i) => (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, color: '#f7d000', flexShrink: 0, minWidth: 16 }}>
+                                            {['①', '②', '③'][i]}
+                                        </span>
+                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{c}</span>
                                     </div>
                                 ))}
 
