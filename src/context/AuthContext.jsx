@@ -9,7 +9,7 @@ import {
     CognitoRefreshToken
 } from 'amazon-cognito-identity-js';
 import { userPool } from '../lib/cognito-config';
-import { UserService as UserAPI } from '../services/user'; // ✅ Pointed to your Vercel service layer
+import { UserService as UserAPI } from '../services/users'; // ✅ Pointed to your Vercel service layer
 
 const AuthContext = createContext(null);
 
