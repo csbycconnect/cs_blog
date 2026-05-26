@@ -36,14 +36,32 @@ export default function Blogs() {
     useEffect(() => {
         const fetchAcceptedArticles = async () => {
             try {
-                const items = await ArticleAPI.fetchByStatus('accepted');
-                const formattedPosts = items.map(item => ({
+                // Fetch from backend API instead of direct DynamoDB
+                const response = await fetch('/api/articles');
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch articles');
+                }
+
+                const items = await response.json();
+
+                // Only accepted articles
+                const acceptedItems = items.filter(
+                    item => item.status === 'accepted'
+                );
+
+                const formattedPosts = acceptedItems.map(item => ({
                     ...item,
                     author: item.name || 'Anonymous',
-                    avatar: item.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${item.name || 'A'}&backgroundColor=0d2142&textColor=ffffff`,
+                    avatar:
+                        item.avatarUrl ||
+                        `https://api.dicebear.com/9.x/initials/svg?seed=${item.name || 'A'
+                        }&backgroundColor=0d2142&textColor=ffffff`,
                 }));
+
                 // Set DB posts only
                 setDbPosts(formattedPosts);
+
             } catch (error) {
                 console.error("Error fetching articles:", error);
                 setDbPosts([]);
@@ -51,6 +69,7 @@ export default function Blogs() {
                 setLoadingPosts(false);
             }
         };
+
         fetchAcceptedArticles();
     }, []);
 
