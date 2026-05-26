@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import DOMPurify from 'dompurify';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArticlesService } from '../services/articles'; // ✅ Fixed Import
+import { ArticlesService } from '../services/articles';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
@@ -13,7 +13,6 @@ import { Heart, Bookmark } from 'lucide-react';
 export default function BlogPost() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth();
     const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -22,7 +21,6 @@ export default function BlogPost() {
     useEffect(() => {
         const loadArticle = async () => {
             try {
-                // ✅ Updated to use ArticlesService fetch
                 const data = await ArticlesService.getById(id);
                 if (!data) {
                     alert('Article not found.');
@@ -34,167 +32,227 @@ export default function BlogPost() {
                 // Track view on every load, protected by ref
                 if (!viewCounted.current) {
                     viewCounted.current = true;
-                    // ✅ Updated to use ArticlesService view incrementer
                     await ArticlesService.incrementViews(id).catch(console.error);
                 }
             } catch (error) {
                 console.error("Error loading article:", error);
                 alert('Failed to load article.');
+                navigate('/blogs');
             } finally {
                 setLoading(false);
             }
         };
-
-        if (id) {
-            loadArticle();
-        }
+        loadArticle();
     }, [id, navigate]);
 
-    // Engagement states
-    const [isLiked, setIsLiked] = useState(false);
+    const { user } = useAuth();
     const [isFavorite, setIsFavorite] = useState(false);
+    const [hasLiked, setHasLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
+
+    useEffect(() => {
+        if (article) {
+            const favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            setIsFavorite(favs.some(f => f.id === article.id));
+
+            // NOTE: DynamoDB schema does not currently track individual user likes (array of IDs).
+            // A simple boolean check for demo purposes, extending localStorage:
+            const localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            setHasLiked(localLikes.includes(article.id));
+
+            setLikesCount(article.likes || 0);
+        }
+    }, [article]);
 
     const handleLikeClick = async () => {
-        if (!article) return;
-        try {
-            const nextLikedState = !isLiked;
-            setIsLiked(nextLikedState);
-            
-            // Optimistic UI update for the counts
-            setArticle(prev => ({
-                ...prev,
-                likes: (prev.likes || 0) + (nextLikedState ? 1 : -1)
-            }));
+        if (!user) {
+            alert('Please log in to like articles.');
+            return;
+        }
 
-            // ✅ Updated to use ArticlesService toggleLike fetch route
-            await ArticlesService.toggleLike(id, nextLikedState);
+        const newLiked = !hasLiked;
+        setHasLiked(newLiked);
+        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
+
+        try {
+            await ArticlesService.toggleLike(article.id, newLiked);
+
+            // Update local likes state
+            let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            if (newLiked) {
+                if (!localLikes.includes(article.id)) localLikes.push(article.id);
+            } else {
+                localLikes = localLikes.filter(id => id !== article.id);
+            }
+            localStorage.setItem('bb_likes', JSON.stringify(localLikes));
+
+            // Sync with favorites array if it's currently in there so counts stay fresh
+            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            const favIndex = favs.findIndex(f => f.id === article.id);
+            if (favIndex > -1) {
+                favs[favIndex].likes = newLiked ? (favs[favIndex].likes || 0) + 1 : (favs[favIndex].likes || 0) - 1;
+                localStorage.setItem('bb_favorites', JSON.stringify(favs));
+            }
+
         } catch (error) {
-            console.error("Error toggling like:", error);
-            // Revert state if backend request fails
-            setIsLiked(prev => !prev);
-            setArticle(prev => ({
-                ...prev,
-                likes: (prev.likes || 0) + (isLiked ? 1 : -1)
-            }));
+            console.error("Failed to toggle like:", error);
+            // Revert on failure
+            setHasLiked(!newLiked);
+            setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
         }
     };
 
     const handleFavoriteClick = () => {
-        setIsFavorite(!isFavorite);
+        if (!user) {
+            alert('Please log in to favorite articles.');
+            return;
+        }
+
+        let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+        const newIsFavorite = !isFavorite;
+
+        if (newIsFavorite) {
+            if (!favs.some(f => f.id === article.id)) {
+                favs.push({ ...article, likes: likesCount });
+            }
+        } else {
+            favs = favs.filter(f => f.id !== article.id);
+        }
+
+        localStorage.setItem('bb_favorites', JSON.stringify(favs));
+        setIsFavorite(newIsFavorite);
     };
 
     if (loading) {
         return (
-            <div style={{
-                minHeight: '100vh',
-                background: '#f4f4f4',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontFamily: 'var(--font-mono)'
-            }}>
-                <div>Loading byteboard dispatch...</div>
+            <div style={{ position: 'relative', minHeight: '100vh' }}>
+                <Navbar />
+                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '4rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)' }}>Loading transmission...</p>
+                </main>
+                <Footer />
             </div>
         );
     }
 
     if (!article) return null;
 
-    // Sanitize HTML if present
-    const cleanHTML = article.contentHTML ? DOMPurify.sanitize(article.contentHTML) : '';
-
     return (
-        <div style={{ minHeight: '100vh', background: '#f4f4f4', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             <Navbar />
-            <main style={{ flex: 1, padding: '2rem 1rem' }}>
-                <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                    <BackButton to="/blogs" text="Back to dispatches" />
+            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
+                <div style={{ marginTop: '2rem' }}>
+                    <BackButton />
+                </div>
 
-                    <article style={{
-                        background: '#fff',
-                        border: '2px solid #000',
-                        boxShadow: '8px 8px 0 #000',
-                        padding: '2.5rem',
-                        marginTop: '1.5rem',
-                        position: 'relative'
+                {/* Article Header */}
+                <header style={{ marginBottom: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '2rem' }}>
+                    <div style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: 'var(--c-yellow)',
+                        marginBottom: '1rem',
+                        letterSpacing: '0.05em'
                     }}>
-                        {/* Category Badge */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '-14px',
-                            left: '2rem',
-                            background: '#000',
-                            color: '#fff',
-                            padding: '0.2rem 0.8rem',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            border: '2px solid #000'
-                        }}>
-                            {article.category || 'GENERAL'}
+                        {article.category || 'Article'} • {article.readTime}
+                    </div>
+                    <h1 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+                        {article.title}
+                    </h1>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+                        <img
+                            src={article.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${article.name || 'A'}&backgroundColor=0d2142&textColor=f7d000`}
+                            alt={article.name}
+                            style={{ width: '45px', height: '45px', border: '2px solid var(--c-yellow)' }}
+                        />
+                        <div>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)', fontWeight: 700, fontSize: '0.9rem' }}>
+                                {article.name || 'Anonymous'}
+                            </div>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                                {new Date(article.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </div>
                         </div>
+                    </div>
+                </header>
 
-                        {/* Title & Metadata */}
-                        <h1 style={{
-                            fontFamily: 'var(--font-sans)',
-                            fontSize: '2.5rem',
-                            fontWeight: 900,
-                            lineHeight: 1.1,
-                            marginBottom: '1rem',
-                            color: '#000'
-                        }}>
-                            {article.title}
-                        </h1>
+                <div style={{ maxWidth: 860, margin: '0 auto', width: '100%' }}>
+                    <article className="blog-post-article" style={{
+                        background: 'var(--c-white)',
+                        border: '2px solid var(--c-black)',
+                        boxShadow: '10px 10px 0 var(--c-yellow)',
+                        padding: 'min(2.5rem, 5vw) min(3rem, 6vw)',
+                        color: '#1a1a1a',
+                        fontFamily: 'var(--font-serif, Georgia, serif)',
+                        fontSize: '1.1rem',
+                        lineHeight: 1.8,
+                        overflowX: 'hidden'
+                    }}>
+                        {article.contentHTML ? (
+                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
+                        ) : (
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    h1: ({ node, ...props }) => <h1 className="serif-heading" style={{ fontSize: '2.2rem', marginTop: '2.5rem', marginBottom: '1rem', lineHeight: 1.2, color: 'var(--c-black)' }} {...props} />,
+                                    h2: ({ node, ...props }) => <h2 className="serif-heading" style={{ fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem', lineHeight: 1.3, color: 'var(--c-black)' }} {...props} />,
+                                    h3: ({ node, ...props }) => <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3rem', marginTop: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }} {...props} />,
+                                    p: ({ node, ...props }) => <p style={{ marginBottom: '1.5rem', wordWrap: 'break-word', wordBreak: 'break-word' }} {...props} />,
+                                    a: ({ node, ...props }) => <a style={{ color: '#0d2142', textDecoration: 'underline', textDecorationColor: 'var(--c-yellow)', textDecorationThickness: '2px', fontWeight: 700 }} {...props} />,
+                                    ul: ({ node, ...props }) => <ul style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                    ol: ({ node, ...props }) => <ol style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                    li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
+                                    blockquote: ({ node, ...props }) => <blockquote style={{ borderLeft: '4px solid var(--c-black)', margin: '1.5rem 0', padding: '1rem 1.5rem', background: '#f5f0e8', fontStyle: 'italic' }} {...props} />,
+                                    code: ({ node, inline, ...props }) =>
+                                        inline ?
+                                            <code style={{ fontFamily: 'var(--font-mono)', background: '#f0f0f0', padding: '0.2rem 0.4rem', fontSize: '0.9em', border: '1px solid #ccc' }} {...props} /> :
+                                            <pre style={{ background: '#0A192F', color: '#fff', padding: '1.5rem', overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', border: '2px solid var(--c-black)', marginBottom: '1.5rem' }}>
+                                                <code {...props} />
+                                            </pre>,
+                                    img: ({ node, ...props }) => <img style={{ maxWidth: '100%', height: 'auto', border: '2px solid var(--c-black)', display: 'block', margin: '2rem auto' }} {...props} />,
+                                    hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
+                                }}
+                            >
+                                {article.content}
+                            </ReactMarkdown>
+                        )}
 
-                        <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '1.5rem',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.8rem',
-                            color: '#555',
-                            borderBottom: '2px dashed #ccc',
-                            paddingBottom: '1.5rem',
-                            marginBottom: '2rem'
-                        }}>
-                            <div>BY: <span style={{ fontWeight: 700, color: '#000' }}>{article.name || 'ANONYMOUS'}</span></div>
-                            <div>DATE: {article.date ? new Date(article.date).toLocaleDateString() : 'UNKNOWN'}</div>
-                            <div>READ: {article.readTime || '1 min read'}</div>
-                            <div>VIEWS: {article.views || 0}</div>
-                        </div>
+                        {/* Author Bio Section (if any) */}
+                        {article.bio && (
+                            <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '2px solid var(--c-black)' }}>
+                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                                    About the Author
+                                </div>
+                                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                                    <img
+                                        src={article.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${article.name || 'A'}&backgroundColor=0d2142&textColor=f7d000`}
+                                        alt={article.name}
+                                        style={{ width: '60px', height: '60px', border: '2px solid var(--c-black)', boxShadow: '4px 4px 0 var(--c-yellow)' }}
+                                    />
+                                    <div>
+                                        <h4 className="serif-heading" style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0' }}>{article.name}</h4>
+                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#555', margin: 0, lineHeight: 1.6 }}>{article.bio}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-                        {/* Content Area */}
-                        <div className="markdown-body" style={{
-                            fontFamily: 'var(--font-sans)',
-                            fontSize: '1.1rem',
-                            lineHeight: 1.65,
-                            color: '#222'
-                        }}>
-                            {article.contentHTML ? (
-                                <div dangerouslySetInnerHTML={{ __html: cleanHTML }} />
-                            ) : (
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {article.content}
-                                </ReactMarkdown>
-                            )}
-                        </div>
-
-                        {/* Interaction Bar */}
-                        <div style={{
-                            marginTop: '3rem',
-                            borderTop: '2px solid #000',
-                            paddingTop: '1.5rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
+                        {/* Article Footer / Actions */}
+                        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--c-black)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--c-black)' }}>
+                                    👁 {article.views || 0} views
+                                </span>
+                            </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button
                                     onClick={handleLikeClick}
                                     style={{
-                                        background: isLiked ? '#ff4d4d' : 'transparent',
-                                        border: isLiked ? '2px solid #000' : '2px solid transparent',
+                                        background: hasLiked ? '#ff4d4d' : 'transparent',
+                                        border: hasLiked ? '2px solid #000' : '2px solid transparent',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '0.5rem',
@@ -204,16 +262,13 @@ export default function BlogPost() {
                                         fontWeight: 700,
                                         fontSize: '0.9rem',
                                         transition: 'all 0.2s',
-                                        boxShadow: isLiked ? '4px 4px 0 #000' : 'none',
-                                        color: isLiked ? '#fff' : '#000'
+                                        boxShadow: hasLiked ? '4px 4px 0 #000' : 'none'
                                     }}
                                 >
-                                    <Heart size={20} color={isLiked ? "#fff" : "#000"} fill={isLiked ? "#fff" : "none"} />
-                                    <span>{article.likes || 0}</span>
+                                    <Heart size={20} color={hasLiked ? "#000" : "#ff4d4d"} fill={hasLiked ? "#000" : "none"} />
+                                    <span>{likesCount} {likesCount === 1 ? 'like' : 'likes'}</span>
                                 </button>
-                            </div>
 
-                            <div>
                                 <button
                                     onClick={handleFavoriteClick}
                                     style={{
@@ -232,7 +287,7 @@ export default function BlogPost() {
                                         color: '#000'
                                     }}
                                 >
-                                    <Bookmark size={20} color=\"#000\" fill={isFavorite ? "#000" : "none"} />
+                                    <Bookmark size={20} color="#000" fill={isFavorite ? "#000" : "none"} />
                                     <span>{isFavorite ? 'Saved' : 'Save'}</span>
                                 </button>
                             </div>
