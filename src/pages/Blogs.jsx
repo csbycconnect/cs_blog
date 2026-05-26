@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArticleAPI } from '../lib/api';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimatedList from '../components/blog/AnimatedList';
