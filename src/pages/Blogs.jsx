@@ -98,28 +98,38 @@ export default function Blogs() {
         navigate(`/blog/${post.id}`);
     };
 
-    const handleLikeToggle = async (post, isLiking, callback) => {
-        if (!user) { setShowGate(true); return; }
+    const handleLikeToggle = async (postId) => {
+        if (!user) {
+            setShowAuthGate(true);
+            return;
+        }
+
+        // Find the current article state in your array first
+        const targetArticle = dbPosts.find(p => p.PK === postId);
+        if (!targetArticle) return;
+
+        // Calculate if they are adding a like (true) or removing a like (false)
+        const isLiking = !(targetArticle.likedBy?.includes(user.sub));
+
         try {
-            await ArticlesService.toggleLike(post.id, isLiking);
-            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
-            if (isLiking) {
-                if (!favs.some(f => f.id === post.id)) {
-                    favs.push({ ...post, likes: (post.likes || 0) + 1 });
+            // ✅ FIXED: Pass the true/false flag to your network service layer
+            await ArticlesService.toggleLike(postId, isLiking);
+
+            // Update local UI state safely
+            setDbPosts(prev => prev.map(p => {
+                if (p.PK === postId) {
+                    return {
+                        ...p,
+                        likes: p.likes + (isLiking ? 1 : -1),
+                        likedBy: isLiking
+                            ? [...(p.likedBy || []), user.sub]
+                            : (p.likedBy || []).filter(id => id !== user.sub)
+                    };
                 }
-            } else {
-                favs = favs.filter(f => f.id !== post.id);
-            }
-            localStorage.setItem('bb_favorites', JSON.stringify(favs));
-            // Update local state post optimistically
-            setDbPosts(current => current.map(p => {
-                if (p.id === post.id) return { ...p, likes: (p.likes || 0) + (isLiking ? 1 : -1) };
                 return p;
             }));
-            if (callback) callback(true);
         } catch (e) {
-            console.error("Failed to like post", e);
-            if (callback) callback(false);
+            console.error('Failed to toggle like:', e);
         }
     };
 

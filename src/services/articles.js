@@ -46,23 +46,23 @@ export const ArticlesService = {
         return await res.json();
     },
 
-    // Used by BlogPost.jsx to register metrics updates
+    // ✅ FIXED: Point directly to /api/articles and pass action inside the body
     async incrementViews(id) {
-        const res = await fetch(`${API_BASE}/views`, {
+        const res = await fetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id })
+            body: JSON.stringify({ action: "views", id })
         });
         if (!res.ok) throw new Error("Failed to increment page view metrics");
         return await res.json();
     },
 
-    // Used by BlogPost.jsx to record counter shifts
+    // ✅ FIXED: Point directly to /api/articles and pass action inside the body
     async toggleLike(id, isLiking) {
-        const res = await fetch(`${API_BASE}/like`, {
+        const res = await fetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, isLiking })
+            body: JSON.stringify({ action: "like", id, isLiking })
         });
         if (!res.ok) throw new Error("Failed to toggle engagement profile counts");
         return await res.json();
