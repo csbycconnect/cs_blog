@@ -1,38 +1,43 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
-  DynamoDBDocumentClient,
-  ScanCommand,
-  GetCommand,
-  UpdateCommand,
-  PutCommand,
-  DeleteCommand,
-  QueryCommand,
+    ScanCommand,
+    QueryCommand,
+    UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+import { dynamoDb } from "../aws/dynamodb.js";
+import { TABLES } from "../constants/tables.js";
 
-const dynamoDb = DynamoDBDocumentClient.from(client);
+/* ------------------------------------------------ */
+/* GET ALL ACCEPTED ARTICLES */
+/* ------------------------------------------------ */
 
-const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME;
+export async function getAcceptedArticles() {
+    const result = await dynamoDb.send(
+        new QueryCommand({
+            TableName: TABLES.ARTICLES,
+            IndexName: "StatusIndex",
+            KeyConditionExpression: "GSI3PK = :status",
+            ExpressionAttributeValues: {
+                ":status": "STATUS#accepted",
+            },
+        })
+    );
+
+    return result.Items || [];
+}
 
 /* ------------------------------------------------ */
 /* GET ALL ARTICLES */
 /* ------------------------------------------------ */
 
 export async function getAllArticles() {
-  const result = await dynamoDb.send(
-    new ScanCommand({
-      TableName: TABLE_NAME,
-    })
-  );
+    const result = await dynamoDb.send(
+        new ScanCommand({
+            TableName: TABLES.ARTICLES,
+        })
+    );
 
-  return result.Items || [];
+    return result.Items || [];
 }
 
 /* ------------------------------------------------ */
@@ -40,18 +45,18 @@ export async function getAllArticles() {
 /* ------------------------------------------------ */
 
 export async function getArticleById(id) {
-  const result = await dynamoDb.send(
-    new QueryCommand({
-      TableName: TABLE_NAME,
-      KeyConditionExpression: "PK = :pk AND SK = :sk",
-      ExpressionAttributeValues: {
-        ":pk": id,
-        ":sk": "ARTICLE",
-      },
-    })
-  );
+    const result = await dynamoDb.send(
+        new QueryCommand({
+            TableName: TABLES.ARTICLES,
+            KeyConditionExpression: "PK = :pk AND SK = :sk",
+            ExpressionAttributeValues: {
+                ":pk": id,
+                ":sk": "ARTICLE",
+            },
+        })
+    );
 
-  return result.Items?.[0] || null;
+    return result.Items?.[0] || null;
 }
 
 /* ------------------------------------------------ */
@@ -59,22 +64,22 @@ export async function getArticleById(id) {
 /* ------------------------------------------------ */
 
 export async function toggleLike(id, isLiking) {
-  await dynamoDb.send(
-    new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: {
-        PK: id,
-        SK: "ARTICLE",
-      },
-      UpdateExpression: "ADD #l :inc",
-      ExpressionAttributeNames: {
-        "#l": "likes",
-      },
-      ExpressionAttributeValues: {
-        ":inc": isLiking ? 1 : -1,
-      },
-    })
-  );
+    await dynamoDb.send(
+        new UpdateCommand({
+            TableName: TABLES.ARTICLES,
+            Key: {
+                PK: id,
+                SK: "ARTICLE",
+            },
+            UpdateExpression: "ADD #l :inc",
+            ExpressionAttributeNames: {
+                "#l": "likes",
+            },
+            ExpressionAttributeValues: {
+                ":inc": isLiking ? 1 : -1,
+            },
+        })
+    );
 }
 
 /* ------------------------------------------------ */
@@ -82,20 +87,20 @@ export async function toggleLike(id, isLiking) {
 /* ------------------------------------------------ */
 
 export async function incrementViews(id) {
-  await dynamoDb.send(
-    new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: {
-        PK: id,
-        SK: "ARTICLE",
-      },
-      UpdateExpression: "ADD #v :inc",
-      ExpressionAttributeNames: {
-        "#v": "views",
-      },
-      ExpressionAttributeValues: {
-        ":inc": 1,
-      },
-    })
-  );
+    await dynamoDb.send(
+        new UpdateCommand({
+            TableName: TABLES.ARTICLES,
+            Key: {
+                PK: id,
+                SK: "ARTICLE",
+            },
+            UpdateExpression: "ADD #v :inc",
+            ExpressionAttributeNames: {
+                "#v": "views",
+            },
+            ExpressionAttributeValues: {
+                ":inc": 1,
+            },
+        })
+    );
 }

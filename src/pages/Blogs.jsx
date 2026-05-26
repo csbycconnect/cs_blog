@@ -6,7 +6,7 @@ import AnimatedList from '../components/blog/AnimatedList';
 import BackButton from '../components/shared/BackButton';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
-
+import { ArticlesService } from '../services/articles';
 
 
 const READ_TIME_RANGES = [
@@ -36,32 +36,17 @@ export default function Blogs() {
     useEffect(() => {
         const fetchAcceptedArticles = async () => {
             try {
-                // Fetch from backend API instead of direct DynamoDB
-                const response = await fetch(`${window.location.origin}/api/articles`);
+                const items = await ArticlesService.getAccepted();
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch articles');
-                }
-
-                const items = await response.json();
-
-                // Only accepted articles
-                const acceptedItems = items.filter(
-                    item => item.status === 'accepted'
-                );
-
-                const formattedPosts = acceptedItems.map(item => ({
+                const formattedPosts = items.map(item => ({
                     ...item,
                     author: item.name || 'Anonymous',
                     avatar:
                         item.avatarUrl ||
-                        `https://api.dicebear.com/9.x/initials/svg?seed=${item.name || 'A'
-                        }&backgroundColor=0d2142&textColor=ffffff`,
+                        `https://api.dicebear.com/9.x/initials/svg?seed=${item.name || 'A'}&backgroundColor=0d2142&textColor=ffffff`,
                 }));
 
-                // Set DB posts only
                 setDbPosts(formattedPosts);
-
             } catch (error) {
                 console.error("Error fetching articles:", error);
                 setDbPosts([]);
@@ -116,7 +101,7 @@ export default function Blogs() {
     const handleLikeToggle = async (post, isLiking, callback) => {
         if (!user) { setShowGate(true); return; }
         try {
-            await ArticleAPI.toggleLike(post.id, isLiking);
+            await ArticlesService.toggleLike(post.id, isLiking);
             let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
             if (isLiking) {
                 if (!favs.some(f => f.id === post.id)) {
