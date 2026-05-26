@@ -1,5 +1,5 @@
 // api/users/profile.js
-import { dynamoDb } from "../lib/aws/dynamodb"; // Adjust this path if your dynamodb client file is in a different location
+import { dynamoDb } from "../lib/aws/dynamodb.js"; // ✅ Corrected path to climb out of api/users/
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 
 export default async function handler(req, res) {
