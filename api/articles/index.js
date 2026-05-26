@@ -120,7 +120,7 @@ export default async function handler(req, res) {
                 const filtered = allArticles.filter(item => item.status === status || item.GSI3PK === `STATUS#${status}`);
                 return res.status(200).json(filtered);
             }
-            
+                
             const articles = await getAcceptedArticles();
             return res.status(200).json(articles);
         } catch (error) {
