@@ -1,52 +1,70 @@
+// src/services/articles.jsx
 const API_BASE = "/api/articles";
 
 export const ArticlesService = {
+    // Used by Blogs.jsx and Home.jsx to pull public approved dispatches
     async getAccepted() {
         const res = await fetch(API_BASE);
-
-        if (!res.ok) {
-            throw new Error("Failed to fetch articles");
-        }
-
+        if (!res.ok) throw new Error("Failed to fetch accepted articles");
         return await res.json();
     },
 
+    // Used by BlogPost.jsx to read a single post layout
     async getById(id) {
-        const res = await fetch(`${API_BASE}/details?id=${id}`);
-
-        if (!res.ok) {
-            throw new Error("Failed to fetch article");
-        }
-
+        if (!id) return null;
+        const res = await fetch(`${API_BASE}?id=${id}`);
+        if (!res.ok) throw new Error("Failed to load article metadata");
         return await res.json();
     },
 
+    // Used by Admin.jsx to view specific categories (e.g., status=pending)
+    async fetchByStatus(status) {
+        const res = await fetch(`${API_BASE}?status=${status}`);
+        if (!res.ok) throw new Error(`Failed to load articles with status ${status}`);
+        return await res.json();
+    },
+
+    // Used by WriteForUs.jsx to safely submit draft dispatches
+    async create(payload) {
+        const res = await fetch(API_BASE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "create", ...payload })
+        });
+        if (!res.ok) throw new Error("Failed to submit draft publication");
+        return await res.json();
+    },
+
+    // Used by Admin.jsx to approve, reject, or archive posts
+    async updateStatus(id, status) {
+        const res = await fetch(API_BASE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "updateStatus", id, status })
+        });
+        if (!res.ok) throw new Error("Failed to update execution status metadata");
+        return await res.json();
+    },
+
+    // Used by BlogPost.jsx to register metrics updates
+    async incrementViews(id) {
+        const res = await fetch(`${API_BASE}/views`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id })
+        });
+        if (!res.ok) throw new Error("Failed to increment page view metrics");
+        return await res.json();
+    },
+
+    // Used by BlogPost.jsx to record counter shifts
     async toggleLike(id, isLiking) {
         const res = await fetch(`${API_BASE}/like`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                id,
-                isLiking,
-            }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, isLiking })
         });
-
-        if (!res.ok) {
-            throw new Error("Failed to toggle like");
-        }
-
+        if (!res.ok) throw new Error("Failed to toggle engagement profile counts");
         return await res.json();
-    },
-
-    async incrementViews(id) {
-        await fetch(`${API_BASE}/views`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ id }),
-        });
-    },
+    }
 };
