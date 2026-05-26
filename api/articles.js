@@ -1,6 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
+console.log("KEY:", process.env.AWS_ACCESS_KEY_ID);
+console.log("REGION:", process.env.AWS_REGION);
+
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION,
   credentials: {
@@ -21,10 +24,11 @@ export default async function handler(req, res) {
 
     res.status(200).json(result.Items || []);
   } catch (err) {
-    console.error(err);
+    console.error("FULL ERROR:", err);
 
     res.status(500).json({
-      error: err.message,
+      message: err.message,
+      stack: err.stack,
+      raw: JSON.stringify(err, null, 2)
     });
   }
-}
