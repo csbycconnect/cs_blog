@@ -1,8 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
-console.log("KEY:", process.env.AWS_ACCESS_KEY_ID);
-console.log("REGION:", process.env.AWS_REGION);
+console.log(
+  "ACCESS:",
+  JSON.stringify(process.env.AWS_ACCESS_KEY_ID)
+);
+
+console.log(
+  "SECRET:",
+  JSON.stringify(process.env.AWS_SECRET_ACCESS_KEY)
+);
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION,
