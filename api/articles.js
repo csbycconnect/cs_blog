@@ -32,3 +32,4 @@ export default async function handler(req, res) {
       raw: JSON.stringify(err, null, 2)
     });
   }
+}
