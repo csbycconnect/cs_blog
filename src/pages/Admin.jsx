@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import emailjs from '@emailjs/browser';
 import { useNavigate } from 'react-router-dom';
-import { ArticleAPI, UserAPI } from '../lib/api';
+import { ArticlesService } from '../services/articles';
+import { UserService } from '../services/users';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
@@ -59,7 +60,7 @@ export default function Admin() {
     const fetchPendingArticles = async () => {
         setLoadingReview(true);
         try {
-            const sortedItems = await ArticleAPI.fetchByStatus('pending');
+            const sortedItems = await ArticlesService.fetchByStatus('pending');
             setPendingArticles(sortedItems);
         } catch (error) {
             console.error("Error fetching articles:", error);
@@ -71,7 +72,7 @@ export default function Admin() {
     const fetchAcceptedBlogs = async () => {
         setLoadingBlogs(true);
         try {
-            const sortedItems = await ArticleAPI.fetchByStatus('accepted');
+            const sortedItems = await ArticlesService.getAccepted();
             setAcceptedBlogs(sortedItems);
         } catch (error) {
             console.error(error);
@@ -83,7 +84,7 @@ export default function Admin() {
     const fetchUsersList = async () => {
         setLoadingUsers(true);
         try {
-            const allUsers = await UserAPI.fetchAllUsers();
+            const allUsers = await UserService.fetchAll();
             setUsers(allUsers);
         } catch (error) {
             console.error(error);
@@ -95,7 +96,7 @@ export default function Admin() {
     const fetchAdminEvents = async () => {
         setLoadingAdminEvents(true);
         try {
-            const allEvs = await ArticleAPI.fetchAllEvents();
+            const allEvs = await ArticlesService.fetchAllEvents();
             setAdminEvents(allEvs);
         } catch (error) {
             console.error(error);
@@ -107,7 +108,7 @@ export default function Admin() {
     // Actions
     const handleAccept = async (article) => {
         try {
-            await ArticleAPI.acceptArticle(article.id);
+            await ArticlesService.updateStatus(article.id, 'accepted');
             setPendingArticles(prev => prev.filter(a => a.id !== article.id));
 
             // Send publication email via emailjs
@@ -133,7 +134,7 @@ export default function Admin() {
 
     const handleReject = async (article) => {
         try {
-            await ArticleAPI.rejectArticle(article.id);
+            await ArticlesService.rejectArticle(article.id);
             setPendingArticles(prev => prev.filter(a => a.id !== article.id));
 
             // Send rejection email via emailjs using secondary credentials
@@ -160,7 +161,7 @@ export default function Admin() {
     const handleSoftDelete = async (id) => {
         if (!window.confirm("Are you sure you want to hide/archive this article?")) return;
         try {
-            await ArticleAPI.softDeleteArticle(id);
+            await ArticlesService.softDeleteArticle(id);
             setAcceptedBlogs(prev => prev.filter(a => a.id !== id));
         } catch (e) {
             alert("Failed to hide article.");
@@ -170,7 +171,7 @@ export default function Admin() {
     const handleHardDelete = async (id) => {
         if (!window.confirm("PERMANENTLY delete this article? This cannot be undone.")) return;
         try {
-            await ArticleAPI.hardDeleteArticle(id);
+            await ArticlesService.hardDeleteArticle(id);
             setAcceptedBlogs(prev => prev.filter(a => a.id !== id));
         } catch (e) {
             alert("Failed to delete article.");
@@ -180,7 +181,7 @@ export default function Admin() {
     const handleEventSubmit = async (e) => {
         e.preventDefault();
         try {
-            await ArticleAPI.createEvent({
+            await ArticlesService.createEvent({
                 date: eventForm.date,
                 department: eventForm.department,
                 title: eventForm.title,
@@ -494,7 +495,7 @@ export default function Admin() {
                                                                 const g = document.getElementById(`gallery-input-${ev.id}`).value;
                                                                 const geo = document.getElementById(`geotag-input-${ev.id}`).value;
                                                                 try {
-                                                                    await ArticleAPI.updateEventMedia(ev.id, { posterUrl: p, galleryUrls: g, geoTagUrls: geo });
+                                                                    await ArticlesService.updateEventMedia(ev.id, { posterUrl: p, galleryUrls: g, geoTagUrls: geo });
                                                                     alert("Media links saved successfully.");
                                                                     fetchAdminEvents();
                                                                 } catch (e) {

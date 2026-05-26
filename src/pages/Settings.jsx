@@ -99,12 +99,6 @@ export default function Settings() {
                                     checked={prefs.dispatchAlerts}
                                     onChange={() => handleToggle('dispatchAlerts')}
                                 />
-                                <ToggleRow
-                                    title="Marketing Offers"
-                                    description="Occasional updates from our university partners and sponsors."
-                                    checked={prefs.marketing}
-                                    onChange={() => handleToggle('marketing')}
-                                />
                             </div>
                         </div>
                     </AnimateOnScroll>

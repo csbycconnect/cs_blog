@@ -8,6 +8,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../services/articles';
+import { EmailService } from '../services/email';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import ShuffleText from '../components/shared/ShuffleText';
@@ -186,6 +187,17 @@ export default function WriteForUs() {
                 authorId: user?.sub // include cognito user id
             };
             await ArticlesService.create(payload);
+
+            try {
+                await EmailService.sendSubmissionConfirmation({
+                    to_name: form.name.trim(),
+                    to_email: user?.email || '',
+                    article_title: form.title.trim(),
+                    read_time: readTime
+                });
+            } catch (emailError) {
+                console.error('Email confirmation failed:', emailError);
+            }
 
             // Remove draft if it was submitted
             if (draftIndex !== null) {

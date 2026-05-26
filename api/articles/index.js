@@ -1,6 +1,6 @@
 // api/articles/index.js
 import { dynamoDb } from "../lib/aws/dynamodb.js";
-import { PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { 
     getAcceptedArticles, 
     getAllArticles, 
@@ -74,6 +74,34 @@ export default async function handler(req, res) {
                 }));
 
                 return res.status(201).json(itemPayload);
+            }
+
+            if (action === "status") {
+                if (!body.id || !body.status) return res.status(400).json({ error: "Missing required parameters id or status" });
+
+                await dynamoDb.send(new UpdateCommand({
+                    TableName: TABLES.ARTICLES || "bb_articles",
+                    Key: { PK: body.id, SK: "ARTICLE" },
+                    UpdateExpression: "SET #s = :s, GSI3PK = :gpk",
+                    ExpressionAttributeNames: { "#s": "status" },
+                    ExpressionAttributeValues: {
+                        ":s": body.status,
+                        ":gpk": `STATUS#${body.status}`
+                    }
+                }));
+
+                return res.status(200).json({ success: true });
+            }
+
+            if (action === "delete") {
+                if (!body.id) return res.status(400).json({ error: "Missing required parameter id" });
+
+                await dynamoDb.send(new DeleteCommand({
+                    TableName: TABLES.ARTICLES || "bb_articles",
+                    Key: { PK: body.id, SK: "ARTICLE" }
+                }));
+
+                return res.status(200).json({ success: true });
             }
 
             // Administrative Moderation Actions (Approve/Reject/Archive)
