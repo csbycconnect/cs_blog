@@ -34,147 +34,106 @@ const SORT_OPTIONS = [
 ];
 
 export default function Blogs() {
-    const [dbPosts, setDbPosts] = useState([]);
+    const [posts, setPosts] = useState([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
+    const [error, setError] = useState(null);
 
     const [search, setSearch] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
-
     const [selectedAuthor, setSelectedAuthor] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedReadTime, setSelectedReadTime] = useState(null);
-
     const [sortBy, setSortBy] = useState('recent');
-
-    const { user } = useAuth();
     const [showGate, setShowGate] = useState(false);
 
+    const { user } = useAuth();
     const navigate = useNavigate();
 
-    /* ------------------------------------------------ */
-    /* FETCH ARTICLES */
-    /* ------------------------------------------------ */
-
     useEffect(() => {
-        const fetchAcceptedArticles = async () => {
+        const loadAcceptedArticles = async () => {
+            setLoadingPosts(true);
+            setError(null);
+
             try {
                 const items = await ArticlesService.getAccepted();
-
-                const formattedPosts = items.map(item => ({
+                const normalized = (items || []).map(item => ({
                     ...item,
-
-                    // Normalize author field
                     author: item.name || item.authorName || 'Anonymous',
-
-                    // Safe avatar fallback
-                    avatar:
-                        item.avatarUrl ||
-                        `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
-                            item.name || item.authorName || 'A'
-                        )}&backgroundColor=0d2142&textColor=ffffff`,
+                    excerpt: item.excerpt || item.subtitle || '',
+                    date: item.date || item.createdAt || '',
+                    readTime: item.readTime || '1 min read',
+                    avatar: item.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(item.name || item.authorName || 'A')}&backgroundColor=0d2142&textColor=ffffff`,
                 }));
 
-                setDbPosts(formattedPosts);
-            } catch (error) {
-                console.error('Error fetching articles:', error);
-                setDbPosts([]);
+                setPosts(normalized);
+            } catch (err) {
+                console.error('Failed to load accepted articles:', err);
+                setError(err?.message || 'Unable to load articles.');
+                setPosts([]);
             } finally {
                 setLoadingPosts(false);
             }
         };
 
-        fetchAcceptedArticles();
+        loadAcceptedArticles();
     }, []);
 
-    /* ------------------------------------------------ */
-    /* FILTER DATA */
-    /* ------------------------------------------------ */
+    const authors = useMemo(
+        () => [...new Set(posts.map(p => p.author).filter(Boolean))],
+        [posts]
+    );
 
-    const authors = [
-        ...new Set(
-            dbPosts
-                .map(p => p.author)
-                .filter(Boolean)
-        )
-    ];
+    const categories = useMemo(
+        () => [...new Set(posts.map(p => p.category).filter(Boolean))],
+        [posts]
+    );
 
-    const categories = [
-        ...new Set(
-            dbPosts
-                .map(p => p.category)
-                .filter(Boolean)
-        )
-    ];
+    const filteredPosts = useMemo(() => {
+        let filtered = [...posts];
 
-    const allTags = [
-        ...new Set(
-            dbPosts.flatMap(p =>
-                Array.isArray(p.tags) ? p.tags : []
-            )
-        )
-    ];
-
-    const filtered = useMemo(() => {
-        let posts = [...dbPosts];
-
-        // Search
         if (search.trim()) {
-            const q = search.toLowerCase();
-
-            posts = posts.filter(p =>
-                (p.title || '').toLowerCase().includes(q) ||
-                (p.excerpt || '').toLowerCase().includes(q) ||
-                (p.content || '').toLowerCase().includes(q)
+            const query = search.toLowerCase();
+            filtered = filtered.filter(post =>
+                (post.title || '').toLowerCase().includes(query) ||
+                (post.excerpt || '').toLowerCase().includes(query) ||
+                (post.content || '').toLowerCase().includes(query)
             );
         }
 
-        // Author filter
         if (selectedAuthor) {
-            posts = posts.filter(p => p.author === selectedAuthor);
+            filtered = filtered.filter(post => post.author === selectedAuthor);
         }
 
-        // Category filter
         if (selectedCategory) {
-            posts = posts.filter(p => p.category === selectedCategory);
+            filtered = filtered.filter(post => post.category === selectedCategory);
         }
 
-        // Read time filter
         if (selectedReadTime !== null) {
-            posts = posts.filter(p =>
-                READ_TIME_RANGES[selectedReadTime].fn(p.readTime)
-            );
+            filtered = filtered.filter(post => READ_TIME_RANGES[selectedReadTime].fn(post.readTime));
         }
 
-        // Sorting
         if (sortBy === 'views') {
-            posts.sort((a, b) => (b.views || 0) - (a.views || 0));
+            filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
         }
 
         if (sortBy === 'comments') {
-            posts.sort((a, b) => (b.comments || 0) - (a.comments || 0));
+            filtered.sort((a, b) => (b.comments || 0) - (a.comments || 0));
         }
 
         if (sortBy === 'recent') {
-            posts.sort(
-                (a, b) =>
-                    new Date(b.createdAt || 0) -
-                    new Date(a.createdAt || 0)
+            filtered.sort(
+                (a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
             );
         }
 
-        return posts;
-    }, [
-        dbPosts,
-        search,
+        return filtered;
+    }, [posts, search, selectedAuthor, selectedCategory, selectedReadTime, sortBy]);
+
+    const activeFilterCount = [
         selectedAuthor,
         selectedCategory,
-        selectedReadTime,
-        sortBy
-    ]);
-
-    /* ------------------------------------------------ */
-    /* CLEAR FILTERS */
-    /* ------------------------------------------------ */
+        selectedReadTime !== null ? true : null,
+    ].filter(Boolean).length + (sortBy !== 'recent' ? 1 : 0);
 
     const clearAll = () => {
         setSearch('');
@@ -184,30 +143,19 @@ export default function Blogs() {
         setSortBy('recent');
     };
 
-    const activeFilterCount =
-        [
-            selectedAuthor,
-            selectedCategory,
-            selectedReadTime !== null ? true : null
-        ].filter(Boolean).length +
-        (sortBy !== 'recent' ? 1 : 0);
-
-    /* ------------------------------------------------ */
-    /* POST SELECT */
-    /* ------------------------------------------------ */
-
     const handlePostSelect = (post) => {
         if (!user) {
             setShowGate(true);
             return;
         }
 
-        navigate(`/blog/${post.id}`);
-    };
+        if (!post.id) {
+            console.error('Missing article id for navigation', post);
+            return;
+        }
 
-    /* ------------------------------------------------ */
-    /* LIKE TOGGLE */
-    /* ------------------------------------------------ */
+        navigate(`/blog/${encodeURIComponent(post.id)}`);
+    };
 
     const handleLikeToggle = async (postId) => {
         if (!user) {
@@ -215,365 +163,180 @@ export default function Blogs() {
             return;
         }
 
-        // ✅ FIXED: Use normalized ID
-        const targetArticle = dbPosts.find(
-            p => p.id === postId
-        );
-
-        if (!targetArticle) {
-            console.error('Article not found:', postId);
+        const existing = posts.find(post => post.id === postId);
+        if (!existing) {
+            console.error('Article not found for like toggle:', postId);
             return;
         }
 
-        const currentLikedBy = targetArticle.likedBy || [];
+        const isLiking = !((existing.likedBy || []).includes(user.sub));
 
-        // Determine action
-        const isLiking = !currentLikedBy.includes(user.sub);
+        setPosts(prev => prev.map(post =>
+            post.id === postId
+                ? {
+                    ...post,
+                    likes: Math.max(0, (post.likes || 0) + (isLiking ? 1 : -1)),
+                    likedBy: isLiking ? [...new Set([...(post.likedBy || []), user.sub])] : (post.likedBy || []).filter(id => id !== user.sub)
+                }
+                : post
+        ));
 
         try {
-            // Backend update
             await ArticlesService.toggleLike(postId, isLiking);
-
-            // Optimistic UI update
-            setDbPosts(prev =>
-                prev.map(p => {
-                    // ✅ FIXED: Use ID instead of PK
-                    if (p.id === postId) {
-                        const updatedLikedBy = isLiking
-                            ? [...(p.likedBy || []), user.sub]
-                            : (p.likedBy || []).filter(
-                                  id => id !== user.sub
-                              );
-
-                        return {
-                            ...p,
-
-                            likes: Math.max(
-                                0,
-                                (p.likes || 0) +
-                                    (isLiking ? 1 : -1)
-                            ),
-
-                            likedBy: updatedLikedBy,
-                        };
-                    }
-
-                    return p;
-                })
-            );
-        } catch (e) {
-            console.error('Failed to toggle like:', e);
+        } catch (err) {
+            console.error('Like toggle failed:', err);
         }
     };
 
     return (
-        <div
-            style={{
-                position: 'relative',
-                minHeight: '100vh',
-                overflow: 'hidden'
-            }}
-        >
+        <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
             {showGate && (
-                <AuthGateModal
-                    action="view and comment on articles"
-                    onClose={() => setShowGate(false)}
-                />
+                <AuthGateModal action="view and comment on articles" onClose={() => setShowGate(false)} />
             )}
 
             <Navbar />
 
             <main className="blog-page-container">
-
                 <BackButton />
 
-                {/* ── Header ── */}
-
                 <div className="blog-page-header">
-                    <h1
-                        className="serif-heading"
-                        style={{ color: 'var(--c-white)' }}
-                    >
-                        All Posts
-                    </h1>
-
-                    <p
-                        style={{
-                            fontFamily: 'var(--font-mono)',
-                            color: 'rgba(255,255,255,0.55)',
-                            fontSize: '0.85rem',
-                            marginTop: '0.5rem'
-                        }}
-                    >
-                        {loadingPosts
-                            ? 'Loading dispatches...'
-                            : `${filtered.length} of ${dbPosts.length} dispatches`}
-                    </p>
+                    <div>
+                        <h1 className="serif-heading" style={{ color: 'var(--c-white)' }}>
+                            All Posts
+                        </h1>
+                        <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                            {loadingPosts ? 'Loading dispatches...' : `${filteredPosts.length} of ${posts.length} dispatches`}
+                        </p>
+                    </div>
+                    {error && (
+                        <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255, 77, 77, 0.15)', border: '1px solid #ff4d4d', color: '#fff', borderRadius: '8px' }}>
+                            {error}
+                        </div>
+                    )}
                 </div>
 
-                {/* ── Search + Filter ── */}
-
                 <div className="blog-topbar">
-
                     <div className="blog-search-bar-container">
-
-                        <span className="blog-search-icon">
-                            ⌕
-                        </span>
-
+                        <span className="blog-search-icon">⌕</span>
                         <input
                             id="blog-search"
                             type="text"
                             className="blog-search-input"
                             placeholder="Search by title or content..."
                             value={search}
-                            onChange={e =>
-                                setSearch(e.target.value)
-                            }
+                            onChange={e => setSearch(e.target.value)}
                         />
-
                         {search && (
-                            <button
-                                className="blog-search-clear"
-                                onClick={() => setSearch('')}
-                            >
+                            <button className="blog-search-clear" onClick={() => setSearch('')}>
                                 ✕
                             </button>
                         )}
                     </div>
 
                     <button
-                        className={`blog-filter-toggle-btn ${
-                            sidebarOpen ? 'open' : ''
-                        }`}
-                        onClick={() =>
-                            setSidebarOpen(v => !v)
-                        }
-                        aria-label={
-                            sidebarOpen
-                                ? 'Close filters'
-                                : 'Open filters'
-                        }
+                        className={`blog-filter-toggle-btn ${sidebarOpen ? 'open' : ''}`}
+                        onClick={() => setSidebarOpen(v => !v)}
+                        aria-label={sidebarOpen ? 'Close filters' : 'Open filters'}
                     >
-                        <span className="blog-filter-toggle-icon">
-                            {sidebarOpen ? '✕' : '⊞'}
-                        </span>
-
+                        <span className="blog-filter-toggle-icon">{sidebarOpen ? '✕' : '⊞'}</span>
                         <span>Filters</span>
-
-                        {activeFilterCount > 0 && (
-                            <span className="blog-filter-badge">
-                                {activeFilterCount}
-                            </span>
-                        )}
+                        {activeFilterCount > 0 && <span className="blog-filter-badge">{activeFilterCount}</span>}
                     </button>
                 </div>
 
-                {/* ── Main Layout ── */}
-
                 <div className="blog-content-area">
-
-                    {/* Sidebar */}
-
-                    <aside
-                        className={`blog-filter-sidebar ${
-                            sidebarOpen
-                                ? 'sidebar-open'
-                                : ''
-                        }`}
-                    >
+                    <aside className={`blog-filter-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
                         <div className="blog-sidebar-header">
-
-                            <span
-                                style={{
-                                    fontFamily:
-                                        'var(--font-mono)',
-                                    fontWeight: 700,
-                                    fontSize: '0.8rem',
-                                    textTransform:
-                                        'uppercase',
-                                    letterSpacing:
-                                        '0.1em',
-                                    color:
-                                        'var(--c-black)'
-                                }}
-                            >
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--c-black)' }}>
                                 Filters
                             </span>
-
                             {activeFilterCount > 0 && (
-                                <button
-                                    className="blog-sidebar-clear-all"
-                                    onClick={clearAll}
-                                >
+                                <button className="blog-sidebar-clear-all" onClick={clearAll}>
                                     Clear all
                                 </button>
                             )}
                         </div>
 
-                        {/* Author */}
-
                         <div className="blog-sidebar-group">
-
-                            <span className="blog-sidebar-label">
-                                Author
-                            </span>
-
+                            <span className="blog-sidebar-label">Author</span>
                             <div className="blog-filter-chips">
-                                {authors.map(a => (
+                                {authors.map(author => (
                                     <button
-                                        key={a}
-                                        className={`blog-filter-chip ${
-                                            selectedAuthor === a
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        onClick={() =>
-                                            setSelectedAuthor(
-                                                selectedAuthor === a
-                                                    ? null
-                                                    : a
-                                            )
-                                        }
+                                        key={author}
+                                        className={`blog-filter-chip ${selectedAuthor === author ? 'active' : ''}`}
+                                        onClick={() => setSelectedAuthor(selectedAuthor === author ? null : author)}
                                     >
-                                        {a}
+                                        {author}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Category */}
-
                         <div className="blog-sidebar-group">
-
-                            <span className="blog-sidebar-label">
-                                Category
-                            </span>
-
+                            <span className="blog-sidebar-label">Category</span>
                             <div className="blog-filter-chips">
-                                {categories.map(c => (
+                                {categories.map(category => (
                                     <button
-                                        key={c}
-                                        className={`blog-filter-chip ${
-                                            selectedCategory === c
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        onClick={() =>
-                                            setSelectedCategory(
-                                                selectedCategory === c
-                                                    ? null
-                                                    : c
-                                            )
-                                        }
+                                        key={category}
+                                        className={`blog-filter-chip ${selectedCategory === category ? 'active' : ''}`}
+                                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
                                     >
-                                        {c}
+                                        {category}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Read Time */}
-
                         <div className="blog-sidebar-group">
-
-                            <span className="blog-sidebar-label">
-                                Read Time
-                            </span>
-
+                            <span className="blog-sidebar-label">Read Time</span>
                             <div className="blog-filter-chips">
-                                {READ_TIME_RANGES.map(
-                                    (r, i) => (
-                                        <button
-                                            key={r.label}
-                                            className={`blog-filter-chip ${
-                                                selectedReadTime === i
-                                                    ? 'active'
-                                                    : ''
-                                            }`}
-                                            onClick={() =>
-                                                setSelectedReadTime(
-                                                    selectedReadTime === i
-                                                        ? null
-                                                        : i
-                                                )
-                                            }
-                                        >
-                                            {r.label}
-                                        </button>
-                                    )
-                                )}
+                                {READ_TIME_RANGES.map((range, index) => (
+                                    <button
+                                        key={range.label}
+                                        className={`blog-filter-chip ${selectedReadTime === index ? 'active' : ''}`}
+                                        onClick={() => setSelectedReadTime(selectedReadTime === index ? null : index)}
+                                    >
+                                        {range.label}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
-                        {/* Sort */}
-
                         <div className="blog-sidebar-group">
-
-                            <span className="blog-sidebar-label">
-                                Sort By
-                            </span>
-
+                            <span className="blog-sidebar-label">Sort By</span>
                             <div className="blog-filter-chips">
-                                {SORT_OPTIONS.map(s => (
+                                {SORT_OPTIONS.map(option => (
                                     <button
-                                        key={s.key}
-                                        className={`blog-filter-chip ${
-                                            sortBy === s.key
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        onClick={() =>
-                                            setSortBy(s.key)
-                                        }
+                                        key={option.key}
+                                        className={`blog-filter-chip ${sortBy === option.key ? 'active' : ''}`}
+                                        onClick={() => setSortBy(option.key)}
                                     >
-                                        {s.label}
+                                        {option.label}
                                     </button>
                                 ))}
                             </div>
                         </div>
                     </aside>
 
-                    {/* Blog List */}
-
-                    <div
-                        className={`blog-list-area ${
-                            sidebarOpen
-                                ? 'sidebar-offset'
-                                : ''
-                        }`}
-                    >
-                        {filtered.length === 0 ? (
+                    <div className={`blog-list-area ${sidebarOpen ? 'sidebar-offset' : ''}`}>
+                        {loadingPosts ? (
+                            <div style={{ color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)' }}>
+                                Loading accepted articles...
+                            </div>
+                        ) : filteredPosts.length === 0 ? (
                             <div className="blog-no-results">
-
-                                <p>
-                                    No dispatches match
-                                    your search.
-                                </p>
-
-                                <button
-                                    className="blog-filter-clear-all"
-                                    onClick={clearAll}
-                                    style={{
-                                        marginTop: '1rem'
-                                    }}
-                                >
+                                <p>No dispatches match your search.</p>
+                                <button className="blog-filter-clear-all" onClick={clearAll} style={{ marginTop: '1rem' }}>
                                     Clear Filters
                                 </button>
                             </div>
                         ) : (
                             <AnimatedList
-                                items={filtered}
-                                onItemSelect={
-                                    handlePostSelect
-                                }
-                                onLikeToggle={
-                                    handleLikeToggle
-                                }
+                                items={filteredPosts}
+                                onItemSelect={handlePostSelect}
+                                onLikeToggle={handleLikeToggle}
                                 showGradients={false}
-                                enableArrowNavigation={
-                                    true
-                                }
+                                enableArrowNavigation={true}
                                 displayScrollbar={false}
                             />
                         )}
@@ -581,14 +344,7 @@ export default function Blogs() {
                 </div>
             </main>
 
-            <div
-                style={{
-                    position: 'relative',
-                    zIndex: 10
-                }}
-            >
-                <Footer />
-            </div>
+            <Footer />
         </div>
     );
 }
