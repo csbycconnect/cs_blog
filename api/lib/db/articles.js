@@ -116,3 +116,21 @@ export async function incrementViews(id) {
         })
     );
 }
+
+/**
+ * PRODUCTION GRADE: Instantly fetches pending submissions for a specific club 
+ * without doing a slow, table-wide database scan!
+ */
+export async function getPendingSubmissionsByClub(clubName = "General") {
+    const command = new QueryCommand({
+        TableName: TABLES.ARTICLES,
+        IndexName: "GSI1", // References the secondary index rule built on AWS
+        KeyConditionExpression: "GSI1PK = :gsi1pk",
+        ExpressionAttributeValues: {
+            ":gsi1pk": `STATUS#pending#CLUB#${clubName}`
+        }
+    });
+
+    const response = await dynamoDb.send(command);
+    return response.Items || [];
+}

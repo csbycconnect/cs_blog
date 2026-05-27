@@ -169,52 +169,62 @@ export default function WriteForUs() {
         return e;
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const allTouched = Object.fromEntries(Object.keys(form).map(k => [k, true]));
-        setTouched(allTouched);
-        const errs = validate();
-        setErrors(errs);
-        if (Object.keys(errs).length) return;
-        setSubmitting(true);
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    const allTouched = Object.fromEntries(Object.keys(form).map(k => [k, true]));
+    setTouched(allTouched);
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+    setSubmitting(true);
+    
+    try {
+        // Sanitize rich text HTML to keep things clean and secure
+        const cleanHtml = DOMPurify.sanitize(editorHtml);
+        
+        // 🚀 STEP 1 FIX: Aligned perfectly to match your Step 2 Backend API keys
+        const payload = {
+            title: form.title.trim(),
+            subtitle: form.excerpt.trim(), // Mapping excerpt as subtitle for card presentation
+            content: cleanHtml,            // Passing the clean string into 'content'
+            category: form.category.trim(),
+            club: form.club || "General",
+            tags: form.tags ? form.tags.split(',').map(t => t.trim()) : [],
+            authorName: user?.name || form.name || "Anonymous",
+            authorSub: user?.sub || "GUEST", // Cognito Identity UUID
+            authorEmail: user?.email || form.email || null
+        };
+
+        // Fire off to your production backend route!
+        await ArticlesService.create(payload);
+
+        // Confirmation Email Dispatch
         try {
-            // sanitize HTML and attach to payload
-            const cleanHtml = DOMPurify.sanitize(editorHtml);
-            const payload = {
-                ...form,
-                club: form.club,
-                contentHTML: cleanHtml,
-                authorId: user?.sub // include cognito user id
-            };
-            await ArticlesService.create(payload);
-
-            try {
-                await EmailService.sendSubmissionConfirmation({
-                    to_name: form.name.trim(),
-                    to_email: user?.email || '',
-                    article_title: form.title.trim(),
-                    read_time: readTime
-                });
-            } catch (emailError) {
-                console.error('Email confirmation failed:', emailError);
-            }
-
-            // Remove draft if it was submitted
-            if (draftIndex !== null) {
-                const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-                drafts.splice(Number(draftIndex), 1);
-                localStorage.setItem('bb_drafts', JSON.stringify(drafts));
-            }
-            // Clear autosave on success
-            localStorage.removeItem('bb_autosave');
-            setSubmitted(true);
-        } catch (error) {
-            console.error("Submission error:", error);
-            alert("Failed to submit article. Please try again later. Make sure AWS configuration is valid.");
-        } finally {
-            setSubmitting(false);
+            await EmailService.sendSubmissionConfirmation({
+                to_name: (user?.name || form.name).split(' ')[0],
+                to_email: user?.email || form.email || '',
+                article_title: form.title.trim(),
+                read_time: readTime
+            });
+        } catch (emailError) {
+            console.error('Email notification failed to dispatch:', emailError);
         }
-    };
+
+        // Clean up local drafting caches on success
+        if (draftIndex !== null) {
+            const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
+            drafts.splice(Number(draftIndex), 1);
+            localStorage.setItem('bb_drafts', JSON.stringify(drafts));
+        }
+        localStorage.removeItem('bb_autosave');
+        setSubmitted(true);
+    } catch (error) {
+        console.error("Submission error:", error);
+        alert("Failed to submit article. Please verify your AWS backend configuration connection.");
+    } finally {
+        setSubmitting(false);
+    }
+};
 
     const handleSaveDraft = () => {
         const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');

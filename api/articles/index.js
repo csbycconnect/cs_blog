@@ -48,30 +48,49 @@ export default async function handler(req, res) {
 
             // Submit Draft Dispatches (Write For Us workflow)
             if (action === "create") {
-                const articleId = `ART#${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+                // 1. Generate a robust, collision-resistant unique ID block
+                const uniqueShortId = Math.random().toString(36).substring(2, 11).toUpperCase();
+                const articleId = `ART_${uniqueShortId}`;
                 const timestamp = new Date().toISOString();
 
+                // 2. Build structured validation lookups
                 const itemPayload = {
-                    PK: articleId,
-                    SK: "ARTICLE",
+                    // Core Access Keys
+                    PK: `ARTICLE#${articleId}`,
+                    SK: "METADATA",
+
+                    // Data Attributes
                     id: articleId,
-                    title: body.title,
-                    subtitle: body.subtitle || "",
-                    content: body.content,
-                    club: body.club,
+                    title: body.title ? body.title.trim() : "Untitled Dispatch",
+                    subtitle: body.subtitle ? body.subtitle.trim() : "",
+                    content: body.content || "",
+                    club: body.club || "General",
+                    category: body.category || "Article",
+
+                    // Relational Tracking Attributes
                     authorName: body.authorName || "Anonymous",
-                    authorSub: body.authorSub,
-                    status: "pending",
-                    GSI3PK: "STATUS#pending",
-                    GSI3SK: timestamp,
+                    authorSub: body.authorSub || "GUEST",
+                    authorEmail: body.authorEmail || null,
+                    status: "pending", // Baseline status flag
+
+                    // Global Secondary Index 1 (Compound Query Optimization)
+                    // Allows filtering by status and club simultaneously in 1 ultra-fast query!
+                    GSI1PK: `STATUS#pending#CLUB#${body.club || "General"}`,
+                    GSI1SK: timestamp,
+
+                    // Operational Metrics Counters
                     views: 0,
                     likes: 0,
-                    createdAt: timestamp
+                    createdAt: timestamp,
+                    updatedAt: timestamp
                 };
 
+                // 3. Dispatch atomic transactional package write command to AWS
                 await dynamoDb.send(new PutCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
-                    Item: itemPayload
+                    Item: itemPayload,
+                    // Production safety check: Ensures we never accidentally overwrite an existing article
+                    ConditionExpression: "attribute_not_exists(PK)"
                 }));
 
                 return res.status(201).json(itemPayload);
@@ -93,7 +112,7 @@ export default async function handler(req, res) {
 
                 if (body.status === "accepted") {
                     try {
-                        const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION});
+                        const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION });
                         const listUsersCmd = new ListUsersCommand({
                             UserPoolId: process.env.COGNITO_USER_POOL_ID
                         });
