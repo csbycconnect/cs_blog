@@ -193,36 +193,39 @@ export default async function handler(req, res) {
                     console.warn("[UpdateStatus Action] Failed to fetch article for email context:", fetchErr.message);
                 }
 
-                // Build UpdateExpression and values dynamically based on status
-                let updateExpression = "SET #s = :s, GSI3PK = :gpk, updatedAt = :updatedAt";
+                // Ensure rejectionReason is never undefined
+                const sanitizedRejectionReason = typeof rejectionReason === 'undefined' ? null : (rejectionReason === '' ? null : String(rejectionReason).trim());
+
+                // Compute TTL only for rejected/declined states, otherwise null
+                const ttl = (status === 'rejected' || status === 'declined') ? Math.floor(Date.now() / 1000) + 518400 : null;
+
+                // Log core debug payload for troubleshooting malformed IDs / payloads
+                console.log('[UpdateStatus Action] Preparing update', { partitionKey, id, status, rejectionReason: sanitizedRejectionReason, ttl });
+
+                // Build a single UpdateExpression that explicitly maps the reserved word `status` to #s
+                const updateExpression = 'SET #s = :s, rejectionReason = :rr, ttl = :ttl, GSI3PK = :gpk, updatedAt = :updatedAt';
+                const expressionNames = { '#s': 'status' };
                 const expressionValues = {
-                    ":s": status,
-                    ":gpk": `STATUS#${status}`,
-                    ":updatedAt": new Date().toISOString()
+                    ':s': status,
+                    ':rr': sanitizedRejectionReason,
+                    ':ttl': ttl,
+                    ':gpk': `STATUS#${status}`,
+                    ':updatedAt': new Date().toISOString()
                 };
-                const expressionNames = { "#s": "status" };
 
-                // If rejected, add TTL (6 days from now) and rejectionReason
-                if (status === "rejected" || status === "declined") {
-                    const ttl = Math.floor(Date.now() / 1000) + 518400; // 6 days
-                    updateExpression += ", ttl = :ttl";
-                    expressionValues[":ttl"] = ttl;
-
-                    // Include rejection reason if provided
-                    if (rejectionReason) {
-                        updateExpression += ", rejectionReason = :reason";
-                        expressionValues[":reason"] = String(rejectionReason).trim();
-                    }
+                // 1. Save state update directly to DynamoDB (wrap in try/catch for clearer logging)
+                try {
+                    await dynamoDb.send(new UpdateCommand({
+                        TableName: TABLES.ARTICLES || 'bb_articles',
+                        Key: { PK: partitionKey, SK: 'METADATA' },
+                        UpdateExpression: updateExpression,
+                        ExpressionAttributeNames: expressionNames,
+                        ExpressionAttributeValues: expressionValues
+                    }));
+                } catch (dbErr) {
+                    console.error('[UpdateStatus] DynamoDB UpdateCommand failed:', dbErr.message || dbErr);
+                    return res.status(500).json({ error: 'Failed to update article status', detail: dbErr.message || String(dbErr) });
                 }
-
-                // 1. Save state update directly to DynamoDB
-                await dynamoDb.send(new UpdateCommand({
-                    TableName: TABLES.ARTICLES || "bb_articles",
-                    Key: { PK: partitionKey, SK: "METADATA" },
-                    UpdateExpression: updateExpression,
-                    ExpressionAttributeNames: expressionNames,
-                    ExpressionAttributeValues: expressionValues
-                }));
 
                 // 2. Dispatch submission status update via your template updates
                 const recipientEmail = body.email || body.authorEmail || article?.authorEmail;
