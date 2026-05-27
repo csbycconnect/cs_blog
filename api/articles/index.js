@@ -202,29 +202,22 @@ export default async function handler(req, res) {
                 // Log core debug payload for troubleshooting malformed IDs / payloads
                 console.log('[UpdateStatus Action] Preparing update', { partitionKey, id, status, rejectionReason: sanitizedRejectionReason, ttl });
 
-                // Build UpdateExpression and values dynamically to avoid sending undefined values
-                // Alias both reserved attributes (status and ttl) to avoid reserved word conflicts
-                const expressionNames = { '#s': 'status', '#t': 'ttl' };
+                // Build a single UpdateExpression that aliases BOTH 'status' AND 'ttl'
+                // Alias `status` to #s and `ttl` to #t
+                const updateExpression = 'SET #s = :s, rejectionReason = :rr, #t = :t, GSI3PK = :gpk, updatedAt = :updatedAt';
+                
+                const expressionNames = { 
+                    '#s': 'status',
+                    '#t': 'ttl' // Alias 'ttl' to '#t'
+                };
+                
                 const expressionValues = {
                     ':s': status,
+                    ':rr': sanitizedRejectionReason,
+                    ':t': ttl, // Use :t in values
                     ':gpk': `STATUS#${status}`,
                     ':updatedAt': new Date().toISOString()
                 };
-
-                const setParts = ['#s = :s', 'GSI3PK = :gpk', 'updatedAt = :updatedAt'];
-
-                if (sanitizedRejectionReason !== null) {
-                    setParts.push('rejectionReason = :rr');
-                    expressionValues[':rr'] = sanitizedRejectionReason;
-                }
-
-                if (ttl !== null) {
-                    // Use alias #t for ttl and :t for the value
-                    setParts.push('#t = :t');
-                    expressionValues[':t'] = ttl;
-                }
-
-                const updateExpression = `SET ${setParts.join(', ')}`;
 
                 // 1. Save state update directly to DynamoDB (wrap in try/catch for clearer logging)
                 try {
@@ -247,31 +240,55 @@ export default async function handler(req, res) {
                 console.log("[UpdateStatus Action] Email payload:", { recipientEmail, recipientName, articleTitle });
 
                 if (recipientEmail) {
+                    // Convert status to lowercase for case-insensitive template matching
+                    const statusLower = status.toLowerCase();
                     let targetTemplate = null;
-                    if (status === "accepted") {
+                    
+                    if (statusLower === "accepted") {
                         targetTemplate = "submission_success";
-                    } else if (status === "rejected" || status === "declined") {
+                    } else if (statusLower === "rejected" || statusLower === "declined") {
                         targetTemplate = "submission_reject";
                     }
 
                     if (targetTemplate) {
+                        // Build the email template data
+                        const templateData = {
+                            postTitle: articleTitle,
+                            authorName: recipientName,
+                            rejectionReason: sanitizedRejectionReason || null
+                        };
+
+                        // Construct absolute URL using environment variable for reliability in serverless
+                        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+                        const emailServiceUrl = `${baseUrl}/api/send-email`;
+
+                        // Debug logging: log template, data, and URL before dispatch
+                        console.log('[UpdateStatus Action] Email dispatch details:', {
+                            targetTemplate,
+                            templateData,
+                            emailServiceUrl
+                        });
+
                         try {
-                            await fetch(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/send-email`, {
+                            const emailRes = await fetch(emailServiceUrl, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     templateType: targetTemplate,
                                     toEmail: recipientEmail,
-                                    templateData: {
-                                        postTitle: articleTitle,
-                                        authorName: recipientName,
-                                        rejectionReason: rejectionReason || null
-                                    }
+                                    templateData: templateData
                                 })
                             });
-                            console.log(`Successfully passed operational task [${targetTemplate}] to mail microservice.`);
+
+                            if (!emailRes.ok) {
+                                console.error(`[UpdateStatus Action] Email microservice returned non-200 status: ${emailRes.status}`);
+                                const errorText = await emailRes.text();
+                                console.error(`[UpdateStatus Action] Email service error body: ${errorText}`);
+                            } else {
+                                console.log(`[UpdateStatus Action] Successfully passed operational task [${targetTemplate}] to mail microservice.`);
+                            }
                         } catch (emailErr) {
-                            console.error("Failed to pass communication sequence over to the send-email route wrapper:", emailErr);
+                            console.error("[UpdateStatus Action] Failed to pass communication sequence over to the send-email route wrapper:", emailErr.message || emailErr);
                         }
                     }
                 } else {
