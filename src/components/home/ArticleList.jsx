@@ -63,11 +63,6 @@ export default function ArticleList() {
         return <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', opacity: 0.5 }}>NO TRANSMISSIONS FOUND IN THE FEED MATRIX.</div>;
     }
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return 'UNKNOWN DATE';
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
-    };
 
     return (
         <div className="right-column-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
