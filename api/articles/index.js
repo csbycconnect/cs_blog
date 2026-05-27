@@ -48,60 +48,49 @@ export default async function handler(req, res) {
 
             // Submit Draft Dispatches (Write For Us workflow)
             if (action === "create") {
-                // 1. Generate a robust, collision-resistant unique ID block
                 const uniqueShortId = Math.random().toString(36).substring(2, 11).toUpperCase();
                 const articleId = `ART_${uniqueShortId}`;
                 const timestamp = new Date().toISOString();
 
-                // 2. Build structured validation lookups
                 const itemPayload = {
-                    // Core Access Keys
                     PK: `ARTICLE#${articleId}`,
                     SK: "METADATA",
-
-                    // Data Attributes
                     id: articleId,
                     title: body.title ? body.title.trim() : "Untitled Dispatch",
                     subtitle: body.subtitle ? body.subtitle.trim() : "",
                     content: body.content || "",
                     club: body.club || "General",
                     category: body.category || "Article",
-
-                    // Relational Tracking Attributes
                     authorName: body.authorName || "Anonymous",
                     authorSub: body.authorSub || "GUEST",
                     authorEmail: body.authorEmail || null,
-                    status: "pending", // Baseline status flag
+                    status: "pending",
 
-                    // Global Secondary Index 1 (Compound Query Optimization)
-                    // Allows filtering by status and club simultaneously in 1 ultra-fast query!
                     GSI1PK: `STATUS#pending#CLUB#${body.club || "General"}`,
                     GSI1SK: timestamp,
 
-                    // Operational Metrics Counters
                     views: 0,
                     likes: 0,
                     createdAt: timestamp,
                     updatedAt: timestamp
                 };
 
-                // 3. Dispatch atomic transactional package write command to AWS
                 await dynamoDb.send(new PutCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
                     Item: itemPayload,
-                    // Production safety check: Ensures we never accidentally overwrite an existing article
                     ConditionExpression: "attribute_not_exists(PK)"
                 }));
 
                 return res.status(201).json(itemPayload);
             }
 
+            // ─── ACTION 1: QUICK STATUS CHANGE WITH COGNITO BROADCASTS ───
             if (action === "status") {
                 if (!body.id || !body.status) return res.status(400).json({ error: "Missing required parameters id or status" });
 
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
-                    Key: { PK: body.id, SK: "ARTICLE" },
+                    Key: { PK: body.id, SK: "METADATA" }, // Cleaned partition schema alignment
                     UpdateExpression: "SET #s = :s, GSI3PK = :gpk",
                     ExpressionAttributeNames: { "#s": "status" },
                     ExpressionAttributeValues: {
@@ -110,85 +99,109 @@ export default async function handler(req, res) {
                     }
                 }));
 
-                if (body.status === "accepted") {
-                    try {
-                        const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION });
-                        const listUsersCmd = new ListUsersCommand({
-                            UserPoolId: process.env.COGNITO_USER_POOL_ID
-                        });
-                        const cognitoData = await cognitoClient.send(listUsersCmd);
-                        const subscriberEmails = [];
+                // Handle Author success/reject routing automatically alongside public list blasts
+                const recipientEmail = body.authorEmail || body.email;
+                const recipientName = body.authorName || body.name || "Contributor";
 
-                        if (cognitoData.Users) {
-                            for (const user of cognitoData.Users) {
-                                const attributes = {};
-                                user.Attributes?.forEach(attr => {
-                                    attributes[attr.Name] = attr.Value;
-                                });
+                if (recipientEmail) {
+                    let authorTemplate = null;
+                    if (body.status === "accepted") authorTemplate = "submission_success";
+                    if (body.status === "rejected" || body.status === "declined") authorTemplate = "submission_reject";
 
-                                if (attributes['custom:dispatchAlerts'] !== 'false' && attributes['email']) {
-                                    subscriberEmails.push(attributes['email']);
-                                }
-                            }
-                        }
-
-                        if (subscriberEmails.length > 0) {
+                    if (authorTemplate) {
+                        try {
                             await fetch(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/send-email`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    templateType: 'dispatch_alert',
-                                    toEmail: subscriberEmails,
+                                    templateType: authorTemplate,
+                                    toEmail: recipientEmail,
                                     templateData: {
-                                        postTitle: body.title || "New Technical Manual",
-                                        authorName: body.authorName || "Community Contributor",
-                                        blogUrl: `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/blog/${body.id}`
+                                        postTitle: body.title || "Your Submission",
+                                        authorName: recipientName
                                     }
                                 })
                             });
+                        } catch (emailErr) {
+                            console.error("Failed to process status email notification loop:", emailErr);
                         }
-                    } catch (broadcastError) {
-                        console.error("Mailing loop error bypassed to prevent blocking DB status update:", broadcastError);
                     }
                 }
 
                 return res.status(200).json({ success: true });
             }
 
+            // ─── ACTION 2: ARTICLE REMOVAL ENGINE ───
             if (action === "delete") {
                 if (!body.id) return res.status(400).json({ error: "Missing required parameter id" });
-
-                // If the ID coming from the frontend does not already have the explicit "ART#" database partition format prefix, wrap it.
-                const partitionKey = body.id.startsWith("ART#") ? body.id : `ART#${body.id}`;
+                const partitionKey = body.id.startsWith("ARTICLE#") ? body.id : (body.id.startsWith("ART#") ? body.id.replace("ART#", "ARTICLE#") : `ARTICLE#${body.id}`);
 
                 await dynamoDb.send(new DeleteCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
                     Key: {
                         PK: partitionKey,
-                        SK: "ARTICLE"
+                        SK: "METADATA"
                     }
                 }));
 
                 return res.status(200).json({ success: true, deletedId: partitionKey });
             }
 
-            // Administrative Moderation Actions (Approve/Reject/Archive)
+            // ─── ACTION 3: ADMINISTRATIVE STATUS SELECTION FOR MANAGEMENT PANEL ───
             if (action === "updateStatus") {
                 const { id, status } = body;
                 if (!id || !status) return res.status(400).json({ error: "Missing parameter elements" });
 
+                const partitionKey = id.startsWith("ARTICLE#") ? id : (id.startsWith("ART#") ? id.replace("ART#", "ARTICLE#") : `ARTICLE#${id}`);
+
+                // 1. Save state update directly to DynamoDB
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
-                    Key: { PK: id, SK: "ARTICLE" },
+                    Key: { PK: partitionKey, SK: "METADATA" },
                     UpdateExpression: "SET #s = :s, GSI3PK = :gpk",
                     ExpressionAttributeNames: { "#s": "status" },
-                    ExpressionAttributeValues: {
+                    ExpressionAttributeValues: {    
                         ":s": status,
                         ":gpk": `STATUS#${status}`
                     }
                 }));
 
-                return res.status(200).json({ success: true, id, status });
+                // 2. Dispatch submission status update via your template updates
+                const recipientEmail = body.authorEmail || body.email;
+                const recipientName = body.authorName || body.name || "Contributor";
+
+                if (recipientEmail) {
+                    let targetTemplate = null;
+                    if (status === "accepted") {
+                        targetTemplate = "submission_success";
+                    } else if (status === "rejected" || status === "declined") {
+                        targetTemplate = "submission_reject";
+                    }
+
+                    if (targetTemplate) {
+                        try {
+                            await fetch(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/send-email`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    templateType: targetTemplate,
+                                    toEmail: recipientEmail,
+                                    templateData: {
+                                        postTitle: body.title || "Your Submission",
+                                        authorName: recipientName
+                                    }
+                                })
+                            });
+                            console.log(`Successfully passed operational task [${targetTemplate}] to mail microservice.`);
+                        } catch (emailErr) {
+                            console.error("Failed to pass communication sequence over to the send-email route wrapper:", emailErr);
+                        }
+                    }
+                } else {
+                    console.warn("Skipping email task forwarding: Missing email mapping references inside payload.");
+                }
+
+                return res.status(200).json({ success: true, id: partitionKey, status });
             }
 
             return res.status(404).json({ error: "Action route target not supported" });

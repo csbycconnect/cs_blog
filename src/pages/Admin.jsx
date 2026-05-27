@@ -168,29 +168,34 @@ export default function Admin() {
     // Editorial Action Handlers
     const handleAccept = async (article) => {
         try {
+            // Trigger your centralized backend action request
             await ArticlesService.updateStatus(article.id, 'accepted');
-            setPendingArticles(prev => prev.filter(a => a.id !== article.id));
 
-            // Force cache clearance so that Tab 2 re-fetches the updated record list on transition
-            setCachedBlogs([]);
+            // Secondary optimization payload parameters can be bundled directly 
+            // to pass metadata seamlessly along to the mail transport layer:
+            const API_BASE = "/api/articles";
+            await fetch(API_BASE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "updateStatus",
+                    id: article.id,
+                    status: "accepted",
+                    title: article.title,
+                    authorName: article.authorName || article.name,
+                    authorEmail: article.authorEmail || article.email
+                })
+            });
 
-            try {
-                await emailjs.send(
-                    import.meta.env.VITE_EMAILJS_SERVICE_ID,
-                    import.meta.env.VITE_EMAILJS_TEMPLATE_PUBLICATION,
-                    {
-                        name: article.name ? article.name.split(' ')[0] : 'Contributor',
-                        email: article.email || '',
-                        title: article.title,
-                        blog_link: `${window.location.origin}/blog/${article.id}`
-                    },
-                    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-                );
-            } catch (emailErr) {
-                console.warn("Failed to send publication email. Article was still published.", emailErr);
+            alert("Article successfully accepted! Automated confirmation email dispatched.");
+
+            // Reload dashboard queues instantly
+            if (typeof fetchAdminBlogs === 'function') {
+                fetchAdminBlogs();
             }
         } catch (error) {
-            alert("Failed to accept article.");
+            console.error("Failed executing administrator approval dispatch loops:", error);
+            alert("Encountered system exceptions handling state transitions.");
         }
     };
 
