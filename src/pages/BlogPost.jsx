@@ -1,318 +1,308 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArticlesService } from '../services/articles';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Heart, Bookmark } from 'lucide-react';
 
-// helper to remove HTML tags when generating previews
-const stripHtml = (html = '') => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-
-export default function YourBlogs() {
-    const { user, updateBio } = useAuth();
+export default function BlogPost() {
+    const { id } = useParams();
     const navigate = useNavigate();
+    const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [posts, setPosts] = useState([]);
-    const [drafts, setDrafts] = useState([]);
-    const [activeTab, setActiveTab] = useState('published'); // 'published', 'pending', 'drafts'
 
-    const [bio, setBio] = useState(user?.bio || '');
-    const [editingBio, setEditingBio] = useState(false);
+    const viewCounted = useRef(false);
 
-    // Load Drafts from localStorage
     useEffect(() => {
-        const localDrafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-        setDrafts(localDrafts);
-    }, []);
-
-    // Load Author's Posts from DB properly matching DynamoDB CSV scheme fields
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-
-        const fetchAuthorPosts = async () => {
+        const loadArticle = async () => {
             try {
                 setLoading(true);
-                
-                // Fetch using established fallback chains to catch everything
-                let data = [];
-                if (typeof ArticlesService.getAccepted === 'function') {
-                    data = await ArticlesService.getAccepted();
-                } else if (typeof ArticlesService.fetchByStatus === 'function') {
-                    data = await ArticlesService.fetchByStatus('accepted');
-                } else {
-                    const res = await fetch('/api/articles');
-                    if (res.ok) data = await res.json();
+                if (!id) return;
+
+                // Strip down dirty parameter prefixes (like 'id=') injected from route links
+                const cleanId = id.replace('id=', '');
+
+                const data = await ArticlesService.getById(cleanId);
+                if (!data) {
+                    alert('Article transmission not found.');
+                    navigate('/blogs');
+                    return;
                 }
+                setArticle(data);
 
-                let pendingData = [];
-                if (typeof ArticlesService.getPending === 'function') {
-                    pendingData = await ArticlesService.getPending().catch(() => []);
+                // Track view on every load, protected by ref
+                if (!viewCounted.current) {
+                    viewCounted.current = true;
+                    await ArticlesService.incrementViews(cleanId).catch(console.error);
                 }
-
-                const combinedDataset = [...(data || []), ...(pendingData || [])];
-
-                // Map precisely against the true data definitions present in your CSV dump
-                const userEmail = (user.email || '').toLowerCase();
-                const userSub = (user.sub || user.id || '').toLowerCase();
-                const userName = (user.name || '').toLowerCase();
-
-                const filtered = combinedDataset.filter(art => 
-                    (art.email && art.email.toLowerCase() === userEmail) ||
-                    (art.authorId && art.authorId.toLowerCase() === userSub) ||
-                    (art.authorName && art.authorName.toLowerCase() === userName)
-                );
-
-                setPosts(filtered);
             } catch (error) {
-                console.error("Error matching author identity metrics:", error);
-            } finally {
+                console.error("Error loading article:", error);
+                alert('Failed to load article.');
+                navigate('/blogs');
+            } finaly {
                 setLoading(false);
             }
         };
+        loadArticle();
+    }, [id, navigate]);
 
-        fetchAuthorPosts();
-    }, [user, navigate]);
+    const { user } = useAuth();
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [hasLiked, setHasLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
 
-    // Handle profile bio saving transitions
-    const handleSaveBio = async () => {
+    useEffect(() => {
+        if (article) {
+            const cleanId = article.id;
+            const favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            setIsFavorite(favs.some(f => f.id === cleanId));
+
+            // Simple boolean check for demo purposes, extending localStorage:
+            const localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            setHasLiked(localLikes.includes(cleanId));
+
+            setLikesCount(article.likes || 0);
+        }
+    }, [article]);
+
+    const handleLikeClick = async () => {
+        if (!user) {
+            alert('Please log in to like articles.');
+            return;
+        }
+
+        const cleanId = article.id;
+        const newLiked = !hasLiked;
+        setHasLiked(newLiked);
+        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
+
         try {
-            await updateBio(bio);
-            setEditingBio(false);
-        } catch (err) {
-            alert('Failed to save bio.');
+            await ArticlesService.toggleLike(cleanId, newLiked);
+
+            // Update local likes state
+            let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            if (newLiked) {
+                if (!localLikes.includes(cleanId)) localLikes.push(cleanId);
+            } else {
+                localLikes = localLikes.filter(lId => lId !== cleanId);
+            }
+            localStorage.setItem('bb_likes', JSON.stringify(localLikes));
+
+            // Sync with favorites array if it's currently in there so counts stay fresh
+            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            const favIndex = favs.findIndex(f => f.id === cleanId);
+            if (favIndex > -1) {
+                favs[favIndex].likes = newLiked ? (favs[favIndex].likes || 0) + 1 : (favs[favIndex].likes || 0) - 1;
+                localStorage.setItem('bb_favorites', JSON.stringify(favs));
+            }
+
+        } catch (error) {
+            console.error("Failed to toggle like:", error);
+            // Revert on failure cleanly
+            setHasLiked(!newLiked);
+            setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
         }
     };
 
-    // Cleanly delete browser drafts without triggering unintended item container navigation clicks
-    const handleDeleteDraft = (e, draftIndex) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this draft?')) {
-            const updatedDrafts = drafts.filter((_, idx) => idx !== draftIndex);
-            setDrafts(updatedDrafts);
-            localStorage.setItem('bb_drafts', JSON.stringify(updatedDrafts));
+    const handleFavoriteClick = () => {
+        if (!user) {
+            alert('Please log in to favorite articles.');
+            return;
         }
+
+        const cleanId = article.id;
+        let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+        const newIsFavorite = !isFavorite;
+
+        if (newIsFavorite) {
+            if (!favs.some(f => f.id === cleanId)) {
+                favs.push({ ...article, likes: likesCount });
+            }
+        } else {
+            favs = favs.filter(f => f.id !== cleanId);
+        }
+
+        localStorage.setItem('bb_favorites', JSON.stringify(favs));
+        setIsFavorite(newIsFavorite);
     };
 
-    // Distribute records to tabs dynamically based on status properties
-    const published = useMemo(() => posts.filter(p => p.status === 'accepted'), [posts]);
-    const pending = useMemo(() => posts.filter(p => p.status === 'pending' || p.status === 'hidden'), [posts]);
+    if (loading) {
+        return (
+            <div style={{ position: 'relative', minHeight: '100vh' }}>
+                <Navbar />
+                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '4rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)' }}>Loading transmission...</p>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
 
-    const getItemsForTab = () => {
-        if (activeTab === 'published') return published;
-        if (activeTab === 'pending') return pending;
-        if (activeTab === 'drafts') return drafts;
-        return [];
-    };
-
-    const currentItems = getItemsForTab();
-
-    if (!user) return null;
+    if (!article) return null;
 
     return (
-        <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             <Navbar />
-            
-            <main style={{ flex: 1, maxWidth: 1100, margin: '0 auto', padding: '0 2.5rem 6rem', width: '100%' }}>
+            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
                 <div style={{ marginTop: '2rem' }}>
                     <BackButton />
                 </div>
 
-                {/* Profile Header */}
-                <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
-                    <img 
-                        src={user.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"} 
-                        alt={user.name} 
-                        style={{ width: '80px', height: '80px', borderRadius: '50%', border: '3px solid var(--c-yellow)', boxShadow: '4px 4px 0 #000' }}
-                    />
-                    <div>
-                        <h1 className="serif-heading" style={{ color: 'var(--c-white)', margin: '0 0 0.5rem 0', fontSize: '2.5rem' }}>Your Transmissions</h1>
-                        <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', margin: 0 }}>
-                            {published.length} Published • {posts.reduce((acc, p) => acc + (parseInt(p.views) || 0), 0)} Views • {posts.reduce((acc, p) => acc + (parseInt(p.likes) || 0), 0)} Likes
-                        </p>
-                        
-                        <div style={{ marginTop: '0.75rem' }}>
-                            {editingBio ? (
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                    <input 
-                                        type="text" 
-                                        value={bio} 
-                                        onChange={(e) => setBio(e.target.value)}
-                                        style={{ padding: '0.3rem 0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', border: '2px solid var(--c-black)', outline: 'none', width: '250px' }}
-                                        maxLength={150}
-                                    />
-                                    <button onClick={handleSaveBio} style={{ padding: '0.3rem 0.7rem', background: 'var(--c-yellow)', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>SAVE</button>
-                                    <button onClick={() => { setEditingBio(false); setBio(user.bio || ''); }} style={{ padding: '0.3rem 0.7rem', background: '#fff', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>CANCEL</button>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: 0 }}>
-                                        {user.bio || "No bio transmission received yet..."}
-                                    </p>
-                                    <button 
-                                        onClick={() => setEditingBio(true)}
-                                        style={{ background: 'transparent', border: 'none', color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
-                                    >
-                                        [EDIT]
-                                    </button>
-                                </div>
-                            )}
+                {/* Article Header */}
+                <header style={{ marginBottom: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '2rem' }}>
+                    <div style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: 'var(--c-yellow)',
+                        marginBottom: '1rem',
+                        letterSpacing: '0.05em'
+                    }}>
+                        {article.category || 'Article'} • {article.readTime}
+                    </div>
+                    <h1 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+                        {article.title}
+                    </h1>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+                        <img
+                            src={article.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${article.name || 'A'}&backgroundColor=0d2142&textColor=f7d000`}
+                            alt={article.name}
+                            style={{ width: '45px', height: '45px', border: '2px solid var(--c-yellow)' }}
+                        />
+                        <div>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)', fontWeight: 700, fontSize: '0.9rem' }}>
+                                {article.name || 'Anonymous'}
+                            </div>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                                {article.date ? new Date(article.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'UNKNOWN DATE'}
+                            </div>
                         </div>
                     </div>
-                </div>
+                </header>
 
-                {/* Tabs selection control row */}
-                <div style={{ marginTop: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', display: 'flex', gap: '2rem' }}>
-                    {['published', 'pending', 'drafts'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: activeTab === tab ? 'var(--c-yellow)' : 'var(--c-white)',
-                                fontFamily: 'var(--font-mono)',
-                                fontWeight: '700',
-                                fontSize: '1.1rem',
-                                padding: '0 0 1rem 0',
-                                cursor: 'pointer',
-                                textTransform: 'uppercase',
-                                borderBottom: activeTab === tab ? '4px solid var(--c-yellow)' : '4px solid transparent',
-                                transition: 'all 0.2s',
-                                marginBottom: '-2px'
-                            }}
-                        >
-                            {tab} ({tab === 'published' ? published.length : tab === 'pending' ? pending.length : drafts.length})
-                        </button>
-                    ))}
-                </div>
+                <div style={{ maxWidth: 860, margin: '0 auto', width: '100%' }}>
+                    <article className="blog-post-article" style={{
+                        background: 'var(--c-white)',
+                        border: '2px solid var(--c-black)',
+                        boxShadow: '10px 10px 0 var(--c-yellow)',
+                        padding: 'min(2.5rem, 5vw) min(3rem, 6vw)',
+                        color: '#1a1a1a',
+                        fontFamily: 'var(--font-serif, Georgia, serif)',
+                        fontSize: '1.1rem',
+                        lineHeight: 1.8,
+                        overflowX: 'hidden'
+                    }}>
+                        {article.contentHTML ? (
+                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
+                        ) : (
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    h1: ({ node, ...props }) => <h1 className="serif-heading" style={{ fontSize: '2.2rem', marginTop: '2.5rem', marginBottom: '1rem', lineHeight: 1.2, color: 'var(--c-black)' }} {...props} />,
+                                    h2: ({ node, ...props }) => <h2 className="serif-heading" style={{ fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem', lineHeight: 1.3, color: 'var(--c-black)' }} {...props} />,
+                                    h3: ({ node, ...props }) => <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3rem', marginTop: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }} {...props} />,
+                                    p: ({ node, ...props }) => <p style={{ marginBottom: '1.5rem', wordWrap: 'break-word', wordBreak: 'break-word' }} {...props} />,
+                                    a: ({ node, ...props }) => <a style={{ color: '#0d2142', textDecoration: 'underline', textDecorationColor: 'var(--c-yellow)', textDecorationThickness: '2px', fontWeight: 700 }} {...props} />,
+                                    ul: ({ node, ...props }) => <ul style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                    ol: ({ node, ...props }) => <ol style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                    li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
+                                    blockquote: ({ node, ...props }) => <blockquote style={{ borderLeft: '4px solid var(--c-black)', margin: '1.5rem 0', padding: '1rem 1.5rem', background: '#f5f0e8', fontStyle: 'italic' }} {...props} />,
+                                    code: ({ node, inline, ...props }) =>
+                                        inline ?
+                                            <code style={{ fontFamily: 'var(--font-mono)', background: '#f0f0f0', padding: '0.2rem 0.4rem', fontSize: '0.9em', border: '1px solid #ccc' }} {...props} /> :
+                                            <pre style={{ background: '#0A192F', color: '#fff', padding: '1.5rem', overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', border: '2px solid var(--c-black)', marginBottom: '1.5rem' }}>
+                                                <code {...props} />
+                                            </pre>,
+                                    img: ({ node, ...props }) => <img style={{ maxWidth: '100%', height: 'auto', border: '2px solid var(--c-black)', display: 'block', margin: '2rem auto' }} {...props} />,
+                                    hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
+                                }}
+                            >
+                                {article.content}
+                            </ReactMarkdown>
+                        )}
 
-                {/* Main dynamic mapping card feed lists container */}
-                <div style={{ marginTop: '2.5rem' }}>
-                    {loading && (
-                        <p style={{ color: 'var(--c-white)', fontFamily: 'var(--font-mono)', fontSize: '0.9rem' }}>
-                            SYNCING DATA TRANSFERS WITH COGNITO/DYNAMODB CORE...
-                        </p>
-                    )}
-
-                    {!loading && currentItems.length === 0 && (
-                        <div style={{ border: '2px dashed rgba(255,255,255,0.2)', padding: '4rem 2rem', textAlign: 'center' }}>
-                            <p style={{ color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)', margin: 0, textTransform: 'uppercase', fontSize: '0.9rem' }}>
-                                No transmissions recorded within the "{activeTab}" matrix block.
-                            </p>
-                        </div>
-                    )}
-
-                    {!loading && currentItems.map((item, i) => (
-                        <div 
-                            key={item.id || i}
-                            onClick={() => {
-                                if (activeTab === 'published') {
-                                    navigate(`/blog/${item.id}`);
-                                } else if (activeTab === 'drafts') {
-                                    navigate(`/write-for-us?draft=${i}`);
-                                }
-                            }}
-                            className="article-card"
-                            style={{
-                                backgroundColor: 'var(--c-white)',
-                                border: '2px solid var(--c-black)',
-                                padding: '1.5rem',
-                                marginBottom: '1.5rem',
-                                boxShadow: '4px 4px 0 var(--c-black)',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                gap: '1.5rem',
-                                cursor: activeTab === 'pending' ? 'default' : 'pointer',
-                                transition: 'transform 0.2s, boxShadow 0.2s'
-                            }}
-                        >
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: '700', backgroundColor: 'var(--c-black)', color: 'var(--c-yellow)', padding: '0.2rem 0.5rem', textTransform: 'uppercase' }}>
-                                        {item.category || "UNASSIGNED"}
-                                    </span>
-                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#666' }}>
-                                        {item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'RAW CHIPS'}
-                                    </span>
+                        {/* Author Bio Section */}
+                        {article.bio && (
+                            <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '2px solid var(--c-black)' }}>
+                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                                    About the Author
                                 </div>
-                                
-                                <h3 className="serif-heading" style={{ margin: '0 0 0.5rem 0', fontSize: '1.4rem', color: 'var(--c-black)', lineHeight: '1.2' }}>
-                                    {item.title || "Untitled Fragment Transmission"}
-                                </h3>
-                                
-                                <p style={{ margin: 0, fontFamily: 'var(--font-serif)', color: '#444', fontSize: '0.95rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                    {item.subtitle || (item.contentHTML ? stripHtml(item.contentHTML).substring(0, 160) + '...' : item.content?.substring(0, 160) + '...') || "No content logging attached."}
-                                </p>
+                                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                                    <img
+                                        src={article.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${article.name || 'A'}&backgroundColor=0d2142&textColor=f7d000`}
+                                        alt={article.name}
+                                        style={{ width: '60px', height: '60px', border: '2px solid var(--c-black)', boxShadow: '4px 4px 0 var(--c-yellow)' }}
+                                    />
+                                    <div>
+                                        <h4 className="serif-heading" style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0' }}>{article.name}</h4>
+                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#555', margin: 0, lineHeight: 1.6 }}>{article.bio}</p>
+                                    </div>
+                                </div>
                             </div>
+                        )}
 
-                            {/* View counters display logic tray */}
-                            {activeTab === 'published' && (
-                                <div style={{ display: 'flex', gap: '1rem', borderLeft: '1px dashed #ccc', paddingLeft: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', fontWeight: '700', color: 'var(--c-black)', textAlign: 'center' }}>
-                                    <div>
-                                        <div style={{ fontSize: '1.1rem' }}>{item.views || 0}</div>
-                                        <div style={{ fontSize: '0.65rem', color: '#666' }}>VIEWS</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '1.1rem', color: '#ff4d4d' }}>{item.likes || 0}</div>
-                                        <div style={{ fontSize: '0.65rem', color: '#666' }}>LIKES</div>
-                                    </div>
-                                </div>
-                            )}
+                        {/* Article Footer Actions */}
+                        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--c-black)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--c-black)' }}>
+                                    👁 {article.views || 0} views
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button
+                                    onClick={handleLikeClick}
+                                    style={{
+                                        background: hasLiked ? '#ff4d4d' : 'transparent',
+                                        border: hasLiked ? '2px solid #000' : '2px solid transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 1rem',
+                                        cursor: 'pointer',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 700,
+                                        fontSize: '0.9rem',
+                                        transition: 'all 0.2s',
+                                        boxShadow: hasLiked ? '4px 4px 0 #000' : 'none'
+                                    }}
+                                >
+                                    <Heart size={20} color={hasLiked ? "#000" : "#ff4d4d"} fill={hasLiked ? "#000" : "none"} />
+                                    <span>{likesCount} {likesCount === 1 ? 'like' : 'likes'}</span>
+                                </button>
 
-                            {/* Option tags tray for unfinished structures */}
-                            {activeTab !== 'published' && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <span style={{ 
-                                        fontFamily: 'var(--font-mono)', 
-                                        fontSize: '0.75rem', 
-                                        fontWeight: '700', 
-                                        border: '2px solid var(--c-black)', 
-                                        padding: '0.3rem 0.6rem',
-                                        backgroundColor: item.status === 'hidden' ? '#000' : activeTab === 'pending' ? 'var(--c-yellow)' : '#eee',
-                                        color: item.status === 'hidden' ? 'var(--c-yellow)' : 'var(--c-black)'
-                                    }}>
-                                        {item.status === 'hidden' ? 'HIDDEN' : activeTab === 'pending' ? 'REVIEW' : 'LOCAL'}
-                                    </span>
-
-                                    {activeTab === 'drafts' && (
-                                        <button
-                                            onClick={(e) => handleDeleteDraft(e, i)}
-                                            style={{
-                                                padding: '0.3rem 0.6rem',
-                                                background: '#fff',
-                                                border: '2px solid #c53030',
-                                                color: '#c53030',
-                                                fontFamily: 'var(--font-mono)',
-                                                fontWeight: 700,
-                                                fontSize: '0.75rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.background = '#c53030';
-                                                e.currentTarget.style.color = '#fff';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.background = '#fff';
-                                                e.currentTarget.style.color = '#c53030';
-                                            }}
-                                        >
-                                            Delete
-                                        </button>
-                                    )}
-                                </div>
-                            )}
+                                <button
+                                    onClick={handleFavoriteClick}
+                                    style={{
+                                        background: isFavorite ? '#f7d000' : 'transparent',
+                                        border: isFavorite ? '2px solid #000' : '2px solid transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 1rem',
+                                        cursor: 'pointer',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 700,
+                                        fontSize: '0.9rem',
+                                        transition: 'all 0.2s',
+                                        boxShadow: isFavorite ? '4px 4px 0 #000' : 'none',
+                                        color: '#000'
+                                    }}
+                                >
+                                    <Bookmark size={20} color="#000" fill={isFavorite ? "#000" : "none"} />
+                                    <span>{isFavorite ? 'Saved' : 'Save'}</span>
+                                </button>
+                            </div>
                         </div>
-                    ))}
+                    </article>
                 </div>
             </main>
-
             <Footer />
         </div>
     );
