@@ -209,36 +209,45 @@ export default function Admin() {
         }
     };
 
-    const handleHideBlog = async (id) => {
+const handleHideBlog = async (id) => {
         try {
-            // Check structural service names dynamically
-            if (typeof ArticlesService.hideArticle === 'function') {
-                await ArticlesService.hideArticle(id);
-            } else if (typeof ArticlesService.softDeleteArticle === 'function') {
-                await ArticlesService.softDeleteArticle(id);
+            // Update item property status to 'hidden' to prevent public rendering
+            if (typeof ArticlesService.updateStatus === 'function') {
+                await ArticlesService.updateStatus(id, 'hidden');
             } else {
-                // REST API Route bypass
-                await fetch(`/api/articles/hide?id=${id}`, { method: 'POST' });
+                // Direct REST execution fallback
+                await fetch(`/api/articles/updateStatus`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, status: 'hidden' })
+                });
             }
-
-            const syncArray = (prev) => prev.filter(b => b.id !== id);
-            setAcceptedBlogs(syncArray);
-            setCachedBlogs(syncArray);
+            
+            // Mark locally on your screen cache layer without blowing record away completely
+            setAcceptedBlogs(prev => prev.map(b => b.id === id ? { ...b, status: 'hidden' } : b));
+            setCachedBlogs(prev => prev.map(b => b.id === id ? { ...b, status: 'hidden' } : b));
+            alert("Article hidden successfully.");
         } catch (e) {
-            console.error("Hide error context:", e);
-            alert("Failed to hide article.");
+            console.error(e);
+            alert("Failed to change article visibility status.");
         }
     };
 
     const handlePermanentDeleteBlog = async (id) => {
-        if (!window.confirm("CRITICAL WARNING > PERMANENTLY delete this article record? This cannot be undone.")) return;
+        if (!window.confirm("CRITICAL PROTOCOL > Permanently delete this article record from DynamoDB? This cannot be undone.")) return;
         try {
-            await ArticlesService.hardDeleteArticle(id);
+            if (typeof ArticlesService.deleteArticle === 'function') {
+                await ArticlesService.deleteArticle(id);
+            } else if (typeof ArticlesService.hardDeleteArticle === 'function') {
+                await ArticlesService.hardDeleteArticle(id);
+            }
+            
             const syncArray = (prev) => prev.filter(b => b.id !== id);
             setAcceptedBlogs(syncArray);
             setCachedBlogs(syncArray);
         } catch (e) {
-            alert("Failed to delete article.");
+            console.error(e);
+            alert("Failed to execute data deletion sweep.");
         }
     };
 

@@ -35,31 +35,41 @@ export default function YourBlogs() {
 
         const fetchAuthorPosts = async () => {
             try {
-                let authorPosts = [];
+                setLoading(true);
                 
-                // Determine correct structural service loader method
-                if (typeof ArticlesService.fetchByAuthor === 'function') {
-                    authorPosts = await ArticlesService.fetchByAuthor(user.username || user.id || user.name);
-                } else if (typeof ArticlesService.getArticlesByAuthor === 'function') {
-                    authorPosts = await ArticlesService.getArticlesByAuthor(user.username || user.id || user.name);
+                // Fetch using our established service methods
+                let data = [];
+                if (typeof ArticlesService.getAccepted === 'function') {
+                    data = await ArticlesService.getAccepted();
+                } else if (typeof ArticlesService.fetchByStatus === 'function') {
+                    data = await ArticlesService.fetchByStatus('accepted');
                 } else {
-                    // Direct API Route fallback filtering down matching items
                     const res = await fetch('/api/articles');
-                    if (res.ok) {
-                        const allArticles = await res.json();
-                        const identityToken = (user.username || user.id || user.name || '').toLowerCase();
-                        authorPosts = allArticles.filter(art => 
-                            (art.authorId && art.authorId.toLowerCase() === identityToken) ||
-                            (art.username && art.username.toLowerCase() === identityToken) ||
-                            (art.name && art.name.toLowerCase() === identityToken) ||
-                            (art.authorName && art.authorName.toLowerCase() === identityToken)
-                        );
-                    }
+                    if (res.ok) data = await res.json();
                 }
-                
-                setPosts(authorPosts || []);
+
+                // Gather pending articles to capture drafts submitted into the queue
+                let pendingData = [];
+                if (typeof ArticlesService.getPending === 'function') {
+                    pendingData = await ArticlesService.getPending().catch(() => []);
+                }
+
+                const combined = [...(data || []), ...(pendingData || [])];
+
+                // Map against the true DynamoDB schema properties present in your CSV records
+                const userEmail = (user.email || '').toLowerCase();
+                const userSub = (user.sub || user.id || '').toLowerCase();
+                const userName = (user.name || '').toLowerCase();
+
+                const filtered = combined.filter(art => 
+                    (art.email && art.email.toLowerCase() === userEmail) ||
+                    (art.authorId && art.authorId.toLowerCase() === userSub) ||
+                    (art.authorName && art.authorName.toLowerCase() === userName)
+                );
+
+                setPosts(filtered);
             } catch (error) {
-                console.error("Error fetching author posts:", error);
+                console.error("Error matching author identity metrics:", error);
             } finally {
                 setLoading(false);
             }
@@ -68,10 +78,10 @@ export default function YourBlogs() {
         fetchAuthorPosts();
     }, [user, navigate]);
 
-    // Derived tab arrays & metrics computed from backend dataset mutations
+    // Compute metrics and separate posts into appropriate lists cleanly
     const { publishedList, pendingList, metrics } = useMemo(() => {
         const publishedItems = posts.filter(p => p.status === 'accepted');
-        const pendingItems = posts.filter(p => p.status === 'pending');
+        const pendingItems = posts.filter(p => p.status === 'pending' || p.status === 'hidden');
         
         return {
             publishedList: publishedItems,
@@ -84,14 +94,13 @@ export default function YourBlogs() {
         };
     }, [posts]);
 
+    // Map correct data slice depending on active view selection
     const items = useMemo(() => {
         if (activeTab === 'published') return publishedList;
         if (activeTab === 'pending') return pendingList;
         if (activeTab === 'drafts') return drafts;
         return [];
     }, [activeTab, publishedList, pendingList, drafts]);
-
-    if (!user) return null;
 
     const handleSaveBio = async () => {
         try {
@@ -102,13 +111,18 @@ export default function YourBlogs() {
         }
     };
 
-    const handleDeleteDraft = (draftIndex) => {
+    // Cleanly delete browser drafts without breaking UI navigation tree state
+    const handleDeleteDraft = (e, draftIndex) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (window.confirm('Are you sure you want to delete this draft?')) {
             const updatedDrafts = drafts.filter((_, idx) => idx !== draftIndex);
             setDrafts(updatedDrafts);
             localStorage.setItem('bb_drafts', JSON.stringify(updatedDrafts));
         }
     };
+
+    if (!user) return null;
 
     return (
         <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -118,9 +132,10 @@ export default function YourBlogs() {
                     <BackButton />
                 </div>
 
+                {/* Profile Header Block */}
                 <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                     <img
-                        src={user.avatar}
+                        src={user.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"}
                         alt={user.name}
                         style={{ width: '80px', height: '80px', borderRadius: '50%', border: '3px solid var(--c-yellow)', boxShadow: '4px 4px 0 #000' }}
                     />
@@ -132,7 +147,7 @@ export default function YourBlogs() {
                         {user.role && user.role !== 'student' && (
                             <div style={{
                                 display: 'inline-block',
-                                marginTop: '0.25rem',
+                                marginTop: '0.5rem',
                                 padding: '3px 8px',
                                 background: 'var(--c-yellow)',
                                 color: 'var(--c-black)',
@@ -169,7 +184,7 @@ export default function YourBlogs() {
                     </div>
                 </div>
 
-                {/* Dashboard Tabs */}
+                {/* Navigation Menu Controls */}
                 <div style={{ marginTop: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', display: 'flex', gap: '2rem' }}>
                     {['published', 'pending', 'drafts'].map(tab => (
                         <button
@@ -195,9 +210,10 @@ export default function YourBlogs() {
                     ))}
                 </div>
 
-                {/* List Container */}
+                {/* Elements Display Stack */}
                 <div style={{ marginTop: '2.5rem' }}>
-                    {loading && <p style={{ color: 'white', fontFamily: 'var(--font-mono)' }}>Loading your dashboard...</p>}
+                    {loading && <p style={{ color: 'white', fontFamily: 'var(--font-mono)' }}>Syncing database connection core...</p>}
+                    
                     {!loading && items.length === 0 && (
                         <div style={{
                             padding: '3rem',
@@ -223,27 +239,25 @@ export default function YourBlogs() {
                             alignItems: 'flex-start',
                             flexWrap: 'wrap',
                             gap: '1rem',
-                            cursor: activeTab === 'published' ? 'pointer' : 'default'
+                            cursor: 'pointer'
                         }}
-                            onClick={() => {
-                                if (activeTab === 'published') navigate(`/article/${item.id}`);
-                                else if (activeTab === 'drafts') navigate(`/write-for-us?draft=${i}`);
-                            }}>
+                        onClick={() => {
+                            if (activeTab === 'published') navigate(`/blog/${item.id}`);
+                            else if (activeTab === 'drafts') navigate(`/write-for-us?draft=${i}`);
+                        }}>
                             <div style={{ flex: 1, minWidth: '300px' }}>
                                 <h3 className="serif-heading" style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', color: 'var(--c-black)' }}>
-                                    {item.title || 'Untitled Draft'}
+                                    {item.title || 'Untitled Transmission'}
                                 </h3>
                                 <p style={{ fontFamily: 'var(--font-serif)', color: '#444', fontSize: '0.95rem', margin: '0 0 1rem 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                    {item.excerpt ||
-                                        (item.contentHTML ? stripHtml(item.contentHTML).substring(0, 150) + '...' : item.content?.substring(0, 150) + '...')
-                                        || 'No content.'}
+                                    {item.subtitle || (item.contentHTML ? stripHtml(item.contentHTML).substring(0, 150) + '...' : item.content?.substring(0, 150) + '...') || 'No summary provided.'}
                                 </p>
                                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#666', fontWeight: 700 }}>
                                     {item.date ? new Date(item.date).toLocaleDateString() : 'Unsaved Date'} • {item.category || 'Uncategorized'}
                                 </div>
                             </div>
 
-                            {/* Stats box for published */}
+                            {/* View/Like metrics segment for published list cards */}
                             {activeTab === 'published' && (
                                 <div style={{
                                     display: 'flex',
@@ -267,26 +281,24 @@ export default function YourBlogs() {
                                 </div>
                             )}
 
-                            {/* Status badge for pending/drafts */}
+                            {/* Options configuration tray for pending drafts lists */}
                             {activeTab !== 'published' && (
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                     <div style={{
                                         padding: '0.5rem 1rem',
                                         border: '2px solid var(--c-black)',
-                                        background: activeTab === 'pending' ? '#FFA500' : '#ccc',
+                                        background: item.status === 'hidden' ? '#000' : activeTab === 'pending' ? '#FFA500' : '#ccc',
+                                        color: item.status === 'hidden' ? 'var(--c-yellow)' : 'var(--c-black)',
                                         fontFamily: 'var(--font-mono)',
                                         fontWeight: 700,
                                         fontSize: '0.85rem',
                                         textTransform: 'uppercase'
                                     }}>
-                                        {activeTab === 'pending' ? 'Reviewing' : 'Draft'}
+                                        {item.status === 'hidden' ? 'Hidden' : activeTab === 'pending' ? 'Reviewing' : 'Draft'}
                                     </div>
                                     {activeTab === 'drafts' && (
                                         <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteDraft(i);
-                                            }}
+                                            onClick={(e) => handleDeleteDraft(e, i)}
                                             style={{
                                                 padding: '0.5rem 1rem',
                                                 border: '2px solid #c53030',
