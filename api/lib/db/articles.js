@@ -68,6 +68,8 @@ export async function getAllArticles() {
 export async function getArticlesByAuthor(userSubId) {
     if (!userSubId) return [];
 
+    const authorKey = `USER#${userSubId}`;
+
     try {
         const result = await dynamoDb.send(
             new QueryCommand({
@@ -75,14 +77,31 @@ export async function getArticlesByAuthor(userSubId) {
                 IndexName: "AuthorIndex",
                 KeyConditionExpression: "GSI2PK = :gsi2pk",
                 ExpressionAttributeValues: {
-                    ":gsi2pk": `USER#${userSubId}`
+                    ":gsi2pk": authorKey
                 }
             })
         );
 
-        return result.Items || [];
+        if (result.Items && result.Items.length > 0) {
+            return result.Items;
+        }
     } catch (error) {
-        console.error("DynamoDB Query AuthorIndex Core Exception:", error);
+        console.warn("DynamoDB Query AuthorIndex failed, falling back to scan:", error.message || error);
+    }
+
+    try {
+        const scanResult = await dynamoDb.send(
+            new ScanCommand({
+                TableName: TABLES.ARTICLES || "bb_articles",
+                FilterExpression: "authorSub = :sub OR authorId = :sub",
+                ExpressionAttributeValues: {
+                    ":sub": userSubId
+                }
+            })
+        );
+        return scanResult.Items || [];
+    } catch (fallbackError) {
+        console.error("DynamoDB Scan fallback for author query failed:", fallbackError);
         return [];
     }
 }
