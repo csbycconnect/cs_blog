@@ -202,16 +202,27 @@ export default async function handler(req, res) {
                 // Log core debug payload for troubleshooting malformed IDs / payloads
                 console.log('[UpdateStatus Action] Preparing update', { partitionKey, id, status, rejectionReason: sanitizedRejectionReason, ttl });
 
-                // Build a single UpdateExpression that explicitly maps the reserved word `status` to #s
-                const updateExpression = 'SET #s = :s, rejectionReason = :rr, ttl = :ttl, GSI3PK = :gpk, updatedAt = :updatedAt';
+                // Build UpdateExpression and values dynamically to avoid sending undefined values
                 const expressionNames = { '#s': 'status' };
                 const expressionValues = {
                     ':s': status,
-                    ':rr': sanitizedRejectionReason,
-                    ':ttl': ttl,
                     ':gpk': `STATUS#${status}`,
                     ':updatedAt': new Date().toISOString()
                 };
+
+                const setParts = ['#s = :s', 'GSI3PK = :gpk', 'updatedAt = :updatedAt'];
+
+                if (sanitizedRejectionReason !== null) {
+                    setParts.push('rejectionReason = :rr');
+                    expressionValues[':rr'] = sanitizedRejectionReason;
+                }
+
+                if (ttl !== null) {
+                    setParts.push('ttl = :ttl');
+                    expressionValues[':ttl'] = ttl;
+                }
+
+                const updateExpression = `SET ${setParts.join(', ')}`;
 
                 // 1. Save state update directly to DynamoDB (wrap in try/catch for clearer logging)
                 try {
