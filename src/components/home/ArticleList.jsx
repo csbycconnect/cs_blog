@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Heart, ThumbsUp } from 'lucide-react';
-import { ArticleAPI } from '../../lib/api';
+// Point directly to your correct established system service
+import { ArticlesService } from '../../services/articles'; 
 import '../../styles/components.css';
+
+// Global memory cache reference to avoid hitting AWS multiple times on home nav
+let globalDispatchesCache = null;
 
 export default function ArticleList() {
     const [articles, setArticles] = useState([]);
@@ -12,10 +16,21 @@ export default function ArticleList() {
     useEffect(() => {
         async function loadDispatches() {
             try {
-                // Fetch only approved articles
-                const data = await ArticleAPI.fetchByStatus('accepted');
-                // Only take the latest 3 for the homepage feed
-                setArticles(data.slice(0, 3));
+                // Cache Hit: Serve the cached home feed instantly
+                if (globalDispatchesCache) {
+                    setArticles(globalDispatchesCache);
+                    setLoading(false);
+                    return;
+                }
+
+                // Cache Miss: Query the pipeline safely via your true service file
+                const data = await ArticlesService.getArticlesByStatus('accepted');
+                
+                // Keep the top 3 latest items for the quick homepage feed stack
+                const latestThree = (data || []).slice(0, 3);
+                
+                setArticles(latestThree);
+                globalDispatchesCache = latestThree; // Set cache reference
             } catch (err) {
                 console.error('Failed to fetch latest dispatches:', err);
             } finally {
@@ -26,14 +41,13 @@ export default function ArticleList() {
     }, []);
 
     if (loading) {
-        return <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#888' }}>RECEIVING TRANSMISSIONS...</div>;
+        return <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--c-yellow)' }}>RECEIVING TRANSMISSIONS...</div>;
     }
 
     if (articles.length === 0) {
-        return <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#888' }}>NO TRANSMISSIONS FOUND.</div>;
+        return <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', opacity: 0.5 }}>NO TRANSMISSIONS FOUND IN THE FEED MATRIX.</div>;
     }
 
-    // Helper to format ISO strings to 'OCTOBER 28, 2024'
     const formatDate = (dateStr) => {
         if (!dateStr) return 'UNKNOWN DATE';
         const d = new Date(dateStr);
@@ -41,7 +55,7 @@ export default function ArticleList() {
     };
 
     return (
-        <div className="right-column-stack">
+        <div className="right-column-stack" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
             {articles.map((article) => (
                 <ArticleListItem key={article.id} article={article} formatDate={formatDate} />
             ))}
@@ -71,7 +85,7 @@ function ArticleListItem({ article, formatDate }) {
         e.stopPropagation();
 
         if (!user) {
-            alert('Please log in to like articles.');
+            alert('Please log in to register an operator like reaction.');
             return;
         }
 
@@ -80,7 +94,8 @@ function ArticleListItem({ article, formatDate }) {
         setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
 
         try {
-            await ArticleAPI.toggleLike(article.id, newLiked);
+            // Target the unified global API service layer methods
+            await ArticlesService.toggleLike(article.id, newLiked);
 
             let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
             if (newLiked) {
@@ -97,7 +112,7 @@ function ArticleListItem({ article, formatDate }) {
                 localStorage.setItem('bb_favorites', JSON.stringify(favs));
             }
         } catch (error) {
-            console.error("Failed to toggle like:", error);
+            console.error("Failed to toggle like record state:", error);
             setHasLiked(!newLiked);
             setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
         }
@@ -108,7 +123,7 @@ function ArticleListItem({ article, formatDate }) {
         e.stopPropagation();
 
         if (!user) {
-            alert('Please log in to favorite articles.');
+            alert('Please log in to archive articles to favorites.');
             return;
         }
 
@@ -130,49 +145,57 @@ function ArticleListItem({ article, formatDate }) {
     return (
         <div className="article-wrapper">
             <div className="article-shadow"></div>
-            <article className="article-card horizontal">
+            <article className="article-card horizontal" style={{ background: '#0A192F', border: '2px solid var(--c-white)', padding: '1.5rem', color: '#fff' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1 }}>
-                    <h2 className="article-title">{article.title}</h2>
-                    <div className="article-meta">
-                        <span>{formatDate(article.date)}</span>
-                        <span>{article.name || article.authorName || 'Contributor'}</span>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--c-yellow)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        // {article.category || 'GENERAL'}
+                    </div>
+                    <h2 className="article-title" style={{ margin: '0 0 0.5rem 0', color: '#fff', fontSize: '1.4rem' }}>{article.title}</h2>
+                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#8892b0', lineHeight: '1.4' }}>{article.subtitle}</p>
+                    
+                    <div className="article-meta" style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#a8b2d1', marginBottom: '1.5rem' }}>
+                        <span>{formatDate(article.date || article.createdAt)}</span>
+                        <span>By <strong style={{ color: 'var(--c-yellow)' }}>{article.name || article.authorName || 'Contributor'}</strong></span>
                         <span>{article.readTime || '5 MIN READ'}</span>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '1rem' }}>
-                        <Link to={`/blog/${article.id}`} className="explore-btn" style={{ textDecoration: 'none', margin: 0 }}>EXPLORE NOW</Link>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '1rem', borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                        <Link to={`/blog/${article.id}`} className="explore-btn" style={{ textDecoration: 'none', margin: 0, padding: '0.5rem 1rem', background: 'transparent', border: '2px solid var(--c-yellow)', color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                            EXPLORE NOW →
+                        </Link>
 
                         <div style={{ display: 'flex', gap: '0.75rem' }}>
                             <button
                                 onClick={handleLikeClick}
-                                title="Like this article"
+                                title="Like this dispatch"
                                 style={{
-                                    background: hasLiked ? '#ff4d4d' : 'transparent',
-                                    border: hasLiked ? '2px solid #000' : '2px solid rgba(0,0,0,0.2)',
+                                    background: hasLiked ? 'var(--c-yellow)' : 'transparent',
+                                    border: hasLiked ? '2px solid #000' : '2px solid rgba(255,255,255,0.2)',
                                     display: 'flex', alignItems: 'center', gap: '0.4rem',
                                     padding: '0.4rem 0.75rem', cursor: 'pointer',
-                                    fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem',
+                                    fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem',
+                                    color: hasLiked ? '#000' : '#fff',
                                     transition: 'all 0.2s',
-                                    boxShadow: hasLiked ? '2px 2px 0 #000' : 'none'
+                                    boxShadow: hasLiked ? '3px 3px 0 #000' : 'none'
                                 }}
                             >
-                                <ThumbsUp size={16} color={hasLiked ? "#000" : "#ff4d4d"} fill={hasLiked ? "#000" : "none"} />
+                                <ThumbsUp size={14} color={hasLiked ? "#000" : "var(--c-yellow)"} fill={hasLiked ? "#000" : "none"} />
                                 <span>{likesCount}</span>
                             </button>
 
                             <button
                                 onClick={handleFavoriteClick}
-                                title="Save to favorites"
+                                title="Save to local database archive"
                                 style={{
-                                    background: isFavorite ? '#ff4d4d' : 'transparent',
-                                    border: isFavorite ? '2px solid #000' : '2px solid rgba(0,0,0,0.2)',
+                                    background: isFavorite ? 'var(--c-yellow)' : 'transparent',
+                                    border: isFavorite ? '2px solid #000' : '2px solid rgba(255,255,255,0.2)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     padding: '0.4rem', cursor: 'pointer',
                                     transition: 'all 0.2s',
-                                    boxShadow: isFavorite ? '2px 2px 0 #000' : 'none'
+                                    boxShadow: isFavorite ? '3px 3px 0 #000' : 'none'
                                 }}
                             >
-                                <Heart size={18} color={isFavorite ? "#000" : "#ff4d4d"} fill={isFavorite ? "#ff4d4d" : "none"} />
+                                <Heart size={15} color={isFavorite ? "#000" : "var(--c-yellow)"} fill={isFavorite ? "#000" : "none"} />
                             </button>
                         </div>
                     </div>
