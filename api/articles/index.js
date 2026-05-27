@@ -209,7 +209,7 @@ export default async function handler(req, res) {
                     ':gpk': `STATUS#${status}`,
                     ':updatedAt': new Date().toISOString()
                 };
-
+                
                 const setParts = ['#s = :s', 'GSI3PK = :gpk', 'updatedAt = :updatedAt'];
 
                 if (sanitizedRejectionReason !== null) {
