@@ -44,7 +44,7 @@ export default function BlogPost() {
                 console.error("Error loading article:", error);
                 alert('Failed to load article.');
                 navigate('/blogs');
-            } finaly {
+            } finally {
                 setLoading(false);
             }
         };
