@@ -17,7 +17,7 @@ export const ArticlesService = {
     // Used by BlogPost.jsx to read a single post layout
     async getById(id) {
         if (!id) return null;
-        const res = await fetch(`${API_BASE}?id=${id}`);
+        const res = await fetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error("Failed to load article metadata");
         return await res.json();
     },
@@ -51,11 +51,39 @@ export const ArticlesService = {
 
     // Used by WriteForUs.jsx to safely submit draft dispatches
     async create(payload) {
+        const timestamp = new Date().toISOString();
+
+        const body = {
+            action: "create",
+
+            // Required schema fields
+            title: payload.title || "Untitled Dispatch",
+            subtitle: payload.subtitle || payload.excerpt || "",
+            content: payload.content || payload.contentHTML || "",
+            authorName: payload.authorName || payload.name || "Anonymous",
+            authorEmail: payload.authorEmail || payload.email || null,
+            status: payload.status || "pending",
+            createdAt: payload.createdAt || timestamp,
+            updatedAt: payload.updatedAt || timestamp,
+            views: typeof payload.views === 'number' ? payload.views : 0,
+            likes: typeof payload.likes === 'number' ? payload.likes : 0,
+
+            // Keep other optional metadata expected by the API
+            contentHTML: payload.contentHTML || payload.content || "",
+            club: payload.club || "General",
+            category: payload.category || "Article",
+            tags: Array.isArray(payload.tags) ? payload.tags : (payload.tags ? [payload.tags] : []),
+            authorId: payload.authorId || payload.authorSub || null,
+            authorSub: payload.authorSub || payload.authorId || null,
+            readTime: payload.readTime || null
+        };
+
         const res = await fetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "create", ...payload })
+            body: JSON.stringify(body)
         });
+
         if (!res.ok) throw new Error("Failed to submit draft publication");
         return await res.json();
     },

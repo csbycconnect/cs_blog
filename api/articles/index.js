@@ -63,34 +63,33 @@ export default async function handler(req, res) {
                     PK: `ARTICLE#${articleId}`,
                     SK: "METADATA",
                     id: articleId,
-                    title: body.title ? body.title.trim() : "Untitled Dispatch",
-                    // canonical excerpt column
-                    excerpt: body.excerpt ? body.excerpt.trim() : (body.subtitle ? body.subtitle.trim() : ''),
-                    // store both plain content and contentHTML for rendering
+
+                    // Required schema fields (exact names)
+                    title: body.title ? String(body.title).trim() : "Untitled Dispatch",
+                    subtitle: body.subtitle ? String(body.subtitle).trim() : (body.excerpt ? String(body.excerpt).trim() : ""),
                     content: body.content || body.contentHTML || "",
+                    authorName: body.authorName || body.name || "Anonymous",
+                    authorEmail: body.authorEmail || body.email || null,
+                    status: "pending",
+                    createdAt: timestamp,
+                    updatedAt: timestamp,
+                    views: 0,
+                    likes: 0,
+
+                    // Additional fields useful for the app (kept alongside required schema)
                     contentHTML: body.contentHTML || body.content || "",
                     club: body.club || "General",
                     category: body.category || "Article",
                     tags: Array.isArray(body.tags) ? body.tags : (body.tags ? [body.tags] : []),
-                    // Save author name under `name` to align with frontend expectations
-                    name: body.authorName || body.name || "Anonymous",
                     authorId: body.authorId || body.authorSub || "GUEST",
-                    authorSub: body.authorSub || "GUEST",
-                    // Store a single canonical email field — prefer `email` over `authorEmail`
-                    email: body.email || body.authorEmail || null,
-                    // store readTime as human-friendly label (e.g., "3 min read")
+                    authorSub: body.authorSub || body.authorId || null,
                     readTime: body.readTime || readTimeLabel,
-                    status: "pending",
 
+                    // GSI helpers
                     GSI1PK: `STATUS#pending#CLUB#${body.club || "General"}`,
                     GSI1SK: timestamp,
                     GSI2PK: body.authorSub ? `USER#${body.authorSub}` : null,
-                    GSI2SK: `DATE#${timestamp}`,
-
-                    views: 0,
-                    likes: 0,
-                    createdAt: timestamp,
-                    updatedAt: timestamp
+                    GSI2SK: `DATE#${timestamp}`
                 };
 
                 await dynamoDb.send(new PutCommand({
@@ -106,9 +105,11 @@ export default async function handler(req, res) {
             if (action === "status") {
                 if (!body.id || !body.status) return res.status(400).json({ error: "Missing required parameters id or status" });
 
+                const partitionKey = body.id.startsWith("ARTICLE#") ? body.id : (body.id.startsWith("ART#") ? body.id.replace("ART#", "ARTICLE#") : `ARTICLE#${body.id}`);
+
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
-                    Key: { PK: body.id, SK: "METADATA" }, // Cleaned partition schema alignment
+                    Key: { PK: partitionKey, SK: "METADATA" },
                     UpdateExpression: "SET #s = :s, GSI3PK = :gpk",
                     ExpressionAttributeNames: { "#s": "status" },
                     ExpressionAttributeValues: {

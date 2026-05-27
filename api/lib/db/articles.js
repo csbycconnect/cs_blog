@@ -87,9 +87,10 @@ export async function getAcceptedArticles() {
                 new QueryCommand({
                     TableName: tableName,
                     IndexName: idx,
-                    KeyConditionExpression: "GSI3PK = :status",
+                    KeyConditionExpression: "GSI3PK = :status AND SK = :sk",
                     ExpressionAttributeValues: {
                         ":status": "STATUS#accepted",
+                        ":sk": "METADATA",
                     },
                 })
             );
@@ -109,11 +110,12 @@ export async function getAcceptedArticles() {
         const scanResult = await dynamoDb.send(
             new ScanCommand({
                 TableName: tableName,
-                FilterExpression: "#s = :accepted OR GSI3PK = :gpk",
+                FilterExpression: "(#s = :accepted OR GSI3PK = :gpk) AND SK = :sk",
                 ExpressionAttributeNames: { "#s": "status" },
                 ExpressionAttributeValues: {
                     ":accepted": "accepted",
                     ":gpk": "STATUS#accepted",
+                    ":sk": "METADATA",
                 },
             })
         );
@@ -134,6 +136,10 @@ export async function getAllArticles() {
     const result = await dynamoDb.send(
         new ScanCommand({
             TableName: tableName,
+            FilterExpression: "SK = :sk",
+            ExpressionAttributeValues: {
+                ":sk": "METADATA"
+            }
         })
     );
 
@@ -153,9 +159,10 @@ export async function getArticlesByAuthor(userSubId) {
             new QueryCommand({
                 TableName: TABLES.ARTICLES || "bb_articles",
                 IndexName: "AuthorIndex",
-                KeyConditionExpression: "GSI2PK = :gsi2pk",
+                KeyConditionExpression: "GSI2PK = :gsi2pk AND SK = :sk",
                 ExpressionAttributeValues: {
-                    ":gsi2pk": authorKey
+                    ":gsi2pk": authorKey,
+                    ":sk": "METADATA"
                 }
             })
         );
@@ -171,9 +178,10 @@ export async function getArticlesByAuthor(userSubId) {
         const scanResult = await dynamoDb.send(
             new ScanCommand({
                 TableName: TABLES.ARTICLES || "bb_articles",
-                FilterExpression: "authorSub = :sub OR authorId = :sub",
+                FilterExpression: "(authorSub = :sub OR authorId = :sub) AND SK = :sk",
                 ExpressionAttributeValues: {
-                    ":sub": userSubId
+                    ":sub": userSubId,
+                    ":sk": "METADATA"
                 }
             })
         );
@@ -274,9 +282,10 @@ export async function getPendingSubmissionsByClub(clubName = "General") {
     const command = new QueryCommand({
         TableName: tableName,
         IndexName: "GSI1", // References the secondary index rule built on AWS
-        KeyConditionExpression: "GSI1PK = :gsi1pk",
+        KeyConditionExpression: "GSI1PK = :gsi1pk AND SK = :sk",
         ExpressionAttributeValues: {
-            ":gsi1pk": `STATUS#pending#CLUB#${clubName}`
+            ":gsi1pk": `STATUS#pending#CLUB#${clubName}`,
+            ":sk": "METADATA"
         }
     });
 
