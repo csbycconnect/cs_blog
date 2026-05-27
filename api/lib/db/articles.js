@@ -61,7 +61,7 @@ export async function getArticleById(id) {
             TableName: TABLES.ARTICLES || "bb_articles",
             Key: {
                 PK: normalizedId,
-                SK: "ARTICLE"
+                SK: "METADATA"
             }
         }));
 
@@ -81,7 +81,7 @@ export async function toggleLike(id, isLiking) {
             TableName: TABLES.ARTICLES,
             Key: {
                 PK: id,
-                SK: "ARTICLE",
+                SK: "METADATA",
             },
             UpdateExpression: "ADD #l :inc",
             ExpressionAttributeNames: {
@@ -104,7 +104,7 @@ export async function incrementViews(id) {
             TableName: TABLES.ARTICLES,
             Key: {
                 PK: id,
-                SK: "ARTICLE",
+                SK: "METADATA",
             },
             UpdateExpression: "ADD #v :inc",
             ExpressionAttributeNames: {

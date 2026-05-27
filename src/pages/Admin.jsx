@@ -168,58 +168,98 @@ export default function Admin() {
     // Editorial Action Handlers
     const handleAccept = async (article) => {
         try {
-            // Trigger your centralized backend action request
-            await ArticlesService.updateStatus(article.id, 'accepted');
+            const articleId = article.id || article.PK;
+            // Fallbacks matching your exact single-table fields
+            const authorEmail = article.authorEmail || article.email;
+            const authorName = article.authorName || article.name || "Contributor";
+            const title = article.title || "Untitled Article";
 
-            // Secondary optimization payload parameters can be bundled directly 
-            // to pass metadata seamlessly along to the mail transport layer:
-            const API_BASE = "/api/articles";
-            await fetch(API_BASE, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    action: "updateStatus",
-                    id: article.id,
-                    status: "accepted",
-                    title: article.title,
-                    authorName: article.authorName || article.name,
-                    authorEmail: article.authorEmail || article.email
-                })
-            });
-
-            alert("Article successfully accepted! Automated confirmation email dispatched.");
-
-            // Reload dashboard queues instantly
-            if (typeof fetchAdminBlogs === 'function') {
-                fetchAdminBlogs();
+            if (!articleId) {
+                alert("Execution halted: Missing valid document reference ID.");
+                return;
             }
+
+            // 1. Fire state change down to DynamoDB
+            await ArticlesService.updateStatus(articleId, 'accepted');
+
+            // 2. Safely trigger your backend NodeMailer microservice (Drops emailjs completely)
+            if (authorEmail) {
+                try {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            templateType: 'submission_success',
+                            toEmail: authorEmail,
+                            templateData: {
+                                authorName: authorName,
+                                title: title,
+                                blogUrl: `${window.location.origin}/blogs/${encodeURIComponent(articleId)}`
+                            }
+                        })
+                    });
+                } catch (mailErr) {
+                    console.error("Backend notification transmission failed:", mailErr);
+                }
+            }
+
+            alert("Article successfully accepted and published!");
+
+            // Refresh local view collections
+            setPendingArticles(prev => prev.filter(a => a.id !== articleId && a.PK !== articleId));
+            if (typeof fetchAdminBlogs === 'function') fetchAdminBlogs();
+
         } catch (error) {
-            console.error("Failed executing administrator approval dispatch loops:", error);
-            alert("Encountered system exceptions handling state transitions.");
+            console.error("Critical error in approval workflow sequence:", error);
+            alert("Encountered system exceptions saving approval status transformations.");
         }
     };
-
     const handleReject = async (article) => {
         try {
-            await ArticlesService.rejectArticle(article.id);
-            setPendingArticles(prev => prev.filter(a => a.id !== article.id));
+            const articleId = article.id || article.PK;
+            const authorEmail = article.authorEmail || article.email;
+            const authorName = article.authorName || article.name || "Contributor";
+            const title = article.title || "Untitled Article";
 
-            try {
-                await emailjs.send(
-                    import.meta.env.VITE_EMAILJS_REJECT_SERVICE_ID,
-                    import.meta.env.VITE_EMAILJS_REJECT_TEMPLATE_ID,
-                    {
-                        name: article.name ? article.name.split(' ')[0] : 'Contributor',
-                        email: article.email || '',
-                        title: article.title
-                    },
-                    import.meta.env.VITE_EMAILJS_REJECT_PUBLIC_KEY
-                );
-            } catch (emailErr) {
-                console.warn("Failed to send rejection email. Article was still rejected.", emailErr);
+            if (!articleId) {
+                alert("Execution halted: Missing valid document reference ID.");
+                return;
             }
+
+            if (!window.confirm("Are you sure you want to reject this submission?")) return;
+
+            // 1. Move database lifecycle status to hidden/rejected
+            await ArticlesService.updateStatus(articleId, 'hidden');
+
+            // 2. Route clean fallback text notice out via your backend server
+            if (authorEmail) {
+                try {
+                    await fetch('/api/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            templateType: 'submission_reject',
+                            toEmail: authorEmail,
+                            templateData: {
+                                authorName: authorName,
+                                title: title
+                            }
+                        })
+                    });
+                } catch (mailErr) {
+                    console.error("Backend rejection notice transmission failed:", mailErr);
+                }
+            }
+
+            alert("Submission declined. Notification sent.");
+
+            // Clear item out of pending UI arrays instantly
+            setPendingArticles(prev => prev.filter(a => a.id !== articleId && a.PK !== articleId));
+            if (typeof fetchAdminBlogs === 'function') fetchAdminBlogs();
+
         } catch (error) {
-            alert("Failed to reject article.");
+            console.error("Critical error in rejection flow execution:", error);
+            alert("Failed to complete submission rejection state.");
         }
     };
 
