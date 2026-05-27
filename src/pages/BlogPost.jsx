@@ -24,10 +24,13 @@ export default function BlogPost() {
                 setLoading(true);
                 if (!id) return;
 
-                // Strip down dirty parameter prefixes (like 'id=') injected from route links
-                const cleanId = id.replace('id=', '');
+                // 1. Strip down parameter prefixes if present
+                let cleanId = id.replace('id=', '');
 
-                const data = await ArticlesService.getById(cleanId);
+                // 2. ✅ FIXED: Encode the ID to safely pass characters like '#' over the API route
+                const encodedId = encodeURIComponent(cleanId);
+
+                const data = await ArticlesService.getById(encodedId);
                 if (!data) {
                     alert('Article transmission not found.');
                     navigate('/blogs');

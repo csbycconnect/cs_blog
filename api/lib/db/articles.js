@@ -45,18 +45,17 @@ export async function getAllArticles() {
 /* ------------------------------------------------ */
 
 export async function getArticleById(id) {
-    const result = await dynamoDb.send(
-        new QueryCommand({
-            TableName: TABLES.ARTICLES,
-            KeyConditionExpression: "PK = :pk AND SK = :sk",
-            ExpressionAttributeValues: {
-                ":pk": id,
-                ":sk": "ARTICLE",
-            },
-        })
-    );
+    // If the lookup ID doesn't start with the prefix, fix it dynamically
+    const partitionKey = id.startsWith("ART#") ? id : `ART#${id}`;
 
-    return result.Items?.[0] || null;
+    const result = await dynamoDb.send(new GetCommand({
+        TableName: TABLES.ARTICLES,
+        Key: {
+            PK: partitionKey,
+            SK: "ARTICLE"
+        }
+    }));
+    return result.Item;
 }
 
 /* ------------------------------------------------ */
