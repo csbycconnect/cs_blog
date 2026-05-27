@@ -2,13 +2,13 @@
 import { dynamoDb } from "../lib/aws/dynamodb.js";
 import { PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
-import { 
-    getAcceptedArticles, 
-    getAllArticles, 
-    getArticleById, 
-    toggleLike, 
-    incrementViews 
-} from "../lib/db/articles.js"; 
+import {
+    getAcceptedArticles,
+    getAllArticles,
+    getArticleById,
+    toggleLike,
+    incrementViews
+} from "../lib/db/articles.js";
 import { TABLES } from "../lib/constants/tables.js";
 
 export default async function handler(req, res) {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(200).end();
 
     const urlParts = req.url.split("?")[0].split("/");
-    const routeAction = urlParts[urlParts.length - 1]; 
+    const routeAction = urlParts[urlParts.length - 1];
 
     // ─── 1. HANDLE POST METHODS ───────────────────────────────────────────
     if (req.method === "POST") {
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
 
                 if (body.status === "accepted") {
                     try {
-                        const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION || "us-east-1" });
+                        const cognitoClient = new CognitoIdentityProviderClient({ region: process.env.AWS_REGION});
                         const listUsersCmd = new ListUsersCommand({
                             UserPoolId: process.env.COGNITO_USER_POOL_ID
                         });
@@ -139,12 +139,18 @@ export default async function handler(req, res) {
             if (action === "delete") {
                 if (!body.id) return res.status(400).json({ error: "Missing required parameter id" });
 
+                // If the ID coming from the frontend does not already have the explicit "ART#" database partition format prefix, wrap it.
+                const partitionKey = body.id.startsWith("ART#") ? body.id : `ART#${body.id}`;
+
                 await dynamoDb.send(new DeleteCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
-                    Key: { PK: body.id, SK: "ARTICLE" }
+                    Key: {
+                        PK: partitionKey,
+                        SK: "ARTICLE"
+                    }
                 }));
 
-                return res.status(200).json({ success: true });
+                return res.status(200).json({ success: true, deletedId: partitionKey });
             }
 
             // Administrative Moderation Actions (Approve/Reject/Archive)
@@ -177,7 +183,7 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
         try {
             const { status, id } = req.query;
-            
+
             if (id || routeAction === "details") {
                 const targetId = id || req.query.id;
                 if (!targetId) return res.status(400).json({ error: "Missing ID parameter" });
@@ -191,7 +197,7 @@ export default async function handler(req, res) {
                 const filtered = allArticles.filter(item => item.status === status || item.GSI3PK === `STATUS#${status}`);
                 return res.status(200).json(filtered);
             }
-                
+
             const articles = await getAcceptedArticles();
             return res.status(200).json(articles);
         } catch (error) {

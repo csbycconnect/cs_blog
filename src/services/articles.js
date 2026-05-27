@@ -24,6 +24,13 @@ export const ArticlesService = {
         return await res.json();
     },
 
+    // New optimized loader to grab everything for management dashboard
+    async fetchAllAdminBlogs() {
+        const res = await fetch(`${API_BASE}?status=all_admin`);
+        if (!res.ok) throw new Error("Failed to grab master database record registry");
+        return await res.json();
+    },
+
     // Used by WriteForUs.jsx to safely submit draft dispatches
     async create(payload) {
         const res = await fetch(API_BASE, {
@@ -46,7 +53,17 @@ export const ArticlesService = {
         return await res.json();
     },
 
-    // ✅ FIXED: Point directly to /api/articles and pass action inside the body
+    // ✅ FIXED & LINKED: Passes the explicit delete action down to API router
+    async deleteArticle(id) {
+        const res = await fetch(API_BASE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", id })
+        });
+        if (!res.ok) throw new Error("Database deletion script tracking failed.");
+        return await res.json();
+    },
+
     async incrementViews(id) {
         const res = await fetch(API_BASE, {
             method: "POST",
@@ -57,7 +74,6 @@ export const ArticlesService = {
         return await res.json();
     },
 
-    // ✅ FIXED: Point directly to /api/articles and pass action inside the body
     async toggleLike(id, isLiking) {
         const res = await fetch(API_BASE, {
             method: "POST",
