@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Heart, ThumbsUp } from 'lucide-react';
 // Point directly to your correct established system service
-import { ArticlesService } from '../../services/articles'; 
+import { ArticlesService } from '../../services/articles';
 import '../../styles/components.css';
 
 // Global memory cache reference to avoid hitting AWS multiple times on home nav
@@ -16,21 +16,36 @@ export default function ArticleList() {
     useEffect(() => {
         async function loadDispatches() {
             try {
-                // Cache Hit: Serve the cached home feed instantly
+                // 1. Cache Hit Check
                 if (globalDispatchesCache) {
                     setArticles(globalDispatchesCache);
                     setLoading(false);
                     return;
                 }
 
-                // Cache Miss: Query the pipeline safely via your true service file
-                const data = await ArticlesService.getArticlesByStatus('accepted');
-                
-                // Keep the top 3 latest items for the quick homepage feed stack
-                const latestThree = (data || []).slice(0, 3);
-                
+                let data = [];
+
+                // 2. Dynamic Service Check: Try getAccepted first, then status string
+                if (typeof ArticlesService.getAccepted === 'function') {
+                    data = await ArticlesService.getAccepted();
+                } else if (typeof ArticlesService.getArticlesByStatus === 'function') {
+                    data = await ArticlesService.getArticlesByStatus('accepted');
+                } else {
+                    // 3. Absolute Fallback: Hit the raw endpoint directly if services mismatch
+                    const res = await fetch('/api/articles');
+                    if (res.ok) data = await res.json();
+                }
+
+                // Filter down to accepted articles if the raw fallback pulled everything
+                const acceptedOnly = (data || []).filter(blog =>
+                    blog.status === 'accepted' || !blog.status
+                );
+
+                // Slice the top 3 items for the home view grid stack
+                const latestThree = acceptedOnly.slice(0, 3);
+
                 setArticles(latestThree);
-                globalDispatchesCache = latestThree; // Set cache reference
+                globalDispatchesCache = latestThree; // Commit to memory cache
             } catch (err) {
                 console.error('Failed to fetch latest dispatches:', err);
             } finally {
@@ -152,7 +167,7 @@ function ArticleListItem({ article, formatDate }) {
                     </div>
                     <h2 className="article-title" style={{ margin: '0 0 0.5rem 0', color: '#fff', fontSize: '1.4rem' }}>{article.title}</h2>
                     <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#8892b0', lineHeight: '1.4' }}>{article.subtitle}</p>
-                    
+
                     <div className="article-meta" style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#a8b2d1', marginBottom: '1.5rem' }}>
                         <span>{formatDate(article.date || article.createdAt)}</span>
                         <span>By <strong style={{ color: 'var(--c-yellow)' }}>{article.name || article.authorName || 'Contributor'}</strong></span>
