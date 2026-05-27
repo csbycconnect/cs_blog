@@ -66,7 +66,8 @@ export default async function handler(req, res) {
                     authorName: body.authorName || "Anonymous",
                     authorId: body.authorId || body.authorSub || "GUEST",
                     authorSub: body.authorSub || "GUEST",
-                    authorEmail: body.authorEmail || null,
+                    // Store a single canonical email field — prefer `email` over `authorEmail`
+                    email: body.email || body.authorEmail || null,
                     readTime: body.readTime || 5,
                     status: "pending",
 
@@ -106,7 +107,7 @@ export default async function handler(req, res) {
                 }));
 
                 // Handle Author success/reject routing automatically alongside public list blasts
-                const recipientEmail = body.authorEmail || body.email;
+                const recipientEmail = body.email || body.authorEmail;
                 const recipientName = body.authorName || body.name || "Contributor";
 
                 if (recipientEmail) {
@@ -173,7 +174,7 @@ export default async function handler(req, res) {
                 }));
 
                 // 2. Dispatch submission status update via your template updates
-                const recipientEmail = body.authorEmail || body.email;
+                const recipientEmail = body.email || body.authorEmail;
                 const recipientName = body.authorName || body.name || "Contributor";
 
                 if (recipientEmail) {

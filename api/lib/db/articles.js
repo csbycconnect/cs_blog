@@ -47,11 +47,17 @@ function extractArticleId(pk) {
  */
 function normalizeArticle(article) {
     if (!article) return article;
-    
-    return {
+    const normalized = {
         ...article,
         id: article.id || extractArticleId(article.PK),
+        // canonicalize email from legacy authorEmail if present
+        email: article.email || article.authorEmail || null,
     };
+
+    // remove legacy field to avoid duplication in API responses
+    if (normalized.authorEmail) delete normalized.authorEmail;
+
+    return normalized;
 }
 
 /**

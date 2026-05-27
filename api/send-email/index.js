@@ -24,13 +24,31 @@ export default async function handler(req, res) {
         }
 
         // Initialize Nodemailer transporter with secure environment variables
+        // Prefer direct SMTP config for Gmail and explicit verification
+        const smtpUser = process.env.NODE_SERVER_EMAIL_USER;
+        const smtpPass = process.env.NODE_SERVER_EMAIL_PASS;
+
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: process.env.NODE_SERVER_EMAIL_HOST || 'smtp.gmail.com',
+            port: Number(process.env.NODE_SERVER_EMAIL_PORT || 465),
+            secure: process.env.NODE_SERVER_EMAIL_SECURE ? process.env.NODE_SERVER_EMAIL_SECURE === 'true' : true,
             auth: {
-                user: process.env.SERVER_EMAIL_USER, // Your sending address configured in Vercel
-                pass: process.env.SERVER_EMAIL_PASS  // Your secure 16-character Gmail App Password
+                user: smtpUser,
+                pass: smtpPass
+            },
+            tls: {
+                // Allow self-signed certs in some environments; set to true only if necessary
+                rejectUnauthorized: process.env.NODE_SERVER_EMAIL_REJECT_UNAUTHORIZED !== 'false'
             }
         });
+
+        // Verify transporter configuration early to provide clearer error messages
+        try {
+            await transporter.verify();
+        } catch (verifyErr) {
+            console.error('[Mail Transport Verify Failed]:', verifyErr);
+            return res.status(500).json({ error: 'Mail transport verification failed', detail: verifyErr.message });
+        }
 
         let subject = "";
         let htmlBody = "";
@@ -177,20 +195,25 @@ export default async function handler(req, res) {
 
         // Configuration setup for outbound mail operations
         const mailOptions = {
-            from: `"ByteBoard Mail Engine" <${process.env.SERVER_EMAIL_USER}>`,
+            from: `"ByteBoard Mail Engine" <${process.env.NODE_SERVER_EMAIL_USER}>`,
             subject: subject,
             html: htmlBody
         };
 
         if (Array.isArray(toEmail)) {
-            mailOptions.to = process.env.SERVER_EMAIL_USER;
-            mailOptions.bcc = toEmail; 
+            mailOptions.to = smtpUser || process.env.NODE_SERVER_EMAIL_USER || 'no-reply@example.com';
+            mailOptions.bcc = toEmail.join(',');
         } else {
             mailOptions.to = toEmail;
         }
 
-        await transporter.sendMail(mailOptions);
-        return res.status(200).json({ success: true, message: "Transmission successfully authorized." });
+        try {
+            const info = await transporter.sendMail(mailOptions);
+            return res.status(200).json({ success: true, message: 'Transmission successfully authorized.', info });
+        } catch (sendErr) {
+            console.error('[Mail Send Failed]:', sendErr);
+            return res.status(500).json({ error: 'Failed to send email', detail: sendErr.message });
+        }
 
     } catch (error) {
         console.error("[Mail Endpoint Failure]:", error);

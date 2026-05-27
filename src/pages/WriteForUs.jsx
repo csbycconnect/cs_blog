@@ -193,7 +193,8 @@ const handleSubmit = async (e) => {
             authorName: user?.name || form.name || "Anonymous",
             authorId: user?.sub || "GUEST",
             authorSub: user?.sub || "GUEST",
-            authorEmail: user?.email || form.email || null,
+            // store canonical `email` field (avoid duplicate `authorEmail`)
+            email: user?.email || form.email || null,
             readTime: Math.ceil(wordCount / 200) || 5
         };
 

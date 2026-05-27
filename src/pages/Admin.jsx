@@ -170,7 +170,7 @@ export default function Admin() {
         try {
             const articleId = article.id || article.PK;
             // Fallbacks matching your exact single-table fields
-            const authorEmail = article.authorEmail || article.email;
+            const recipientEmail = article.email;
             const authorName = article.authorName || article.name || "Contributor";
             const title = article.title || "Untitled Article";
 
@@ -183,14 +183,14 @@ export default function Admin() {
             await ArticlesService.updateStatus(articleId, 'accepted');
 
             // 2. Safely trigger your backend NodeMailer microservice (Drops emailjs completely)
-            if (authorEmail) {
+            if (recipientEmail) {
                 try {
                     await fetch('/api/send-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             templateType: 'submission_success',
-                            toEmail: authorEmail,
+                            toEmail: recipientEmail,
                             templateData: {
                                 authorName: authorName,
                                 title: title,
@@ -217,7 +217,7 @@ export default function Admin() {
     const handleReject = async (article) => {
         try {
             const articleId = article.id || article.PK;
-            const authorEmail = article.authorEmail || article.email;
+            const recipientEmail = article.email;
             const authorName = article.authorName || article.name || "Contributor";
             const title = article.title || "Untitled Article";
 
@@ -232,14 +232,14 @@ export default function Admin() {
             await ArticlesService.updateStatus(articleId, 'hidden');
 
             // 2. Route clean fallback text notice out via your backend server
-            if (authorEmail) {
+            if (recipientEmail) {
                 try {
                     await fetch('/api/send-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             templateType: 'submission_reject',
-                            toEmail: authorEmail,
+                            toEmail: recipientEmail,
                             templateData: {
                                 authorName: authorName,
                                 title: title

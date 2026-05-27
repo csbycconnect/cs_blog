@@ -62,7 +62,7 @@ export default function YourBlogs() {
 
                     const combinedDataset = [...(accepted || []), ...(pending || [])];
                     data = combinedDataset.filter(art => 
-                        (art.authorEmail && art.authorEmail.toLowerCase() === userEmail) ||
+                        (art.email && art.email.toLowerCase() === userEmail) ||
                         (art.authorSub && art.authorSub.toLowerCase() === userSubLower) ||
                         (art.authorId && art.authorId.toLowerCase() === userSubLower) ||
                         (art.authorName && art.authorName.toLowerCase() === userName)
