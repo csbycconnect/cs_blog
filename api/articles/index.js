@@ -234,65 +234,61 @@ export default async function handler(req, res) {
                 }
 
                 // 2. Dispatch submission status update via your template updates
-                const recipientEmail = body.email || body.authorEmail || article?.authorEmail;
-                const recipientName = body.authorName || body.name || article?.authorName || "Contributor";
                 const articleTitle = body.title || article?.title || "Your Submission";
-                console.log("[UpdateStatus Action] Email payload:", { recipientEmail, recipientName, articleTitle });
+                console.log("DEBUG: Full database object retrieved:", JSON.stringify(article, null, 2));
 
-                if (recipientEmail) {
-                    // Convert status to lowercase for case-insensitive template matching
-                    const statusLower = status.toLowerCase();
-                    let targetTemplate = null;
-                    
-                    if (statusLower === "accepted") {
-                        targetTemplate = "submission_success";
-                    } else if (statusLower === "rejected" || statusLower === "declined") {
-                        targetTemplate = "submission_reject";
-                    }
+                const recipientEmail = article?.authorEmail || article?.email || 'noreply.phdcs.managment@gmail.com';
+                const recipientName = article?.authorName || 'Contributor';
+                console.log("[UpdateStatus Action] Email payload:", { recipientEmail, recipientName, articleTitle: article?.title });
 
-                    if (targetTemplate) {
-                        // Build the email template data
-                        const templateData = {
-                            postTitle: articleTitle,
-                            authorName: recipientName,
-                            rejectionReason: sanitizedRejectionReason || null
-                        };
+                const statusLower = status.toLowerCase();
+                let targetTemplate = null;
 
-                        // Construct absolute URL using environment variable for reliability in serverless
-                        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
-                        const emailServiceUrl = `${baseUrl}/api/send-email`;
+                if (statusLower === "accepted") {
+                    targetTemplate = "submission_success";
+                } else if (statusLower === "rejected" || statusLower === "declined") {
+                    targetTemplate = "submission_reject";
+                }
 
-                        // Debug logging: log template, data, and URL before dispatch
-                        console.log('[UpdateStatus Action] Email dispatch details:', {
-                            targetTemplate,
-                            templateData,
-                            emailServiceUrl
+                if (!recipientEmail || recipientEmail === 'undefined') {
+                    console.error("[ERROR] Email dispatch aborted: recipientEmail is invalid.");
+                } else if (targetTemplate) {
+                    const templateData = {
+                        postTitle: articleTitle,
+                        authorName: recipientName,
+                        rejectionReason: sanitizedRejectionReason || null
+                    };
+
+                    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
+                    const emailServiceUrl = `${baseUrl}/api/send-email`;
+
+                    console.log('[UpdateStatus Action] Email dispatch details:', {
+                        targetTemplate,
+                        templateData,
+                        emailServiceUrl
+                    });
+
+                    try {
+                        const emailRes = await fetch(emailServiceUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                templateType: targetTemplate,
+                                toEmail: recipientEmail,
+                                templateData: templateData
+                            })
                         });
 
-                        try {
-                            const emailRes = await fetch(emailServiceUrl, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    templateType: targetTemplate,
-                                    toEmail: recipientEmail,
-                                    templateData: templateData
-                                })
-                            });
-
-                            if (!emailRes.ok) {
-                                console.error(`[UpdateStatus Action] Email microservice returned non-200 status: ${emailRes.status}`);
-                                const errorText = await emailRes.text();
-                                console.error(`[UpdateStatus Action] Email service error body: ${errorText}`);
-                            } else {
-                                console.log(`[UpdateStatus Action] Successfully passed operational task [${targetTemplate}] to mail microservice.`);
-                            }
-                        } catch (emailErr) {
-                            console.error("[UpdateStatus Action] Failed to pass communication sequence over to the send-email route wrapper:", emailErr.message || emailErr);
+                        if (!emailRes.ok) {
+                            console.error(`[UpdateStatus Action] Email microservice returned non-200 status: ${emailRes.status}`);
+                            const errorText = await emailRes.text();
+                            console.error(`[UpdateStatus Action] Email service error body: ${errorText}`);
+                        } else {
+                            console.log(`[UpdateStatus Action] Successfully passed operational task [${targetTemplate}] to mail microservice.`);
                         }
+                    } catch (emailErr) {
+                        console.error("[UpdateStatus Action] Failed to pass communication sequence over to the send-email route wrapper:", emailErr.message || emailErr);
                     }
-                } else {
-                    console.warn("Skipping email task forwarding: Missing email mapping references inside payload.");
                 }
 
                 return res.status(200).json({ success: true, id: partitionKey, status });

@@ -209,6 +209,9 @@ export async function getArticleById(id) {
                 PK: normalizedId,
                 SK: "METADATA"
             }
+            // IMPORTANT: Do not include a ProjectionExpression here unless you
+            // specifically list authorEmail. Returning the full item ensures the
+            // email address is available for notification dispatch.
         }));
 
         return normalizeArticle(result.Item || null);
