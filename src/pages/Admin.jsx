@@ -31,6 +31,7 @@ export default function Admin() {
     const [acceptedBlogs, setAcceptedBlogs] = useState([]);
     const [loadingBlogs, setLoadingBlogs] = useState(false);
     const [blogSearchQuery, setBlogSearchQuery] = useState('');
+    const [cachedBlogs, setCachedBlogs] = useState([]);
 
     // Tab 3: Events
     const [eventSubTab, setEventSubTab] = useState('create'); // 'create', 'manage'
@@ -61,7 +62,7 @@ export default function Admin() {
             (blog.title || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
             (blog.subtitle || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
             (blog.category || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-            (blog.authorName || '').toLowerCase().includes(blogSearchQuery.toLowerCase())
+            (blog.name || '').toLowerCase().includes(blogSearchQuery.toLowerCase())
         );
     }, [acceptedBlogs, blogSearchQuery]);
 
@@ -70,7 +71,21 @@ export default function Admin() {
         if (activeTab === 'review' && canReviewBlogs) {
             fetchPendingArticles();
         } else if (activeTab === 'manage_blogs') {
-            fetchAcceptedBlogs();
+            if (cachedBlogs.length > 0) {
+                setAcceptedBlogs(cachedBlogs);
+                return;
+            }
+            setLoadingBlogs(true);
+            ArticlesService.getAccepted()
+                .then(data => {
+                    setAcceptedBlogs(data);
+                    setCachedBlogs(data);
+                    setLoadingBlogs(false);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setLoadingBlogs(false);
+                });
         } else if (activeTab === 'events' && eventSubTab === 'manage') {
             fetchAdminEvents();
         } else if (activeTab === 'users') {
@@ -91,7 +106,7 @@ export default function Admin() {
                 });
         }
         // eslint-disable-next-line
-    }, [activeTab, eventSubTab, canReviewBlogs, cachedUsers]);
+    }, [activeTab, eventSubTab, canReviewBlogs, cachedBlogs, cachedUsers]);
 
     const fetchPendingArticles = async () => {
         setLoadingReview(true);
@@ -194,21 +209,24 @@ export default function Admin() {
         }
     };
 
-    const handleSoftDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to hide/archive this article?")) return;
+    const handleHideBlog = async (id) => {
         try {
             await ArticlesService.softDeleteArticle(id);
-            setAcceptedBlogs(prev => prev.filter(a => a.id !== id));
+            const syncArray = (prev) => prev.filter(b => b.id !== id);
+            setAcceptedBlogs(syncArray);
+            setCachedBlogs(syncArray);
         } catch (e) {
             alert("Failed to hide article.");
         }
     };
 
-    const handleHardDelete = async (id) => {
-        if (!window.confirm("PERMANENTLY delete this article? This cannot be undone.")) return;
+    const handlePermanentDeleteBlog = async (id) => {
+        if (!window.confirm("CRITICAL WARNING > PERMANENTLY delete this article record? This cannot be undone.")) return;
         try {
             await ArticlesService.hardDeleteArticle(id);
-            setAcceptedBlogs(prev => prev.filter(a => a.id !== id));
+            const syncArray = (prev) => prev.filter(b => b.id !== id);
+            setAcceptedBlogs(syncArray);
+            setCachedBlogs(syncArray);
         } catch (e) {
             alert("Failed to delete article.");
         }
@@ -419,20 +437,10 @@ export default function Admin() {
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <input 
                                         type="text"
-                                        placeholder="SEARCH_CATALOGUE > Enter article title, club category, or author name..."
+                                        placeholder="SEARCH_CATALOGUE > Enter article title, category, or author..."
                                         value={blogSearchQuery}
                                         onChange={(e) => setBlogSearchQuery(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem 1rem',
-                                            background: '#040D1A',
-                                            border: '2px solid var(--c-yellow)',
-                                            color: '#fff',
-                                            fontFamily: 'var(--font-mono)',
-                                            fontSize: '0.8rem',
-                                            outline: 'none',
-                                            boxShadow: '4px 4px 0 #000'
-                                        }}
+                                        style={{ width: '100%', padding: '0.75rem 1rem', background: '#040D1A', border: '2px solid var(--c-yellow)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', outline: 'none', boxShadow: '4px 4px 0 #000' }}
                                     />
                                 </div>
 
@@ -443,35 +451,25 @@ export default function Admin() {
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                                         {filteredBlogs.map((blog) => (
-                                            <div key={blog.id} style={{ background: '#0A192F', border: '2px solid var(--c-yellow)', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                                            <div key={blog.id} style={{ background: '#0A192F', border: '2px solid var(--c-yellow)', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--c-yellow)', marginBottom: '0.25rem' }}>
-                                                        [{blog.category || 'GENERAL'}] By {blog.authorName || 'Anonymous'}
+                                                        [{blog.category || 'GENERAL'}] By {blog.name || 'Contributor'}
                                                     </div>
                                                     <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{blog.title}</h3>
                                                     <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.subtitle}</p>
                                                 </div>
                                                 
-                                                {/* Administrative Controls Block */}
-                                                <button
-                                                    onClick={() => handleTakedown(blog.id, blog.title)}
-                                                    style={{
-                                                        padding: '0.5rem 1rem',
-                                                        background: '#1A0B0B',
-                                                        border: '2px solid #EF4444',
-                                                        color: '#FCA5A5',
-                                                        fontFamily: 'var(--font-mono)',
-                                                        fontSize: '0.7rem',
-                                                        fontWeight: 'bold',
-                                                        cursor: 'pointer',
-                                                        boxShadow: '3px 3px 0 #000',
-                                                        whiteSpace: 'nowrap'
-                                                    }}
-                                                    onMouseEnter={(e) => { e.target.style.background = '#EF4444'; e.target.style.color = '#fff'; }}
-                                                    onMouseLeave={(e) => { e.target.style.background = '#1A0B0B'; e.target.style.color = '#FCA5A5'; }}
-                                                >
-                                                    🗑️ TAKEDOWN
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button onClick={() => handleHideBlog(blog.id)} style={{ padding: '0.5rem 1rem', background: '#222', border: '2px solid #aaa', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                                                        👁️‍🗨️ HIDE
+                                                    </button>
+                                                    {isAL0 && (
+                                                        <button onClick={() => handlePermanentDeleteBlog(blog.id)} style={{ padding: '0.5rem 1rem', background: '#1A0B0B', border: '2px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                                                            🗑️ DELETE
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -629,17 +627,7 @@ export default function Admin() {
                                         placeholder="SEARCH_DIRECTORY > Enter user name, email, or sub ID..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '0.75rem 1rem',
-                                            background: '#040D1A',
-                                            border: '2px solid var(--c-yellow)',
-                                            color: '#fff',
-                                            fontFamily: 'var(--font-mono)',
-                                            fontSize: '0.8rem',
-                                            outline: 'none',
-                                            boxShadow: '4px 4px 0 #000'
-                                        }}
+                                        style={{ width: '100%', padding: '0.75rem 1rem', background: '#040D1A', border: '2px solid var(--c-yellow)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', outline: 'none', boxShadow: '4px 4px 0 #000' }}
                                     />
                                 </div>
 
@@ -648,69 +636,60 @@ export default function Admin() {
                                 ) : filteredUsers.length === 0 ? (
                                     <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.5 }}>NO DIRECTORY ENTRIES FOUND MATCHING CRITERIA.</div>
                                 ) : (
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                                        {filteredUsers.map((u, i) => (
-                                            <div key={i} style={{ background: '#0A192F', border: '2px dashed var(--c-yellow)', padding: '1.5rem', color: 'var(--c-white)' }}>
-                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--c-yellow)', marginBottom: '0.25rem' }}>
-                                                    {u.name}
-                                                </div>
-                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', opacity: 0.7, marginBottom: '0.5rem' }}>
-                                                    {u.email} | <span style={{ color: '#64ffda' }}>{u.role}</span>
-                                                </div>
-                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', color: '#8892b0', wordBreak: 'break-all', marginBottom: '0.5rem' }}>
-                                                    ID: {u.id}
-                                                </div>
-                                                {isAL0 && (
-                                                    <div style={{ 
-                                                        display: 'flex', 
-                                                        gap: '0.5rem', 
-                                                        marginTop: '0.75rem', 
-                                                        paddingTop: '0.75rem', 
-                                                        borderTop: '1px dashed rgba(250, 204, 21, 0.2)' 
-                                                    }}>
-                                                        <button
-                                                            onClick={() => handleRoleChange(u.username, u.role, 'demote')}
-                                                            disabled={u.role === 'User'}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '0.25rem 0.5rem',
-                                                                background: u.role === 'User' ? '#111' : '#1A0B0B',
-                                                                border: u.role === 'User' ? '1px solid #333' : '1px solid #EF4444',
-                                                                color: u.role === 'User' ? '#555' : '#FCA5A5',
-                                                                fontFamily: 'var(--font-mono)',
-                                                                fontSize: '0.6rem',
-                                                                cursor: u.role === 'User' ? 'not-allowed' : 'pointer'
-                                                            }}
-                                                        >
-                                                            ▼ DEMOTE
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRoleChange(u.username, u.role, 'promote')}
-                                                            disabled={u.role === 'AL0'}
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '0.25rem 0.5rem',
-                                                                background: u.role === 'AL0' ? '#111' : '#0B1A0E',
-                                                                border: u.role === 'AL0' ? '1px solid #333' : '1px solid #22C55E',
-                                                                color: u.role === 'AL0' ? '#555' : '#86EFAC',
-                                                                fontFamily: 'var(--font-mono)',
-                                                                fontSize: '0.6rem',
-                                                                cursor: u.role === 'AL0' ? 'not-allowed' : 'pointer'
-                                                            }}
-                                                        >
-                                                            ▲ PROMOTE
-                                                        </button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                                        {[
+                                            { title: '👑 SEC_CLEARANCE_LEVEL_0 (Super Admins)', type: 'AL0' },
+                                            { title: '🛡️ SEC_CLEARANCE_LEVEL_1 (Editorial Admins)', type: 'AL1' },
+                                            { title: '🛡️ SEC_CLEARANCE_LEVEL_2 (Moderator Admins)', type: 'AL2' },
+                                            { title: '💻 REGISTERED_OPERATORS (Raw Users)', type: 'Raw' }
+                                        ].map(group => {
+                                            const groupUsers = filteredUsers.filter(u => {
+                                                const userGroups = u.groups || [];
+                                                if (group.type === 'Raw') {
+                                                    return !userGroups.includes('AL0') && !userGroups.includes('AL1') && !userGroups.includes('AL2');
+                                                }
+                                                return userGroups.includes(group.type);
+                                            });
+
+                                            if (groupUsers.length === 0) return null;
+
+                                            return (
+                                                <div key={group.type}>
+                                                    <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: 'var(--c-yellow)', marginBottom: '1rem', borderBottom: '1px dashed rgba(250,204,21,0.3)', paddingBottom: '0.25rem' }}>
+                                                        {group.title} — {groupUsers.length} node(s)
+                                                    </h3>
+                                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                                        {groupUsers.map((u, i) => (
+                                                            <div key={i} style={{ background: '#0A192F', border: '2px dashed var(--c-yellow)', padding: '1.5rem', color: 'var(--c-white)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                                                <div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', marginBottom: '0.25rem' }}>
+                                                                        {u.name || 'Anonymous User'}
+                                                                    </div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#8892b0', marginBottom: '0.5rem' }}>
+                                                                        {u.email}
+                                                                    </div>
+                                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.55rem', opacity: 0.4, wordBreak: 'break-all' }}>
+                                                                        SUB: {u.id}
+                                                                    </div>
+                                                                    {(u.groups || []).length > 0 && (
+                                                                        <div style={{ marginTop: '0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--c-yellow)' }}>
+                                                                            TAGS: {(u.groups || []).join(', ')}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                
+                                                                {isAL0 && (
+                                                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(250, 204, 21, 0.1)' }}>
+                                                                        <button onClick={() => handleRoleChange(u.username, u.groups, 'demote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#1A0B0B', border: '1px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▼ DEMOTE</button>
+                                                                        <button onClick={() => handleRoleChange(u.username, u.groups, 'promote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#0B1A0E', border: '1px solid #22C55E', color: '#86EFAC', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▲ PROMOTE</button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                )}
-                                                <div style={{ fontFamily: 'var(--font-serif)', fontSize: '0.9rem', color: '#ddd' }}>
-                                                    {u.bio ? (
-                                                        <span style={{ fontStyle: 'italic' }}>"{u.bio}"</span>
-                                                    ) : (
-                                                        <span style={{ opacity: 0.3, fontSize: '0.8rem' }}>No telemetry bio logged.</span>
-                                                    )}
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </>
