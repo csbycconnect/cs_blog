@@ -108,7 +108,13 @@ export default async function handler(req, res) {
                 const partitionKey = body.id.startsWith("ARTICLE#") ? body.id : (body.id.startsWith("ART#") ? body.id.replace("ART#", "ARTICLE#") : `ARTICLE#${body.id}`);
 
                 // Fetch article to get actual title and author details
-                const article = await getArticleById(body.id);
+                let article = null;
+                try {
+                    article = await getArticleById(body.id);
+                    console.log("[Status Action] Fetched article:", { id: body.id, title: article?.title, authorName: article?.authorName });
+                } catch (fetchErr) {
+                    console.warn("[Status Action] Failed to fetch article for email context:", fetchErr.message);
+                }
 
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
@@ -125,6 +131,7 @@ export default async function handler(req, res) {
                 const recipientEmail = body.email || body.authorEmail || article?.authorEmail;
                 const recipientName = body.authorName || body.name || article?.authorName || "Contributor";
                 const articleTitle = body.title || article?.title || "Your Submission";
+                console.log("[Status Action] Email payload:", { recipientEmail, recipientName, articleTitle });
 
                 if (recipientEmail) {
                     let authorTemplate = null;
@@ -178,7 +185,13 @@ export default async function handler(req, res) {
                 const partitionKey = id.startsWith("ARTICLE#") ? id : (id.startsWith("ART#") ? id.replace("ART#", "ARTICLE#") : `ARTICLE#${id}`);
 
                 // Fetch article to get actual title and author details from DB
-                const article = await getArticleById(id);
+                let article = null;
+                try {
+                    article = await getArticleById(id);
+                    console.log("[UpdateStatus Action] Fetched article:", { id, title: article?.title, authorName: article?.authorName });
+                } catch (fetchErr) {
+                    console.warn("[UpdateStatus Action] Failed to fetch article for email context:", fetchErr.message);
+                }
 
                 // 1. Save state update directly to DynamoDB
                 await dynamoDb.send(new UpdateCommand({
@@ -196,6 +209,7 @@ export default async function handler(req, res) {
                 const recipientEmail = body.email || body.authorEmail || article?.authorEmail;
                 const recipientName = body.authorName || body.name || article?.authorName || "Contributor";
                 const articleTitle = body.title || article?.title || "Your Submission";
+                console.log("[UpdateStatus Action] Email payload:", { recipientEmail, recipientName, articleTitle });
 
                 if (recipientEmail) {
                     let targetTemplate = null;
