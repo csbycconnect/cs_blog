@@ -135,7 +135,7 @@ function ArticleListItem({ article, formatDate }) {
                     <h2 className="article-title">{article.title}</h2>
                     <div className="article-meta">
                         <span>{formatDate(article.date)}</span>
-                        <span>{article.name || article.author || 'ANONYMOUS'}</span>
+                        <span>{article.name || article.authorName || 'Contributor'}</span>
                         <span>{article.readTime || '5 MIN READ'}</span>
                     </div>
 
