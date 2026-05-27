@@ -107,6 +107,9 @@ export default async function handler(req, res) {
 
                 const partitionKey = body.id.startsWith("ARTICLE#") ? body.id : (body.id.startsWith("ART#") ? body.id.replace("ART#", "ARTICLE#") : `ARTICLE#${body.id}`);
 
+                // Fetch article to get actual title and author details
+                const article = await getArticleById(body.id);
+
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
                     Key: { PK: partitionKey, SK: "METADATA" },
@@ -118,9 +121,10 @@ export default async function handler(req, res) {
                     }
                 }));
 
-                // Handle Author success/reject routing automatically alongside public list blasts
-                const recipientEmail = body.email || body.authorEmail;
-                const recipientName = body.authorName || body.name || "Contributor";
+                // Handle Author success/reject routing with data from DB
+                const recipientEmail = body.email || body.authorEmail || article?.authorEmail;
+                const recipientName = body.authorName || body.name || article?.authorName || "Contributor";
+                const articleTitle = body.title || article?.title || "Your Submission";
 
                 if (recipientEmail) {
                     let authorTemplate = null;
@@ -136,7 +140,7 @@ export default async function handler(req, res) {
                                     templateType: authorTemplate,
                                     toEmail: recipientEmail,
                                     templateData: {
-                                        postTitle: body.title || "Your Submission",
+                                        postTitle: articleTitle,
                                         authorName: recipientName
                                     }
                                 })
@@ -173,6 +177,9 @@ export default async function handler(req, res) {
 
                 const partitionKey = id.startsWith("ARTICLE#") ? id : (id.startsWith("ART#") ? id.replace("ART#", "ARTICLE#") : `ARTICLE#${id}`);
 
+                // Fetch article to get actual title and author details from DB
+                const article = await getArticleById(id);
+
                 // 1. Save state update directly to DynamoDB
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
@@ -186,8 +193,9 @@ export default async function handler(req, res) {
                 }));
 
                 // 2. Dispatch submission status update via your template updates
-                const recipientEmail = body.email || body.authorEmail;
-                const recipientName = body.authorName || body.name || "Contributor";
+                const recipientEmail = body.email || body.authorEmail || article?.authorEmail;
+                const recipientName = body.authorName || body.name || article?.authorName || "Contributor";
+                const articleTitle = body.title || article?.title || "Your Submission";
 
                 if (recipientEmail) {
                     let targetTemplate = null;
@@ -206,7 +214,7 @@ export default async function handler(req, res) {
                                     templateType: targetTemplate,
                                     toEmail: recipientEmail,
                                     templateData: {
-                                        postTitle: body.title || "Your Submission",
+                                        postTitle: articleTitle,
                                         authorName: recipientName
                                     }
                                 })
