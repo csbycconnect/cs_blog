@@ -45,19 +45,32 @@ export async function getAllArticles() {
 /* ------------------------------------------------ */
 
 export async function getArticleById(id) {
-    // If the lookup ID doesn't start with the prefix, fix it dynamically
-    const partitionKey = id.startsWith("ART#") ? id : `ART#${id}`;
+    if (!id) return null;
 
-    const result = await dynamoDb.send(new GetCommand({
-        TableName: TABLES.ARTICLES,
-        Key: {
-            PK: partitionKey,
-            SK: "ARTICLE"
-        }
-    }));
-    return result.Item;
+    // 1. Clean up any weird URL/colon formatting issues coming from the client
+    // This turns "ART:1" into "ART#1" dynamically
+    let normalizedId = id.replace("ART:", "ART#");
+
+    // 2. If it's a raw numeric string or string without prefix, ensure it matches the database pattern
+    if (!normalizedId.startsWith("ART#")) {
+        normalizedId = `ART#${normalizedId}`;
+    }
+
+    try {
+        const result = await dynamoDb.send(new GetCommand({
+            TableName: TABLES.ARTICLES || "bb_articles",
+            Key: {
+                PK: normalizedId,
+                SK: "ARTICLE"
+            }
+        }));
+
+        return result.Item || null;
+    } catch (error) {
+        console.error("DynamoDB GetCommand Core Exception:", error);
+        throw new Error(`Database read execution failed for ID: ${normalizedId}`);
+    }
 }
-
 /* ------------------------------------------------ */
 /* TOGGLE LIKE */
 /* ------------------------------------------------ */
