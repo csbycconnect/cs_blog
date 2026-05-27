@@ -259,14 +259,16 @@ export default async function handler(req, res) {
                         rejectionReason: sanitizedRejectionReason || null
                     };
 
-                    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`;
-                    const emailServiceUrl = `${baseUrl}/api/send-email`;
+                    const host = req.headers.host;
+                    const protocol = req.headers['x-forwarded-proto'] || 'https';
+                    const emailServiceUrl = `${protocol}://${host}/api/send-email`;
 
                     console.log('[UpdateStatus Action] Email dispatch details:', {
                         targetTemplate,
                         templateData,
                         emailServiceUrl
                     });
+                    console.log('[UpdateStatus Action] DEBUG - Final Validated URL:', emailServiceUrl);
 
                     try {
                         const emailRes = await fetch(emailServiceUrl, {
