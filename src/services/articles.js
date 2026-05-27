@@ -4,9 +4,14 @@ const API_BASE = "/api/articles";
 export const ArticlesService = {
     // Used by Blogs.jsx and Home.jsx to pull public approved dispatches
     async getAccepted() {
-        const res = await fetch(API_BASE);
-        if (!res.ok) throw new Error("Failed to fetch accepted articles");
-        return await res.json();
+        try {
+            const res = await fetch(API_BASE);
+            if (!res.ok) throw new Error("Failed to fetch accepted articles");
+            return await res.json();
+        } catch (error) {
+            console.warn("getAccepted failed, falling back to status query:", error);
+            return await this.fetchByStatus('accepted');
+        }
     },
 
     // Used by BlogPost.jsx to read a single post layout

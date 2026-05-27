@@ -76,18 +76,53 @@ function normalizeArticles(articles) {
 /* ------------------------------------------------ */
 
 export async function getAcceptedArticles() {
-    const result = await dynamoDb.send(
-        new QueryCommand({
-            TableName: TABLES.ARTICLES,
-            IndexName: "StatusIndex",
-            KeyConditionExpression: "GSI3PK = :status",
-            ExpressionAttributeValues: {
-                ":status": "STATUS#accepted",
-            },
-        })
-    );
+    const tableName = TABLES.ARTICLES || "bb_articles";
 
-    return normalizeArticles(result.Items || []);
+    // Try a few index name variants to be tolerant of infra differences.
+    const triedIndexNames = ["StatusIndex", "GSI3", "GSI3PK", "StatusGSI"];
+
+    for (const idx of triedIndexNames) {
+        try {
+            const result = await dynamoDb.send(
+                new QueryCommand({
+                    TableName: tableName,
+                    IndexName: idx,
+                    KeyConditionExpression: "GSI3PK = :status",
+                    ExpressionAttributeValues: {
+                        ":status": "STATUS#accepted",
+                    },
+                })
+            );
+
+            // If we got items back, return them
+            if (result && Array.isArray(result.Items) && result.Items.length > 0) {
+                return normalizeArticles(result.Items);
+            }
+        } catch (err) {
+            // Continue trying other index name variants silently
+            console.warn(`Status query with index ${idx} failed:`, err.message || err);
+        }
+    }
+
+    // Final fallback: perform a scan filtered by status attribute (slower but reliable)
+    try {
+        const scanResult = await dynamoDb.send(
+            new ScanCommand({
+                TableName: tableName,
+                FilterExpression: "#s = :accepted OR GSI3PK = :gpk",
+                ExpressionAttributeNames: { "#s": "status" },
+                ExpressionAttributeValues: {
+                    ":accepted": "accepted",
+                    ":gpk": "STATUS#accepted",
+                },
+            })
+        );
+
+        return normalizeArticles(scanResult.Items || []);
+    } catch (scanErr) {
+        console.error("Failed to fetch accepted articles via Scan fallback:", scanErr);
+        return [];
+    }
 }
 
 /* ------------------------------------------------ */
@@ -95,9 +130,10 @@ export async function getAcceptedArticles() {
 /* ------------------------------------------------ */
 
 export async function getAllArticles() {
+    const tableName = TABLES.ARTICLES || "bb_articles";
     const result = await dynamoDb.send(
         new ScanCommand({
-            TableName: TABLES.ARTICLES,
+            TableName: tableName,
         })
     );
 
@@ -181,9 +217,11 @@ export async function toggleLike(id, isLiking) {
     const partitionKey = normalizeArticlePK(id);
     if (!partitionKey) return;
 
+    const tableName = TABLES.ARTICLES || "bb_articles";
+
     await dynamoDb.send(
         new UpdateCommand({
-            TableName: TABLES.ARTICLES,
+            TableName: tableName,
             Key: {
                 PK: partitionKey,
                 SK: "METADATA",
@@ -207,9 +245,11 @@ export async function incrementViews(id) {
     const partitionKey = normalizeArticlePK(id);
     if (!partitionKey) return;
 
+    const tableName = TABLES.ARTICLES || "bb_articles";
+
     await dynamoDb.send(
         new UpdateCommand({
-            TableName: TABLES.ARTICLES,
+            TableName: tableName,
             Key: {
                 PK: partitionKey,
                 SK: "METADATA",
@@ -230,8 +270,9 @@ export async function incrementViews(id) {
  * without doing a slow, table-wide database scan!
  */
 export async function getPendingSubmissionsByClub(clubName = "General") {
+    const tableName = TABLES.ARTICLES || "bb_articles";
     const command = new QueryCommand({
-        TableName: TABLES.ARTICLES,
+        TableName: tableName,
         IndexName: "GSI1", // References the secondary index rule built on AWS
         KeyConditionExpression: "GSI1PK = :gsi1pk",
         ExpressionAttributeValues: {
