@@ -8,6 +8,27 @@ import {
 import { dynamoDb } from "../aws/dynamodb.js";
 import { TABLES } from "../constants/tables.js";
 
+function normalizeArticlePK(id) {
+    if (!id) return null;
+    let normalized = id;
+
+    if (normalized.startsWith("ARTICLE#")) {
+        return normalized;
+    }
+
+    if (normalized.startsWith("ART:")) {
+        normalized = normalized.replace("ART:", "ART_");
+    } else if (normalized.startsWith("ART#")) {
+        normalized = normalized.replace("ART#", "ART_");
+    }
+
+    if (!normalized.startsWith("ART_")) {
+        normalized = `ART_${normalized}`;
+    }
+
+    return `ARTICLE#${normalized}`;
+}
+
 /* ------------------------------------------------ */
 /* GET ALL ACCEPTED ARTICLES */
 /* ------------------------------------------------ */
@@ -73,13 +94,8 @@ export async function getArticlesByAuthor(userSubId) {
 export async function getArticleById(id) {
     if (!id) return null;
 
-    // Normalize potential ID string variations safely
-    let normalizedId = id.replace("ART:", "ART#");
-
-    // Only apply standard 'ART#' prefixing logic if it isn't an explicit system UUID string format
-    if (!normalizedId.startsWith("ART#") && !normalizedId.includes("-")) {
-        normalizedId = `ART#${normalizedId}`;
-    }
+    const normalizedId = normalizeArticlePK(id);
+    if (!normalizedId) return null;
 
     try {
         const result = await dynamoDb.send(new GetCommand({
@@ -101,11 +117,14 @@ export async function getArticleById(id) {
 /* ------------------------------------------------ */
 
 export async function toggleLike(id, isLiking) {
+    const partitionKey = normalizeArticlePK(id);
+    if (!partitionKey) return;
+
     await dynamoDb.send(
         new UpdateCommand({
             TableName: TABLES.ARTICLES,
             Key: {
-                PK: id,
+                PK: partitionKey,
                 SK: "METADATA",
             },
             UpdateExpression: "ADD #l :inc",
@@ -124,11 +143,14 @@ export async function toggleLike(id, isLiking) {
 /* ------------------------------------------------ */
 
 export async function incrementViews(id) {
+    const partitionKey = normalizeArticlePK(id);
+    if (!partitionKey) return;
+
     await dynamoDb.send(
         new UpdateCommand({
             TableName: TABLES.ARTICLES,
             Key: {
-                PK: id,
+                PK: partitionKey,
                 SK: "METADATA",
             },
             UpdateExpression: "ADD #v :inc",

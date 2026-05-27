@@ -69,6 +69,8 @@ export default async function handler(req, res) {
 
                     GSI1PK: `STATUS#pending#CLUB#${body.club || "General"}`,
                     GSI1SK: timestamp,
+                    GSI2PK: body.authorSub ? `USER#${body.authorSub}` : null,
+                    GSI2SK: `DATE#${timestamp}`,
 
                     views: 0,
                     likes: 0,

@@ -39,29 +39,31 @@ export default function YourBlogs() {
 
                 let data = [];
                 const userSub = user.sub || user.id;
+                const userEmail = (user.email || '').toLowerCase();
+                const userSubLower = userSub ? userSub.toLowerCase() : '';
+                const userName = (user.name || '').toLowerCase();
+
                 if (typeof ArticlesService.getByAuthor === 'function') {
                     data = await ArticlesService.getByAuthor(userSub);
-                } else {
-                    // Fallback: keep existing filtering behavior for compatibility
+                }
+
+                if (!data || data.length === 0) {
                     let accepted = [];
                     if (typeof ArticlesService.getAccepted === 'function') {
                         accepted = await ArticlesService.getAccepted();
                     } else if (typeof ArticlesService.fetchByStatus === 'function') {
-                        accepted = await ArticlesService.fetchByStatus('accepted');
+                        accepted = await ArticlesService.fetchByStatus('accepted').catch(() => []);
                     }
 
-                    let pendingData = [];
-                    if (typeof ArticlesService.getPending === 'function') {
-                        pendingData = await ArticlesService.getPending().catch(() => []);
+                    let pending = [];
+                    if (typeof ArticlesService.fetchByStatus === 'function') {
+                        pending = await ArticlesService.fetchByStatus('pending').catch(() => []);
                     }
 
-                    const combinedDataset = [...(accepted || []), ...(pendingData || [])];
-                    const userEmail = (user.email || '').toLowerCase();
-                    const userSubLower = userSub ? userSub.toLowerCase() : '';
-                    const userName = (user.name || '').toLowerCase();
-
+                    const combinedDataset = [...(accepted || []), ...(pending || [])];
                     data = combinedDataset.filter(art => 
-                        (art.email && art.email.toLowerCase() === userEmail) ||
+                        (art.authorEmail && art.authorEmail.toLowerCase() === userEmail) ||
+                        (art.authorSub && art.authorSub.toLowerCase() === userSubLower) ||
                         (art.authorId && art.authorId.toLowerCase() === userSubLower) ||
                         (art.authorName && art.authorName.toLowerCase() === userName)
                     );
