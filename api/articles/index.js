@@ -179,7 +179,7 @@ export default async function handler(req, res) {
 
             // ─── ACTION 3: ADMINISTRATIVE STATUS SELECTION FOR MANAGEMENT PANEL ───
             if (action === "updateStatus") {
-                const { id, status } = body;
+                const { id, status, rejectionReason } = body;
                 if (!id || !status) return res.status(400).json({ error: "Missing parameter elements" });
 
                 const partitionKey = id.startsWith("ARTICLE#") ? id : (id.startsWith("ART#") ? id.replace("ART#", "ARTICLE#") : `ARTICLE#${id}`);
@@ -193,16 +193,35 @@ export default async function handler(req, res) {
                     console.warn("[UpdateStatus Action] Failed to fetch article for email context:", fetchErr.message);
                 }
 
+                // Build UpdateExpression and values dynamically based on status
+                let updateExpression = "SET #s = :s, GSI3PK = :gpk, updatedAt = :updatedAt";
+                const expressionValues = {
+                    ":s": status,
+                    ":gpk": `STATUS#${status}`,
+                    ":updatedAt": new Date().toISOString()
+                };
+                const expressionNames = { "#s": "status" };
+
+                // If rejected, add TTL (6 days from now) and rejectionReason
+                if (status === "rejected" || status === "declined") {
+                    const ttl = Math.floor(Date.now() / 1000) + 518400; // 6 days
+                    updateExpression += ", ttl = :ttl";
+                    expressionValues[":ttl"] = ttl;
+
+                    // Include rejection reason if provided
+                    if (rejectionReason) {
+                        updateExpression += ", rejectionReason = :reason";
+                        expressionValues[":reason"] = String(rejectionReason).trim();
+                    }
+                }
+
                 // 1. Save state update directly to DynamoDB
                 await dynamoDb.send(new UpdateCommand({
                     TableName: TABLES.ARTICLES || "bb_articles",
                     Key: { PK: partitionKey, SK: "METADATA" },
-                    UpdateExpression: "SET #s = :s, GSI3PK = :gpk",
-                    ExpressionAttributeNames: { "#s": "status" },
-                    ExpressionAttributeValues: {    
-                        ":s": status,
-                        ":gpk": `STATUS#${status}`
-                    }
+                    UpdateExpression: updateExpression,
+                    ExpressionAttributeNames: expressionNames,
+                    ExpressionAttributeValues: expressionValues
                 }));
 
                 // 2. Dispatch submission status update via your template updates
@@ -229,7 +248,8 @@ export default async function handler(req, res) {
                                     toEmail: recipientEmail,
                                     templateData: {
                                         postTitle: articleTitle,
-                                        authorName: recipientName
+                                        authorName: recipientName,
+                                        rejectionReason: rejectionReason || null
                                     }
                                 })
                             });

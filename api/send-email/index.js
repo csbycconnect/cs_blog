@@ -2,67 +2,67 @@
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
-    // Enable CORS for frontend communication
-    res.setHeader("Access-Control-Allow-Credentials", true);
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  // Enable CORS for frontend communication
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    if (req.method === "OPTIONS") {
-        return res.status(200).end();
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const { templateType, toEmail, templateData } = req.body;
+
+    if (!toEmail || !templateType) {
+      return res.status(400).json({ error: "Missing required parameters: toEmail or templateType" });
     }
 
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method not allowed" });
-    }
+    // Initialize Nodemailer transporter with secure environment variables
+    // Prefer direct SMTP config for Gmail and explicit verification
+    const smtpUser = process.env.NODE_SERVER_EMAIL_USER;
+    const smtpPass = process.env.NODE_SERVER_EMAIL_PASS;
 
+    const transporter = nodemailer.createTransport({
+      host: process.env.NODE_SERVER_EMAIL_HOST || 'smtp.gmail.com',
+      port: Number(process.env.NODE_SERVER_EMAIL_PORT || 465),
+      secure: process.env.NODE_SERVER_EMAIL_SECURE ? process.env.NODE_SERVER_EMAIL_SECURE === 'true' : true,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      tls: {
+        // Allow self-signed certs in some environments; set to true only if necessary
+        rejectUnauthorized: process.env.NODE_SERVER_EMAIL_REJECT_UNAUTHORIZED !== 'false'
+      }
+    });
+
+    // Verify transporter configuration early to provide clearer error messages
     try {
-        const { templateType, toEmail, templateData } = req.body;
+      await transporter.verify();
+    } catch (verifyErr) {
+      console.error('[Mail Transport Verify Failed]:', verifyErr);
+      return res.status(500).json({ error: 'Mail transport verification failed', detail: verifyErr.message });
+    }
 
-        if (!toEmail || !templateType) {
-            return res.status(400).json({ error: "Missing required parameters: toEmail or templateType" });
-        }
+    let subject = "";
+    let htmlBody = "";
 
-        // Initialize Nodemailer transporter with secure environment variables
-        // Prefer direct SMTP config for Gmail and explicit verification
-        const smtpUser = process.env.NODE_SERVER_EMAIL_USER;
-        const smtpPass = process.env.NODE_SERVER_EMAIL_PASS;
+    const postTitle = templateData?.postTitle || "Untitled Submission";
+    const authorName = templateData?.authorName || "Contributor";
 
-        const transporter = nodemailer.createTransport({
-            host: process.env.NODE_SERVER_EMAIL_HOST || 'smtp.gmail.com',
-            port: Number(process.env.NODE_SERVER_EMAIL_PORT || 465),
-            secure: process.env.NODE_SERVER_EMAIL_SECURE ? process.env.NODE_SERVER_EMAIL_SECURE === 'true' : true,
-            auth: {
-                user: smtpUser,
-                pass: smtpPass
-            },
-            tls: {
-                // Allow self-signed certs in some environments; set to true only if necessary
-                rejectUnauthorized: process.env.NODE_SERVER_EMAIL_REJECT_UNAUTHORIZED !== 'false'
-            }
-        });
+    // ==========================================
+    // TEMPLATE 1: Submission Success (Approved)
+    // ==========================================
+    if (templateType === 'submission_success') {
+      subject = `✔ Article Approved: "${postTitle}"`;
 
-        // Verify transporter configuration early to provide clearer error messages
-        try {
-            await transporter.verify();
-        } catch (verifyErr) {
-            console.error('[Mail Transport Verify Failed]:', verifyErr);
-            return res.status(500).json({ error: 'Mail transport verification failed', detail: verifyErr.message });
-        }
-
-        let subject = "";
-        let htmlBody = "";
-
-        const postTitle = templateData?.postTitle || "Untitled Submission";
-        const authorName = templateData?.authorName || "Contributor";
-
-        // ==========================================
-        // TEMPLATE 1: Submission Success (Approved)
-        // ==========================================
-        if (templateType === 'submission_success') {
-            subject = `✔ Article Approved: "${postTitle}"`;
-
-            htmlBody = `<!DOCTYPE html>
+      htmlBody = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -251,15 +251,15 @@ export default async function handler(req, res) {
 
 </body>
 </html>`;
-        }
+    }
 
-        // ==========================================
-        // TEMPLATE 2: Submission Reject (Declined)
-        // ==========================================
-        else if (templateType === 'submission_reject') {
-            subject = `❌ Submission Update: "${postTitle || 'Your Article'}"`;
+    // ==========================================
+    // TEMPLATE 2: Submission Reject (Declined)
+    // ==========================================
+    else if (templateType === 'submission_reject') {
+      subject = `❌ Submission Update: "${postTitle || 'Your Article'}"`;
 
-            htmlBody = `<!DOCTYPE html>
+      htmlBody = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -425,6 +425,19 @@ export default async function handler(req, res) {
               <br><br>
 
               We genuinely appreciate your effort and encourage you to continue contributing in the future.
+
+              <br><br>
+
+              <span style="font-size:13px; color:#6b7280;">
+                Note: If you believe there may have been an issue during the review process,
+                you may contact our editorial team for further assistance at
+                <a 
+                    href="mailto:csbyc.connect@christuniversity.in?subject=Regarding%20Rejection%20of%20Article"
+                    style="color:#dc2626; text-decoration:none;"
+                >
+                  csbyc.connect@christuniversity.in
+                </a>.
+                </span>
             </td>
           </tr>
 
@@ -450,34 +463,34 @@ export default async function handler(req, res) {
 
 </body>
 </html>`;
-        } else {
-            return res.status(400).json({ error: "Invalid templateType provided" });
-        }
-
-        // Configuration setup for outbound mail operations
-        const mailOptions = {
-            from: `"ByteBoard Mail Engine" <${process.env.NODE_SERVER_EMAIL_USER}>`,
-            subject: subject,
-            html: htmlBody
-        };
-
-        if (Array.isArray(toEmail)) {
-            mailOptions.to = smtpUser || process.env.NODE_SERVER_EMAIL_USER || 'no-reply@example.com';
-            mailOptions.bcc = toEmail.join(',');
-        } else {
-            mailOptions.to = toEmail;
-        }
-
-        try {
-            const info = await transporter.sendMail(mailOptions);
-            return res.status(200).json({ success: true, message: 'Transmission successfully authorized.', info });
-        } catch (sendErr) {
-            console.error('[Mail Send Failed]:', sendErr);
-            return res.status(500).json({ error: 'Failed to send email', detail: sendErr.message });
-        }
-
-    } catch (error) {
-        console.error("[Mail Endpoint Failure]:", error);
-        return res.status(500).json({ error: "Internal processing crash inside mail system transaction." });
+    } else {
+      return res.status(400).json({ error: "Invalid templateType provided" });
     }
+
+    // Configuration setup for outbound mail operations
+    const mailOptions = {
+      from: `"ByteBoard Mail Engine" <${process.env.NODE_SERVER_EMAIL_USER}>`,
+      subject: subject,
+      html: htmlBody
+    };
+
+    if (Array.isArray(toEmail)) {
+      mailOptions.to = smtpUser || process.env.NODE_SERVER_EMAIL_USER || 'no-reply@example.com';
+      mailOptions.bcc = toEmail.join(',');
+    } else {
+      mailOptions.to = toEmail;
+    }
+
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      return res.status(200).json({ success: true, message: 'Transmission successfully authorized.', info });
+    } catch (sendErr) {
+      console.error('[Mail Send Failed]:', sendErr);
+      return res.status(500).json({ error: 'Failed to send email', detail: sendErr.message });
+    }
+
+  } catch (error) {
+    console.error("[Mail Endpoint Failure]:", error);
+    return res.status(500).json({ error: "Internal processing crash inside mail system transaction." });
+  }
 }
