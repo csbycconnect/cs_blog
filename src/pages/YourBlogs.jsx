@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-
-// helper to remove HTML tags when generating previews
-const stripHtml = (html = '') => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArticlesService } from '../services/articles';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
+
+// Helper to remove HTML tags when generating previews
+const stripHtml = (html = '') => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 export default function YourBlogs() {
     const { user, updateBio } = useAuth();
@@ -26,7 +26,6 @@ export default function YourBlogs() {
         setDrafts(localDrafts);
     }, []);
 
-    // Load Author's Posts from DB
     // Load Author's Posts from DB properly
     useEffect(() => {
         if (!user) {
@@ -37,19 +36,19 @@ export default function YourBlogs() {
         const fetchAuthorPosts = async () => {
             try {
                 let authorPosts = [];
-
-                // 1. Determine correct structural service loader method
+                
+                // Determine correct structural service loader method
                 if (typeof ArticlesService.fetchByAuthor === 'function') {
                     authorPosts = await ArticlesService.fetchByAuthor(user.username || user.id || user.name);
                 } else if (typeof ArticlesService.getArticlesByAuthor === 'function') {
                     authorPosts = await ArticlesService.getArticlesByAuthor(user.username || user.id || user.name);
                 } else {
-                    // Fallback to fetch filtered down matching items
+                    // Direct API Route fallback filtering down matching items
                     const res = await fetch('/api/articles');
                     if (res.ok) {
                         const allArticles = await res.json();
                         const identityToken = (user.username || user.id || user.name || '').toLowerCase();
-                        authorPosts = allArticles.filter(art =>
+                        authorPosts = allArticles.filter(art => 
                             (art.authorId && art.authorId.toLowerCase() === identityToken) ||
                             (art.username && art.username.toLowerCase() === identityToken) ||
                             (art.name && art.name.toLowerCase() === identityToken) ||
@@ -57,7 +56,7 @@ export default function YourBlogs() {
                         );
                     }
                 }
-
+                
                 setPosts(authorPosts || []);
             } catch (error) {
                 console.error("Error fetching author posts:", error);
@@ -69,28 +68,28 @@ export default function YourBlogs() {
         fetchAuthorPosts();
     }, [user, navigate]);
 
-    // Track total metrics across all items published by this identity
-    const metrics = useMemo(() => {
-        const acceptedItems = posts.filter(p => p.status === 'accepted');
+    // Derived tab arrays & metrics computed from backend dataset mutations
+    const { publishedList, pendingList, metrics } = useMemo(() => {
+        const publishedItems = posts.filter(p => p.status === 'accepted');
+        const pendingItems = posts.filter(p => p.status === 'pending');
+        
         return {
-            publishedCount: acceptedItems.length,
-            totalViews: posts.reduce((acc, p) => acc + (parseInt(p.views) || 0), 0),
-            totalLikes: posts.reduce((acc, p) => acc + (parseInt(p.likes) || 0), 0)
+            publishedList: publishedItems,
+            pendingList: pendingItems,
+            metrics: {
+                publishedCount: publishedItems.length,
+                totalViews: posts.reduce((acc, p) => acc + (parseInt(p.views) || 0), 0),
+                totalLikes: posts.reduce((acc, p) => acc + (parseInt(p.likes) || 0), 0)
+            }
         };
     }, [posts]);
 
-    const getItemsForTab = () => {
-        if (activeTab === 'published') return published;
-        if (activeTab === 'pending') return pending;
+    const items = useMemo(() => {
+        if (activeTab === 'published') return publishedList;
+        if (activeTab === 'pending') return pendingList;
         if (activeTab === 'drafts') return drafts;
         return [];
-    };
-
-    const items = getItemsForTab();
-
-    // Calculate total metrics for accepted posts
-    const totalViews = published.reduce((acc, p) => acc + (p.views || 0), 0);
-    const totalLikes = published.reduce((acc, p) => acc + (p.likes || 0), 0);
+    }, [activeTab, publishedList, pendingList, drafts]);
 
     if (!user) return null;
 
@@ -128,7 +127,7 @@ export default function YourBlogs() {
                     <div>
                         <h1 className="serif-heading" style={{ color: 'var(--c-white)', margin: '0 0 0.5rem 0', fontSize: '2.5rem' }}>Your Transmissions</h1>
                         <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.7)', margin: 0 }}>
-                            {published.length} Published • {totalViews} Views • {totalLikes} Likes
+                            {metrics.publishedCount} Published • {metrics.totalViews} Views • {metrics.totalLikes} Likes
                         </p>
                         {user.role && user.role !== 'student' && (
                             <div style={{
@@ -147,7 +146,6 @@ export default function YourBlogs() {
                                 {user.role} Admin
                             </div>
                         )}
-                        {/* user bio display/edit */}
                         <div style={{ marginTop: '0.75rem' }}>
                             {editingBio ? (
                                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -227,7 +225,6 @@ export default function YourBlogs() {
                             gap: '1rem',
                             cursor: activeTab === 'published' ? 'pointer' : 'default'
                         }}
-                            // Replace line 161 inside YourBlogs.jsx:
                             onClick={() => {
                                 if (activeTab === 'published') navigate(`/article/${item.id}`);
                                 else if (activeTab === 'drafts') navigate(`/write-for-us?draft=${i}`);
