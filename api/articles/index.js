@@ -203,13 +203,14 @@ export default async function handler(req, res) {
                 console.log('[UpdateStatus Action] Preparing update', { partitionKey, id, status, rejectionReason: sanitizedRejectionReason, ttl });
 
                 // Build UpdateExpression and values dynamically to avoid sending undefined values
-                const expressionNames = { '#s': 'status' };
+                // Alias both reserved attributes (status and ttl) to avoid reserved word conflicts
+                const expressionNames = { '#s': 'status', '#t': 'ttl' };
                 const expressionValues = {
                     ':s': status,
                     ':gpk': `STATUS#${status}`,
                     ':updatedAt': new Date().toISOString()
                 };
-                
+
                 const setParts = ['#s = :s', 'GSI3PK = :gpk', 'updatedAt = :updatedAt'];
 
                 if (sanitizedRejectionReason !== null) {
@@ -218,8 +219,9 @@ export default async function handler(req, res) {
                 }
 
                 if (ttl !== null) {
-                    setParts.push('ttl = :ttl');
-                    expressionValues[':ttl'] = ttl;
+                    // Use alias #t for ttl and :t for the value
+                    setParts.push('#t = :t');
+                    expressionValues[':t'] = ttl;
                 }
 
                 const updateExpression = `SET ${setParts.join(', ')}`;
