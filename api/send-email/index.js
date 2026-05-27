@@ -60,63 +60,195 @@ export default async function handler(req, res) {
         // TEMPLATE 1: Submission Success (Approved)
         // ==========================================
         if (templateType === 'submission_success') {
-            subject = `🎉 ARTICLE APPROVED: "${postTitle.toUpperCase()}"`;
+            subject = `✔ Article Approved: "${postTitle}"`;
 
             htmlBody = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
+
   <style>
-    body { margin:0; padding:0; background-color:#f3f4f6; font-family:Courier New, monospace; color:#111827; }
-    .container { background-color:#ffffff; border:1px solid #e5e7eb; }
-    .header { color:#16a34a; }
-    .title { color:#111827; }
-    .muted { color:#6b7280; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: "Courier New", monospace;
+      color: #111827;
+    }
+
+    table {
+      border-spacing: 0;
+    }
+
+    .wrapper {
+      width: 100%;
+      padding: 40px 15px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 40px;
+    }
+
+    .brand {
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #6b7280;
+      text-transform: uppercase;
+      padding-bottom: 20px;
+    }
+
+    .status {
+      font-size: 16px;
+      font-weight: bold;
+      color: #16a34a;
+      padding-bottom: 25px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+      padding-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #374151;
+    }
+
+    .article {
+      color: #111827;
+      font-weight: bold;
+    }
+
+    .footer {
+      margin-top: 35px;
+      padding-top: 20px;
+      border-top: 1px dashed #d1d5db;
+      font-size: 11px;
+      line-height: 1.7;
+      color: #6b7280;
+    }
+
+    .link {
+      color: #16a34a;
+      text-decoration: none;
+    }
+
     @media (prefers-color-scheme: dark) {
-      body { background-color:#0b0f14; color:#d1d5db; }
-      .container { background-color:#111827; border:1px solid #1f2937; }
-      .header { color:#4ade80; }
-      .title { color:#ffffff; }
-      .muted { color:#9ca3af; }
+
+      body {
+        background-color: #0b0f14;
+        color: #d1d5db;
+      }
+
+      .container {
+        background-color: #111827;
+        border: 1px solid #1f2937;
+      }
+
+      .brand {
+        color: #9ca3af;
+      }
+
+      .status {
+        color: #4ade80;
+      }
+
+      .title,
+      .article {
+        color: #ffffff;
+      }
+
+      .content {
+        color: #d1d5db;
+      }
+
+      .footer {
+        color: #9ca3af;
+        border-top: 1px dashed #374151;
+      }
+
+      .link {
+        color: #4ade80;
+      }
     }
   </style>
 </head>
+
 <body>
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+
+  <table width="100%" class="wrapper">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" class="container" style="padding:30px;">
+
+        <table class="container" cellpadding="0" cellspacing="0">
+
           <tr>
-            <td class="header" style="font-size:16px; font-weight:bold; padding-bottom:20px;">
-              ✔ SUBMISSION STATUS UPDATE: APPROVED
+            <td class="brand">
+              THEBYTEBOARD
             </td>
           </tr>
+
           <tr>
-            <td style="font-size:14px; line-height:1.6;">
+            <td class="status">
+              ✔ ARTICLE APPROVED
+            </td>
+          </tr>
+
+          <tr>
+            <td class="title">
+              Your submission has been successfully accepted.
+            </td>
+          </tr>
+
+          <tr>
+            <td class="content">
               Hello ${authorName},
+              <br><br>
+
+              We're pleased to inform you that your article titled
+              <span class="article">"${postTitle}"</span>
+              has been reviewed and officially approved for publication on TheByteBoard.
+              <br><br>
+
+              Your submission is now part of the public content stream and available through the platform dashboard.
+              Thank you for contributing your ideas and perspective to the community.
+              <br><br>
+
+              We appreciate your contribution and look forward to future submissions.
             </td>
           </tr>
+
           <tr>
-            <td style="font-size:14px; line-height:1.6; padding-top:10px;">
-              Great news! Your article submission titled <strong class="title">"${postTitle}"</strong> has cleared our content evaluation backlog and is now officially <strong>ACCEPTED</strong>.
+            <td class="footer">
+              This is an automated notification from TheByteBoard Blog System.
+              <br>
+              Please do not reply directly to this email.
+              <br><br>
+
+              Visit:
+              <a href="https://www.thebyteboard-csbyc.blog/" class="link">
+                www.thebyteboard-csbyc.blog
+              </a>
             </td>
           </tr>
-          <tr>
-            <td style="font-size:14px; line-height:1.6; padding-top:10px;">
-              It has been indexed and is actively rendering across the public dashboard streams. Thank you for contributing your perspective to ByteBoard.
-            </td>
-          </tr>
-          <tr>
-            <td class="muted" style="padding-top:30px; font-size:11px; border-top:1px dashed #e5e7eb; margin-top:20px;">
-              This is an automated operational transmission from the PhD Management Systems. Please do not reply directly to this inbox line.
-            </td>
-          </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
+
 </body>
 </html>`;
         }
@@ -125,68 +257,197 @@ export default async function handler(req, res) {
         // TEMPLATE 2: Submission Reject (Declined)
         // ==========================================
         else if (templateType === 'submission_reject') {
-            subject = `REJECTED: Submission Update for "${postTitle || 'Your Article'}"`;
+            subject = `❌ Submission Update: "${postTitle || 'Your Article'}"`;
 
             htmlBody = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light dark">
   <meta name="supported-color-schemes" content="light dark">
+
   <style>
-    body { margin:0; padding:0; background-color:#f3f4f6; font-family:Courier New, monospace; color:#111827; }
-    .container { background-color:#ffffff; border:1px solid #e5e7eb; }
-    .header { color:#dc2626; }
-    .title { color:#111827; }
-    .muted { color:#6b7280; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: "Courier New", monospace;
+      color: #111827;
+    }
+
+    table {
+      border-spacing: 0;
+    }
+
+    .wrapper {
+      width: 100%;
+      padding: 40px 15px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 40px;
+    }
+
+    .brand {
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #6b7280;
+      text-transform: uppercase;
+      padding-bottom: 20px;
+    }
+
+    .status {
+      font-size: 16px;
+      font-weight: bold;
+      color: #dc2626;
+      padding-bottom: 25px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+      padding-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #374151;
+    }
+
+    .article {
+      color: #111827;
+      font-weight: bold;
+    }
+
+    .footer {
+      margin-top: 35px;
+      padding-top: 20px;
+      border-top: 1px dashed #d1d5db;
+      font-size: 11px;
+      line-height: 1.7;
+      color: #6b7280;
+    }
+
+    .link {
+      color: #dc2626;
+      text-decoration: none;
+    }
+
     @media (prefers-color-scheme: dark) {
-      body { background-color:#0b0f14; color:#d1d5db; }
-      .container { background-color:#111827; border:1px solid #1f2937; }
-      .header { color:#f87171; }
-      .title { color:#ffffff; }
-      .muted { color:#9ca3af; }
+
+      body {
+        background-color: #0b0f14;
+        color: #d1d5db;
+      }
+
+      .container {
+        background-color: #111827;
+        border: 1px solid #1f2937;
+      }
+
+      .brand {
+        color: #9ca3af;
+      }
+
+      .status {
+        color: #f87171;
+      }
+
+      .title,
+      .article {
+        color: #ffffff;
+      }
+
+      .content {
+        color: #d1d5db;
+      }
+
+      .footer {
+        color: #9ca3af;
+        border-top: 1px dashed #374151;
+      }
+
+      .link {
+        color: #f87171;
+      }
     }
   </style>
 </head>
+
 <body>
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0;">
+
+  <table width="100%" class="wrapper">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" class="container" style="padding:30px;">
+
+        <table class="container" cellpadding="0" cellspacing="0">
+
           <tr>
-            <td class="header" style="font-size:16px; font-weight:bold; padding-bottom:20px;">
-              ❌ SUBMISSION STATUS UPDATE: DECLINED
+            <td class="brand">
+              THEBYTEBOARD
             </td>
           </tr>
+
           <tr>
-            <td style="font-size:14px; line-height:1.6;">
+            <td class="status">
+              ❌ ARTICLE NOT APPROVED
+            </td>
+          </tr>
+
+          <tr>
+            <td class="title">
+              Your submission was not selected for publication.
+            </td>
+          </tr>
+
+          <tr>
+            <td class="content">
               Hello ${authorName},
+              <br><br>
+
+              Thank you for submitting your article titled
+              <span class="article">"${postTitle}"</span>
+              to TheByteBoard.
+              <br><br>
+
+              After review by our editorial team, we regret to inform you that your submission was not approved for publication at this time.
+              <br><br>
+
+              This decision may be based on factors such as content alignment, formatting standards, originality requirements, or editorial quality guidelines.
+              <br><br>
+
+              We genuinely appreciate your effort and encourage you to continue contributing in the future.
             </td>
           </tr>
+
           <tr>
-            <td style="font-size:14px; line-height:1.6; padding-top:10px;">
-              Thank you for taking the time to submit your document titled <strong class="title">"${postTitle}"</strong> to ByteBoard.
+            <td class="footer">
+              This is an automated notification from TheByteBoard Blog System.
+              <br>
+              Please do not reply directly to this email.
+              <br><br>
+
+              Visit:
+              <a href="https://www.thebyteboard-csbyc.blog/" class="link">
+                www.thebyteboard-csbyc.blog
+              </a>
             </td>
           </tr>
-          <tr>
-            <td style="font-size:14px; line-height:1.6; padding-top:10px;">
-              Following assessment from our editorial panel review engine, we regret to inform you that your submission was not accepted for publication at this time.
-            </td>
-          </tr>
-          <tr>
-            <td style="font-size:14px; line-height:1.6; padding-top:10px;">
-              We encourage you to review our formatting metrics and technical manual submission criteria before attempting to upload subsequent files to the repository.
-            </td>
-          </tr>
-          <tr>
-            <td class="muted" style="padding-top:30px; font-size:11px; border-top:1px dashed #e5e7eb; margin-top:20px;">
-              This is an automated operational transmission from the PhD Management Systems. Please do not reply directly to this inbox line.
-            </td>
-          </tr>
+
         </table>
+
       </td>
     </tr>
   </table>
+
 </body>
 </html>`;
         } else {
