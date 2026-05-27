@@ -40,10 +40,10 @@ export default function Blogs() {
 
                 const formattedPosts = items.map(item => ({
                     ...item,
-                    author: item.name || 'Anonymous',
+                    author: item.authorName || item.name || 'Anonymous',
                     avatar:
                         item.avatarUrl ||
-                        `https://api.dicebear.com/9.x/initials/svg?seed=${item.name || 'A'}&backgroundColor=0d2142&textColor=ffffff`,
+                        `https://api.dicebear.com/9.x/initials/svg?seed=${item.authorName || item.name || 'A'}&backgroundColor=0d2142&textColor=ffffff`,
                 }));
 
                 setDbPosts(formattedPosts);
@@ -58,8 +58,9 @@ export default function Blogs() {
         fetchAcceptedArticles();
     }, []);
 
-    const authors = [...new Set(dbPosts.map(p => p.author))];
+    const authors = [...new Set(dbPosts.map(p => p.authorName || p.author))];
     const categories = [...new Set(dbPosts.map(p => p.category))];
+    const allTags = [...new Set(dbPosts.flatMap(p => Array.isArray(p.tags) ? p.tags : []))];
 
     const filtered = useMemo(() => {
         let posts = [...dbPosts];

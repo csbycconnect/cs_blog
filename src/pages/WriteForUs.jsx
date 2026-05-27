@@ -185,14 +185,16 @@ const handleSubmit = async (e) => {
         // 🚀 STEP 1 FIX: Aligned perfectly to match your Step 2 Backend API keys
         const payload = {
             title: form.title.trim(),
-            subtitle: form.excerpt.trim(), // Mapping excerpt as subtitle for card presentation
-            content: cleanHtml,            // Passing the clean string into 'content'
+            subtitle: form.excerpt.trim(),
+            content: cleanHtml,
             category: form.category.trim(),
             club: form.club || "General",
-            tags: form.tags ? form.tags.split(',').map(t => t.trim()) : [],
+            tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(t => t) : [],
             authorName: user?.name || form.name || "Anonymous",
-            authorSub: user?.sub || "GUEST", // Cognito Identity UUID
-            authorEmail: user?.email || form.email || null
+            authorId: user?.sub || "GUEST",
+            authorSub: user?.sub || "GUEST",
+            authorEmail: user?.email || form.email || null,
+            readTime: Math.ceil(wordCount / 200) || 5
         };
 
         // Fire off to your production backend route!

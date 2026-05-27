@@ -167,11 +167,30 @@ export default function BlogPost() {
                         marginBottom: '1rem',
                         letterSpacing: '0.05em'
                     }}>
-                        {article.category || 'Article'} • {article.readTime}
+                        {article.category || 'Article'} • {article.readTime ? `${article.readTime} MIN READ` : '5 MIN READ'}
                     </div>
                     <h1 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem' }}>
                         {article.title}
                     </h1>
+
+                    {Array.isArray(article.tags) && article.tags.length > 0 && (
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                            {article.tags.map((tag, i) => (
+                                <span key={i} style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    backgroundColor: 'var(--c-yellow)',
+                                    color: '#0A192F',
+                                    padding: '0.3rem 0.6rem',
+                                    border: '1px solid #000',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
                         <img
@@ -203,16 +222,25 @@ export default function BlogPost() {
                         overflowX: 'hidden'
                     }}>
                         {(() => {
-                        const rawContent = article.contentHTML || article.content || '';
-                        const isHtml = /<[^>]+>/.test(rawContent);
+                        const htmlContent = article.contentHTML || article.content || '';
+                        const isHtml = /<[^>]+>/.test(htmlContent);
 
-                        if (isHtml) {
+                        if (isHtml && htmlContent.trim()) {
                             return (
                                 <div
-                                    style={{ lineHeight: 1.8, fontFamily: 'var(--font-serif, Georgia, serif)', color: '#1a1a1a' }}
-                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawContent) }}
+                                    style={{
+                                        lineHeight: 1.8,
+                                        fontFamily: 'var(--font-serif, Georgia, serif)',
+                                        color: '#1a1a1a',
+                                        fontSize: '1.1rem'
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span'] }) }}
                                 />
                             );
+                        }
+
+                        if (!htmlContent.trim()) {
+                            return <p style={{ color: '#999', fontStyle: 'italic' }}>No article content available.</p>;
                         }
 
                         return (
@@ -238,7 +266,7 @@ export default function BlogPost() {
                                     hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
                                 }}
                             >
-                                {rawContent}
+                                {htmlContent}
                             </ReactMarkdown>
                         );
                     })()}

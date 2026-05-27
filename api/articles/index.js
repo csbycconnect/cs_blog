@@ -62,10 +62,12 @@ export default async function handler(req, res) {
                     content: body.content || "",
                     club: body.club || "General",
                     category: body.category || "Article",
+                    tags: Array.isArray(body.tags) ? body.tags : (body.tags ? [body.tags] : []),
                     authorName: body.authorName || "Anonymous",
                     authorId: body.authorId || body.authorSub || "GUEST",
                     authorSub: body.authorSub || "GUEST",
                     authorEmail: body.authorEmail || null,
+                    readTime: body.readTime || 5,
                     status: "pending",
 
                     GSI1PK: `STATUS#pending#CLUB#${body.club || "General"}`,
