@@ -2,6 +2,7 @@ import {
     ScanCommand,
     QueryCommand,
     UpdateCommand,
+    GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 import { dynamoDb } from "../aws/dynamodb.js";
