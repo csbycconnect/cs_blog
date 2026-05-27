@@ -36,37 +36,38 @@ export default function YourBlogs() {
         const fetchAuthorPosts = async () => {
             try {
                 setLoading(true);
-                
-                // Fetch using established fallback chains to catch everything
+
                 let data = [];
-                if (typeof ArticlesService.getAccepted === 'function') {
-                    data = await ArticlesService.getAccepted();
-                } else if (typeof ArticlesService.fetchByStatus === 'function') {
-                    data = await ArticlesService.fetchByStatus('accepted');
+                const userSub = user.sub || user.id;
+                if (typeof ArticlesService.getByAuthor === 'function') {
+                    data = await ArticlesService.getByAuthor(userSub);
                 } else {
-                    const res = await fetch('/api/articles');
-                    if (res.ok) data = await res.json();
+                    // Fallback: keep existing filtering behavior for compatibility
+                    let accepted = [];
+                    if (typeof ArticlesService.getAccepted === 'function') {
+                        accepted = await ArticlesService.getAccepted();
+                    } else if (typeof ArticlesService.fetchByStatus === 'function') {
+                        accepted = await ArticlesService.fetchByStatus('accepted');
+                    }
+
+                    let pendingData = [];
+                    if (typeof ArticlesService.getPending === 'function') {
+                        pendingData = await ArticlesService.getPending().catch(() => []);
+                    }
+
+                    const combinedDataset = [...(accepted || []), ...(pendingData || [])];
+                    const userEmail = (user.email || '').toLowerCase();
+                    const userSubLower = userSub ? userSub.toLowerCase() : '';
+                    const userName = (user.name || '').toLowerCase();
+
+                    data = combinedDataset.filter(art => 
+                        (art.email && art.email.toLowerCase() === userEmail) ||
+                        (art.authorId && art.authorId.toLowerCase() === userSubLower) ||
+                        (art.authorName && art.authorName.toLowerCase() === userName)
+                    );
                 }
 
-                let pendingData = [];
-                if (typeof ArticlesService.getPending === 'function') {
-                    pendingData = await ArticlesService.getPending().catch(() => []);
-                }
-
-                const combinedDataset = [...(data || []), ...(pendingData || [])];
-
-                // Map precisely against the true data definitions present in your CSV dump
-                const userEmail = (user.email || '').toLowerCase();
-                const userSub = (user.sub || user.id || '').toLowerCase();
-                const userName = (user.name || '').toLowerCase();
-
-                const filtered = combinedDataset.filter(art => 
-                    (art.email && art.email.toLowerCase() === userEmail) ||
-                    (art.authorId && art.authorId.toLowerCase() === userSub) ||
-                    (art.authorName && art.authorName.toLowerCase() === userName)
-                );
-
-                setPosts(filtered);
+                setPosts(data || []);
             } catch (error) {
                 console.error("Error matching author identity metrics:", error);
             } finally {

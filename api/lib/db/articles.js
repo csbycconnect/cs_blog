@@ -42,6 +42,31 @@ export async function getAllArticles() {
 }
 
 /* ------------------------------------------------ */
+/* GET ARTICLES BY SPECIFIC AUTHOR (For "Your Blogs") */
+/* ------------------------------------------------ */
+export async function getArticlesByAuthor(userSubId) {
+    if (!userSubId) return [];
+
+    try {
+        const result = await dynamoDb.send(
+            new QueryCommand({
+                TableName: TABLES.ARTICLES || "bb_articles",
+                IndexName: "AuthorIndex",
+                KeyConditionExpression: "GSI2PK = :gsi2pk",
+                ExpressionAttributeValues: {
+                    ":gsi2pk": `USER#${userSubId}`
+                }
+            })
+        );
+
+        return result.Items || [];
+    } catch (error) {
+        console.error("DynamoDB Query AuthorIndex Core Exception:", error);
+        return [];
+    }
+}
+
+/* ------------------------------------------------ */
 /* GET ARTICLE BY ID */
 /* ------------------------------------------------ */
 

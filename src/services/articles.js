@@ -24,6 +24,13 @@ export const ArticlesService = {
         return await res.json();
     },
 
+    async getByAuthor(userSubId) {
+        if (!userSubId) return [];
+        const res = await fetch(`${API_BASE}?author=${encodeURIComponent(userSubId)}`);
+        if (!res.ok) throw new Error("Failed to load author-specific articles");
+        return await res.json();
+    },
+
     // New optimized loader to grab everything for management dashboard
     async fetchAllAdminBlogs() {
         const res = await fetch(`${API_BASE}?status=all_admin`);

@@ -6,6 +6,7 @@ import {
     getAcceptedArticles,
     getAllArticles,
     getArticleById,
+    getArticlesByAuthor,
     toggleLike,
     incrementViews
 } from "../lib/db/articles.js";
@@ -214,7 +215,7 @@ export default async function handler(req, res) {
     // ─── 2. HANDLE GET METHODS ────────────────────────────────────────────
     if (req.method === "GET") {
         try {
-            const { status, id } = req.query;
+            const { status, id, author } = req.query;
 
             if (id || routeAction === "details") {
                 const targetId = id || req.query.id;
@@ -222,6 +223,11 @@ export default async function handler(req, res) {
                 const article = await getArticleById(targetId);
                 if (!article) return res.status(404).json({ error: "Article not found" });
                 return res.status(200).json(article);
+            }
+
+            if (author) {
+                const articles = await getArticlesByAuthor(author);
+                return res.status(200).json(articles);
             }
 
             if (status) {
