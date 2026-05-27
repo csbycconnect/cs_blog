@@ -29,6 +29,39 @@ function normalizeArticlePK(id) {
     return `ARTICLE#${normalized}`;
 }
 
+/**
+ * Extract the clean ID from a PK (removes "ARTICLE#" prefix)
+ * E.g., "ARTICLE#ART_NTAF3RDTT" -> "ART_NTAF3RDTT"
+ */
+function extractArticleId(pk) {
+    if (!pk) return null;
+    if (pk.startsWith("ARTICLE#")) {
+        return pk.replace("ARTICLE#", "");
+    }
+    return pk;
+}
+
+/**
+ * Normalize an article object to ensure it has a clean 'id' field
+ * If article already has 'id', keep it; otherwise extract from PK
+ */
+function normalizeArticle(article) {
+    if (!article) return article;
+    
+    return {
+        ...article,
+        id: article.id || extractArticleId(article.PK),
+    };
+}
+
+/**
+ * Normalize an array of articles
+ */
+function normalizeArticles(articles) {
+    if (!Array.isArray(articles)) return articles;
+    return articles.map(normalizeArticle);
+}
+
 /* ------------------------------------------------ */
 /* GET ALL ACCEPTED ARTICLES */
 /* ------------------------------------------------ */
@@ -45,7 +78,7 @@ export async function getAcceptedArticles() {
         })
     );
 
-    return result.Items || [];
+    return normalizeArticles(result.Items || []);
 }
 
 /* ------------------------------------------------ */
@@ -59,7 +92,7 @@ export async function getAllArticles() {
         })
     );
 
-    return result.Items || [];
+    return normalizeArticles(result.Items || []);
 }
 
 /* ------------------------------------------------ */
@@ -83,7 +116,7 @@ export async function getArticlesByAuthor(userSubId) {
         );
 
         if (result.Items && result.Items.length > 0) {
-            return result.Items;
+            return normalizeArticles(result.Items);
         }
     } catch (error) {
         console.warn("DynamoDB Query AuthorIndex failed, falling back to scan:", error.message || error);
@@ -99,7 +132,7 @@ export async function getArticlesByAuthor(userSubId) {
                 }
             })
         );
-        return scanResult.Items || [];
+        return normalizeArticles(scanResult.Items || []);
     } catch (fallbackError) {
         console.error("DynamoDB Scan fallback for author query failed:", fallbackError);
         return [];
@@ -125,7 +158,7 @@ export async function getArticleById(id) {
             }
         }));
 
-        return result.Item || null;
+        return normalizeArticle(result.Item || null);
     } catch (error) {
         console.error("DynamoDB GetCommand Core Exception:", error);
         throw error; // Propagate down to catch blocks safely
@@ -198,5 +231,5 @@ export async function getPendingSubmissionsByClub(clubName = "General") {
     });
 
     const response = await dynamoDb.send(command);
-    return response.Items || [];
+    return normalizeArticles(response.Items || []);
 }
