@@ -202,9 +202,6 @@ export default function BlogPost() {
                             <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)', fontWeight: 700, fontSize: '0.9rem' }}>
                                 {article.name || 'Anonymous'}
                             </div>
-                            <div style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                                {article.date ? new Date(article.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'UNKNOWN DATE'}
-                            </div>
                         </div>
                     </div>
                 </header>
