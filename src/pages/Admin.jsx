@@ -103,22 +103,39 @@ export default function Admin() {
     const fetchAdminBlogs = async () => {
         setLoadingBlogs(true);
         try {
-            // Using fetchByStatus configurations or dedicated fallback to ensure hidden articles display safely
             let data = [];
-            if (typeof ArticlesService.fetchAllAdminBlogs === 'function') {
-                data = await ArticlesService.fetchAllAdminBlogs();
-            } else if (typeof ArticlesService.fetchByStatus === 'function') {
+
+            // Step 1: Try the dedicated admin endpoint first
+            try {
+                if (typeof ArticlesService.fetchAllAdminBlogs === 'function') {
+                    data = await ArticlesService.fetchAllAdminBlogs();
+                }
+            } catch (adminRouteError) {
+                console.warn("Admin-specific route failed, attempting automatic status-fallback mesh...", adminRouteError);
+            }
+
+            // Step 2: If the admin route returned empty or failed, use the reliable status fallback mesh
+            if (!data || data.length === 0) {
+                console.log("Fetching via individual status pools...");
                 const accepted = await ArticlesService.fetchByStatus('accepted').catch(() => []);
                 const hidden = await ArticlesService.fetchByStatus('hidden').catch(() => []);
-                data = [...accepted, ...hidden];
-            } else {
-                data = await ArticlesService.getAccepted();
+                const pending = await ArticlesService.fetchByStatus('pending').catch(() => []);
+
+                // Combine them all together safely
+                data = [...accepted, ...hidden, ...pending];
             }
-            setAllBlogs(data);
-            setCachedBlogs(data); // Populate matching local cache layer
+
+            // Step 3: Remove duplicate items if any overlapped
+            const uniqueData = Array.from(new Map(data.map(item => [item.id, item])).values());
+
+            setAllBlogs(uniqueData);
+            setCachedBlogs(uniqueData);
         } catch (error) {
-            console.error("Error reading backend catalogue records:", error);
+            console.error("Critical failure reading backend catalogue records:", error);
+            alert("Could not load blogs from the database. Displaying empty catalog.");
+            setAllBlogs([]);
         } finally {
+            // This MUST run, ensuring the "READING CATALOGUE..." message goes away!
             setLoadingBlogs(false);
         }
     };
@@ -213,7 +230,7 @@ export default function Admin() {
                     body: JSON.stringify({ id, status: targetStatus })
                 });
             }
-            
+
             const syncArray = (prev) => prev.map(b => b.id === id ? { ...b, status: targetStatus } : b);
             setAllBlogs(syncArray);
             setCachedBlogs(syncArray);
@@ -232,7 +249,7 @@ export default function Admin() {
             } else if (typeof ArticlesService.hardDeleteArticle === 'function') {
                 await ArticlesService.hardDeleteArticle(id);
             }
-            
+
             const syncArray = (prev) => prev.filter(b => b.id !== id);
             setAllBlogs(syncArray);
             setCachedBlogs(syncArray);
@@ -273,9 +290,9 @@ export default function Admin() {
 
     const handleRoleChange = async (userId, currentGroupsArray, direction) => {
         const rolesOrder = ['User', 'AL2', 'AL1', 'AL0'];
-        
+
         // Extract primary string rank token out of existing user context arrays safely
-        const currentRole = Array.isArray(currentGroupsArray) 
+        const currentRole = Array.isArray(currentGroupsArray)
             ? (currentGroupsArray.includes('AL0') ? 'AL0' : currentGroupsArray.includes('AL1') ? 'AL1' : currentGroupsArray.includes('AL2') ? 'AL2' : 'User')
             : 'User';
 
@@ -283,7 +300,7 @@ export default function Admin() {
         if (currentIndex === -1) currentIndex = 0;
 
         let nextIndex = direction === 'promote' ? currentIndex + 1 : currentIndex - 1;
-        if (nextIndex < 0 || nextIndex >= rolesOrder.length) return; 
+        if (nextIndex < 0 || nextIndex >= rolesOrder.length) return;
 
         const targetRole = rolesOrder[nextIndex];
         if (!window.confirm(`Are you sure you want to change this user's clearance level to ${targetRole}?`)) return;
@@ -294,7 +311,7 @@ export default function Admin() {
             // Reconstruct modern structural arrays to accurately match component list groupings instantly
             const updatedGroups = targetRole === 'User' ? [] : [targetRole];
             const updateArray = (prev) => prev.map(u => u.id === userId ? { ...u, groups: updatedGroups } : u);
-            
+
             setUsers(updateArray);
             setCachedUsers(updateArray);
         } catch (err) {
@@ -443,10 +460,10 @@ export default function Admin() {
                                         {filteredBlogs.map((blog) => {
                                             const isHidden = blog.status === 'hidden';
                                             return (
-                                                <div key={blog.id} style={{ 
-                                                    background: isHidden ? '#0e1117' : '#0A192F', 
-                                                    border: isHidden ? '2px solid #4a5568' : '2px solid var(--c-yellow)', 
-                                                    padding: '1.5rem', display: 'flex', justifyContent: 'space-between', 
+                                                <div key={blog.id} style={{
+                                                    background: isHidden ? '#0e1117' : '#0A192F',
+                                                    border: isHidden ? '2px solid #4a5568' : '2px solid var(--c-yellow)',
+                                                    padding: '1.5rem', display: 'flex', justifyContent: 'space-between',
                                                     alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
                                                     opacity: isHidden ? 0.75 : 1
                                                 }}>
@@ -460,14 +477,14 @@ export default function Admin() {
                                                     </div>
 
                                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                        <button 
-                                                            onClick={() => handleToggleVisibility(blog.id, blog.status)} 
-                                                            style={{ 
-                                                                padding: '0.5rem 1rem', 
-                                                                background: isHidden ? 'var(--c-yellow)' : '#222', 
-                                                                border: isHidden ? '2px solid var(--c-yellow)' : '2px solid #aaa', 
-                                                                color: isHidden ? '#000' : '#fff', 
-                                                                fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' 
+                                                        <button
+                                                            onClick={() => handleToggleVisibility(blog.id, blog.status)}
+                                                            style={{
+                                                                padding: '0.5rem 1rem',
+                                                                background: isHidden ? 'var(--c-yellow)' : '#222',
+                                                                border: isHidden ? '2px solid var(--c-yellow)' : '2px solid #aaa',
+                                                                color: isHidden ? '#000' : '#fff',
+                                                                fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer'
                                                             }}
                                                         >
                                                             {isHidden ? '👁️ SHOW' : '👁️‍🗨️ HIDE'}
