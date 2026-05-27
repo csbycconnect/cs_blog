@@ -49,7 +49,7 @@ export default function Admin() {
 
     // Memoized user directory filter
     const filteredUsers = useMemo(() => {
-        return users.filter(u => 
+        return users.filter(u =>
             (u.name && u.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (u.id && u.id.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -58,7 +58,7 @@ export default function Admin() {
 
     // Memoized blog catalog filter
     const filteredBlogs = useMemo(() => {
-        return acceptedBlogs.filter(blog => 
+        return acceptedBlogs.filter(blog =>
             (blog.title || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
             (blog.subtitle || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
             (blog.category || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
@@ -211,11 +211,21 @@ export default function Admin() {
 
     const handleHideBlog = async (id) => {
         try {
-            await ArticlesService.softDeleteArticle(id);
+            // Check structural service names dynamically
+            if (typeof ArticlesService.hideArticle === 'function') {
+                await ArticlesService.hideArticle(id);
+            } else if (typeof ArticlesService.softDeleteArticle === 'function') {
+                await ArticlesService.softDeleteArticle(id);
+            } else {
+                // REST API Route bypass
+                await fetch(`/api/articles/hide?id=${id}`, { method: 'POST' });
+            }
+
             const syncArray = (prev) => prev.filter(b => b.id !== id);
             setAcceptedBlogs(syncArray);
             setCachedBlogs(syncArray);
         } catch (e) {
+            console.error("Hide error context:", e);
             alert("Failed to hide article.");
         }
     };
@@ -234,11 +244,11 @@ export default function Admin() {
 
     const handleTakedown = async (id, title) => {
         if (!window.confirm(`CRITICAL_ACTION > Are you sure you want to take down and retract "${title}"?`)) return;
-        
+
         try {
             // Revert state back to draft on the serverless layer
             await ArticlesService.updateStatus(id, 'draft');
-            
+
             // Synchronously pull it from client-side state memory
             setAcceptedBlogs(prev => prev.filter(blog => blog.id !== id));
         } catch (err) {
@@ -290,7 +300,7 @@ export default function Admin() {
 
         try {
             await UserService.updateUserRole(username, targetRole);
-            
+
             // Synchronously update local react context memory states instantly
             const updateArray = (prev) => prev.map(u => u.username === username ? { ...u, role: targetRole } : u);
             setUsers(updateArray);
@@ -435,7 +445,7 @@ export default function Admin() {
                         {activeTab === 'manage_blogs' && (
                             <>
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <input 
+                                    <input
                                         type="text"
                                         placeholder="SEARCH_CATALOGUE > Enter article title, category, or author..."
                                         value={blogSearchQuery}
@@ -459,7 +469,7 @@ export default function Admin() {
                                                     <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{blog.title}</h3>
                                                     <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.subtitle}</p>
                                                 </div>
-                                                
+
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                     <button onClick={() => handleHideBlog(blog.id)} style={{ padding: '0.5rem 1rem', background: '#222', border: '2px solid #aaa', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}>
                                                         👁️‍🗨️ HIDE
@@ -622,7 +632,7 @@ export default function Admin() {
                         {activeTab === 'users' && (
                             <>
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <input 
+                                    <input
                                         type="text"
                                         placeholder="SEARCH_DIRECTORY > Enter user name, email, or sub ID..."
                                         value={searchQuery}
@@ -677,7 +687,7 @@ export default function Admin() {
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                
+
                                                                 {isAL0 && (
                                                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(250, 204, 21, 0.1)' }}>
                                                                         <button onClick={() => handleRoleChange(u.username, u.groups, 'demote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#1A0B0B', border: '1px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▼ DEMOTE</button>

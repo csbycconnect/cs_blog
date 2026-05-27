@@ -27,6 +27,7 @@ export default function YourBlogs() {
     }, []);
 
     // Load Author's Posts from DB
+    // Load Author's Posts from DB properly
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -35,8 +36,29 @@ export default function YourBlogs() {
 
         const fetchAuthorPosts = async () => {
             try {
-                const authorPosts = await ArticlesService.fetchByStatus(user.name);
-                setPosts(authorPosts);
+                let authorPosts = [];
+
+                // 1. Determine correct structural service loader method
+                if (typeof ArticlesService.fetchByAuthor === 'function') {
+                    authorPosts = await ArticlesService.fetchByAuthor(user.username || user.id || user.name);
+                } else if (typeof ArticlesService.getArticlesByAuthor === 'function') {
+                    authorPosts = await ArticlesService.getArticlesByAuthor(user.username || user.id || user.name);
+                } else {
+                    // Fallback to fetch filtered down matching items
+                    const res = await fetch('/api/articles');
+                    if (res.ok) {
+                        const allArticles = await res.json();
+                        const identityToken = (user.username || user.id || user.name || '').toLowerCase();
+                        authorPosts = allArticles.filter(art =>
+                            (art.authorId && art.authorId.toLowerCase() === identityToken) ||
+                            (art.username && art.username.toLowerCase() === identityToken) ||
+                            (art.name && art.name.toLowerCase() === identityToken) ||
+                            (art.authorName && art.authorName.toLowerCase() === identityToken)
+                        );
+                    }
+                }
+
+                setPosts(authorPosts || []);
             } catch (error) {
                 console.error("Error fetching author posts:", error);
             } finally {
@@ -47,10 +69,13 @@ export default function YourBlogs() {
         fetchAuthorPosts();
     }, [user, navigate]);
 
-    const { published, pending } = useMemo(() => {
+    // Track total metrics across all items published by this identity
+    const metrics = useMemo(() => {
+        const acceptedItems = posts.filter(p => p.status === 'accepted');
         return {
-            published: posts.filter(p => p.status === 'accepted'),
-            pending: posts.filter(p => p.status === 'pending'),
+            publishedCount: acceptedItems.length,
+            totalViews: posts.reduce((acc, p) => acc + (parseInt(p.views) || 0), 0),
+            totalLikes: posts.reduce((acc, p) => acc + (parseInt(p.likes) || 0), 0)
         };
     }, [posts]);
 
@@ -202,8 +227,9 @@ export default function YourBlogs() {
                             gap: '1rem',
                             cursor: activeTab === 'published' ? 'pointer' : 'default'
                         }}
+                            // Replace line 161 inside YourBlogs.jsx:
                             onClick={() => {
-                                if (activeTab === 'published') navigate(`/blog/${item.id}`);
+                                if (activeTab === 'published') navigate(`/article/${item.id}`);
                                 else if (activeTab === 'drafts') navigate(`/write-for-us?draft=${i}`);
                             }}>
                             <div style={{ flex: 1, minWidth: '300px' }}>
