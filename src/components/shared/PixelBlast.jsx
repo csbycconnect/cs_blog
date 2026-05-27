@@ -339,7 +339,7 @@ export default function PixelBlast({
             const quadGeom = new THREE.PlaneGeometry(2, 2);
             const quad = new THREE.Mesh(quadGeom, material);
             scene.add(quad);
-            const clock = new THREE.Clock();
+            const clock = new THREE.Timer();
 
             const setSize = () => {
                 const w = container.clientWidth || 1;

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Heart, ThumbsUp } from 'lucide-react';
 // Point directly to your correct established system service
 import { ArticlesService } from '../../services/articles';
+import { formatDate } from '../../utils';
 import '../../styles/components.css';
 
 // Global memory cache reference to avoid hitting AWS multiple times on home nav
