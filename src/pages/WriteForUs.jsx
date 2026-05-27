@@ -591,7 +591,7 @@ export default function WriteForUs() {
 
                             <div style={{ marginTop: '1.5rem', height: 2, background: 'rgba(255,255,255,0.1)' }} />
                                 <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f7d000', margin: '1.25rem 0 0.85rem' }}>
-                                    🕵️‍♂️ What We Look For
+                                    ℹ️ Additional Information 
                                 </div>
                                 {ADDITIONALINFORMATION.map((c, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.5rem' }}>

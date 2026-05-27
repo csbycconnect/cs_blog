@@ -403,17 +403,18 @@ export default function Admin() {
                                     <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No pending submissions currently.</p>
                                 ) : (
                                     pendingArticles.map(article => (
-                                        <div key={article.id} style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem' }}>
+                                        <div key={article.id} style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem', marginBottom: '1.5rem' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                                                <div style={{ flex: 1, minWidth: '100%' }}>
-                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--c-black)', marginBottom: '0.5rem' }}>
-                                                        {article.category || 'Article'} • By {article.name || 'Anonymous'} • {article.date ? new Date(article.date).toLocaleDateString() : ''}
+                                                <div style={{ flex: 1, minWidth: '280px' }}>
+                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#000000', marginBottom: '0.5rem' }}>
+                                                        {/* ✅ FIXED: Matches authorName field from database */}
+                                                        {article.category || 'Article'} • By {article.authorName || article.name || 'Anonymous'} • {article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Recent'}
                                                     </div>
                                                     <h2 className="serif-heading" style={{ fontSize: '1.8rem', color: 'var(--c-black)', marginBottom: '1rem', lineHeight: 1.2 }}>
                                                         {article.title}
                                                     </h2>
-                                                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#555', marginBottom: '1.5rem', lineHeight: 1.6, wordWrap: 'break-word', wordBreak: 'break-word' }}>
-                                                        {article.excerpt}
+                                                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#333333', marginBottom: '1.5rem', lineHeight: 1.6, wordWrap: 'break-word', wordBreak: 'break-word' }}>
+                                                        {article.subtitle || article.excerpt || "No subtitle provided."}
                                                     </p>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', minWidth: '120px' }}>
@@ -427,9 +428,26 @@ export default function Admin() {
                                             </div>
 
                                             <details style={{ marginTop: '1.5rem', borderTop: '2px dashed #ccc', paddingTop: '1rem' }}>
-                                                <summary style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', color: 'var(--c-black)' }}>View Full Content</summary>
-                                                <div style={{ marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#333', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1.5rem', border: '1px solid #ddd' }}>
-                                                    {article.contentHTML ? <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} /> : article.content}
+                                                <summary style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', color: 'var(--c-black)' }}>
+                                                    View Full Content
+                                                </summary>
+                                                <div style={{
+                                                    marginTop: '1rem',
+                                                    fontFamily: 'var(--font-mono)',
+                                                    fontSize: '0.85rem',
+                                                    color: '#000000', // 👈 FIXED: Explicitly set text color to solid black
+                                                    lineHeight: 1.6,
+                                                    whiteSpace: 'pre-wrap',
+                                                    background: '#f9f9f9', // 👈 Light background for high contrast
+                                                    padding: '1.5rem',
+                                                    border: '1px solid #ddd'
+                                                }}>
+                                                    {/* ✅ FIXED: Safely tests for both types of content structures without rendering blanks */}
+                                                    {article.contentHTML && article.contentHTML.trim() !== "" ? (
+                                                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
+                                                    ) : (
+                                                        <div>{article.content || "No text content payload detected in this database record."}</div>
+                                                    )}
                                                 </div>
                                             </details>
                                         </div>
