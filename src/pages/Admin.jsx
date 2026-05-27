@@ -9,7 +9,6 @@ import Footer from '../components/layout/Footer';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import { useAuth } from '../context/AuthContext';
 
-
 export default function Admin() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
@@ -28,10 +27,10 @@ export default function Admin() {
     const [loadingReview, setLoadingReview] = useState(true);
 
     // Tab 2: Manage Blogs
-    const [acceptedBlogs, setAcceptedBlogs] = useState([]);
+    const [allBlogs, setAllBlogs] = useState([]); // Holds all articles (accepted + hidden)
     const [loadingBlogs, setLoadingBlogs] = useState(false);
     const [blogSearchQuery, setBlogSearchQuery] = useState('');
-    const [cachedBlogs, setCachedBlogs] = useState([]);
+    const [cachedBlogs, setCachedBlogs] = useState([]); // Master cache layer
 
     // Tab 3: Events
     const [eventSubTab, setEventSubTab] = useState('create'); // 'create', 'manage'
@@ -44,7 +43,7 @@ export default function Admin() {
     // Tab 4: Users
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
-    const [cachedUsers, setCachedUsers] = useState([]);
+    const [cachedUsers, setCachedUsers] = useState([]); // User cache layer
     const [searchQuery, setSearchQuery] = useState('');
 
     // Memoized user directory filter
@@ -56,36 +55,27 @@ export default function Admin() {
         );
     }, [users, searchQuery]);
 
-    // Memoized blog catalog filter
+    // Memoized blog catalog filter (Searches across titles, status, categories, and authors)
     const filteredBlogs = useMemo(() => {
-        return acceptedBlogs.filter(blog =>
+        return allBlogs.filter(blog =>
             (blog.title || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
             (blog.subtitle || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
             (blog.category || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
-            (blog.name || '').toLowerCase().includes(blogSearchQuery.toLowerCase())
+            (blog.name || '').toLowerCase().includes(blogSearchQuery.toLowerCase()) ||
+            (blog.status || '').toLowerCase().includes(blogSearchQuery.toLowerCase())
         );
-    }, [acceptedBlogs, blogSearchQuery]);
+    }, [allBlogs, blogSearchQuery]);
 
-    // Data Loaders
+    // Dynamic Data Sync Loader
     useEffect(() => {
         if (activeTab === 'review' && canReviewBlogs) {
             fetchPendingArticles();
         } else if (activeTab === 'manage_blogs') {
             if (cachedBlogs.length > 0) {
-                setAcceptedBlogs(cachedBlogs);
+                setAllBlogs(cachedBlogs);
                 return;
             }
-            setLoadingBlogs(true);
-            ArticlesService.getAccepted()
-                .then(data => {
-                    setAcceptedBlogs(data);
-                    setCachedBlogs(data);
-                    setLoadingBlogs(false);
-                })
-                .catch(err => {
-                    console.error(err);
-                    setLoadingBlogs(false);
-                });
+            fetchAdminBlogs();
         } else if (activeTab === 'events' && eventSubTab === 'manage') {
             fetchAdminEvents();
         } else if (activeTab === 'users') {
@@ -93,17 +83,7 @@ export default function Admin() {
                 setUsers(cachedUsers);
                 return;
             }
-            setLoadingUsers(true);
-            UserService.fetchAll()
-                .then(data => {
-                    setUsers(data);
-                    setCachedUsers(data);
-                    setLoadingUsers(false);
-                })
-                .catch(err => {
-                    console.error(err);
-                    setLoadingUsers(false);
-                });
+            fetchUsersList();
         }
         // eslint-disable-next-line
     }, [activeTab, eventSubTab, canReviewBlogs, cachedBlogs, cachedUsers]);
@@ -120,13 +100,24 @@ export default function Admin() {
         }
     };
 
-    const fetchAcceptedBlogs = async () => {
+    const fetchAdminBlogs = async () => {
         setLoadingBlogs(true);
         try {
-            const sortedItems = await ArticlesService.getAccepted();
-            setAcceptedBlogs(sortedItems);
+            // Using fetchByStatus configurations or dedicated fallback to ensure hidden articles display safely
+            let data = [];
+            if (typeof ArticlesService.fetchAllAdminBlogs === 'function') {
+                data = await ArticlesService.fetchAllAdminBlogs();
+            } else if (typeof ArticlesService.fetchByStatus === 'function') {
+                const accepted = await ArticlesService.fetchByStatus('accepted').catch(() => []);
+                const hidden = await ArticlesService.fetchByStatus('hidden').catch(() => []);
+                data = [...accepted, ...hidden];
+            } else {
+                data = await ArticlesService.getAccepted();
+            }
+            setAllBlogs(data);
+            setCachedBlogs(data); // Populate matching local cache layer
         } catch (error) {
-            console.error(error);
+            console.error("Error reading backend catalogue records:", error);
         } finally {
             setLoadingBlogs(false);
         }
@@ -137,6 +128,7 @@ export default function Admin() {
         try {
             const allUsers = await UserService.fetchAll();
             setUsers(allUsers);
+            setCachedUsers(allUsers); // Keep base directories mapped in line
         } catch (error) {
             console.error(error);
         } finally {
@@ -156,13 +148,15 @@ export default function Admin() {
         }
     };
 
-    // Actions
+    // Editorial Action Handlers
     const handleAccept = async (article) => {
         try {
             await ArticlesService.updateStatus(article.id, 'accepted');
             setPendingArticles(prev => prev.filter(a => a.id !== article.id));
 
-            // Send publication email via emailjs
+            // Force cache clearance so that Tab 2 re-fetches the updated record list on transition
+            setCachedBlogs([]);
+
             try {
                 await emailjs.send(
                     import.meta.env.VITE_EMAILJS_SERVICE_ID,
@@ -176,7 +170,7 @@ export default function Admin() {
                     import.meta.env.VITE_EMAILJS_PUBLIC_KEY
                 );
             } catch (emailErr) {
-                console.warn("Failed to send publication email. However, article was still published.", emailErr);
+                console.warn("Failed to send publication email. Article was still published.", emailErr);
             }
         } catch (error) {
             alert("Failed to accept article.");
@@ -188,7 +182,6 @@ export default function Admin() {
             await ArticlesService.rejectArticle(article.id);
             setPendingArticles(prev => prev.filter(a => a.id !== article.id));
 
-            // Send rejection email via emailjs using secondary credentials
             try {
                 await emailjs.send(
                     import.meta.env.VITE_EMAILJS_REJECT_SERVICE_ID,
@@ -201,32 +194,30 @@ export default function Admin() {
                     import.meta.env.VITE_EMAILJS_REJECT_PUBLIC_KEY
                 );
             } catch (emailErr) {
-                console.warn("Failed to send rejection email. However, article was still rejected.", emailErr);
+                console.warn("Failed to send rejection email. Article was still rejected.", emailErr);
             }
-
         } catch (error) {
             alert("Failed to reject article.");
         }
     };
 
-const handleHideBlog = async (id) => {
+    const handleToggleVisibility = async (id, currentStatus) => {
+        const targetStatus = currentStatus === 'hidden' ? 'accepted' : 'hidden';
         try {
-            // Update item property status to 'hidden' to prevent public rendering
             if (typeof ArticlesService.updateStatus === 'function') {
-                await ArticlesService.updateStatus(id, 'hidden');
+                await ArticlesService.updateStatus(id, targetStatus);
             } else {
-                // Direct REST execution fallback
                 await fetch(`/api/articles/updateStatus`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, status: 'hidden' })
+                    body: JSON.stringify({ id, status: targetStatus })
                 });
             }
             
-            // Mark locally on your screen cache layer without blowing record away completely
-            setAcceptedBlogs(prev => prev.map(b => b.id === id ? { ...b, status: 'hidden' } : b));
-            setCachedBlogs(prev => prev.map(b => b.id === id ? { ...b, status: 'hidden' } : b));
-            alert("Article hidden successfully.");
+            const syncArray = (prev) => prev.map(b => b.id === id ? { ...b, status: targetStatus } : b);
+            setAllBlogs(syncArray);
+            setCachedBlogs(syncArray);
+            alert(`Article shifted to ${targetStatus} visualization protocol.`);
         } catch (e) {
             console.error(e);
             alert("Failed to change article visibility status.");
@@ -243,26 +234,11 @@ const handleHideBlog = async (id) => {
             }
             
             const syncArray = (prev) => prev.filter(b => b.id !== id);
-            setAcceptedBlogs(syncArray);
+            setAllBlogs(syncArray);
             setCachedBlogs(syncArray);
         } catch (e) {
             console.error(e);
             alert("Failed to execute data deletion sweep.");
-        }
-    };
-
-    const handleTakedown = async (id, title) => {
-        if (!window.confirm(`CRITICAL_ACTION > Are you sure you want to take down and retract "${title}"?`)) return;
-
-        try {
-            // Revert state back to draft on the serverless layer
-            await ArticlesService.updateStatus(id, 'draft');
-
-            // Synchronously pull it from client-side state memory
-            setAcceptedBlogs(prev => prev.filter(blog => blog.id !== id));
-        } catch (err) {
-            alert("Failed to execute catalogue database override.");
-            console.error(err);
         }
     };
 
@@ -283,7 +259,7 @@ const handleHideBlog = async (id) => {
                 category: eventForm.category
             });
             alert("Event created successfully!");
-            setEventForm({ date: '', timeStart: '', timeEnd: '', department: '', title: '', venue: '', description: '', note: '', category: '' });
+            setEventForm({ date: '', timeStart: '', timeEnd: '', department: '', title: '', venue: '', description: '', note: '', category: '', posterUrl: '' });
         } catch (err) {
             console.error(err);
             alert("Failed to create event.");
@@ -295,23 +271,30 @@ const handleHideBlog = async (id) => {
         navigate('/');
     };
 
-    const handleRoleChange = async (username, currentRole, direction) => {
-        const rolesOrder = ['User', 'AL1', 'AL0'];
+    const handleRoleChange = async (userId, currentGroupsArray, direction) => {
+        const rolesOrder = ['User', 'AL2', 'AL1', 'AL0'];
+        
+        // Extract primary string rank token out of existing user context arrays safely
+        const currentRole = Array.isArray(currentGroupsArray) 
+            ? (currentGroupsArray.includes('AL0') ? 'AL0' : currentGroupsArray.includes('AL1') ? 'AL1' : currentGroupsArray.includes('AL2') ? 'AL2' : 'User')
+            : 'User';
+
         let currentIndex = rolesOrder.indexOf(currentRole);
-        if (currentIndex === -1) currentIndex = 0; // Default fallback
+        if (currentIndex === -1) currentIndex = 0;
 
         let nextIndex = direction === 'promote' ? currentIndex + 1 : currentIndex - 1;
-        if (nextIndex < 0 || nextIndex >= rolesOrder.length) return; // Prevent index out of bounds
+        if (nextIndex < 0 || nextIndex >= rolesOrder.length) return; 
 
         const targetRole = rolesOrder[nextIndex];
-
         if (!window.confirm(`Are you sure you want to change this user's clearance level to ${targetRole}?`)) return;
 
         try {
-            await UserService.updateUserRole(username, targetRole);
+            await UserService.updateUserRole(userId, targetRole);
 
-            // Synchronously update local react context memory states instantly
-            const updateArray = (prev) => prev.map(u => u.username === username ? { ...u, role: targetRole } : u);
+            // Reconstruct modern structural arrays to accurately match component list groupings instantly
+            const updatedGroups = targetRole === 'User' ? [] : [targetRole];
+            const updateArray = (prev) => prev.map(u => u.id === userId ? { ...u, groups: updatedGroups } : u);
+            
             setUsers(updateArray);
             setCachedUsers(updateArray);
         } catch (err) {
@@ -320,7 +303,6 @@ const handleHideBlog = async (id) => {
         }
     };
 
-    // Shared Styles
     const inputStyle = {
         padding: '0.75rem', border: '2px solid var(--c-black)',
         fontFamily: 'var(--font-mono)', fontSize: '0.9rem', width: '100%',
@@ -375,17 +357,12 @@ const handleHideBlog = async (id) => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 style={{
-                                    background: 'transparent',
-                                    border: 'none',
+                                    background: 'transparent', border: 'none',
                                     color: activeTab === tab.id ? 'var(--c-yellow)' : 'var(--c-white)',
-                                    fontFamily: 'var(--font-mono)',
-                                    fontWeight: 700,
-                                    fontSize: '0.95rem',
-                                    padding: '0 0.5rem 0.8rem 0.5rem',
-                                    cursor: 'pointer',
+                                    fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.95rem',
+                                    padding: '0 0.5rem 0.8rem 0.5rem', cursor: 'pointer',
                                     borderBottom: activeTab === tab.id ? '4px solid var(--c-yellow)' : '4px solid transparent',
-                                    transition: 'all 0.2s',
-                                    marginBottom: '-2px'
+                                    transition: 'all 0.2s', marginBottom: '-2px'
                                 }}
                             >
                                 {tab.label}
@@ -393,7 +370,6 @@ const handleHideBlog = async (id) => {
                         ))}
                     </div>
 
-                    {/* TAB VIEWS */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
                         {/* TAB 1: EDITORIAL REVIEW */}
@@ -410,9 +386,7 @@ const handleHideBlog = async (id) => {
                                     <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No pending submissions currently.</p>
                                 ) : (
                                     pendingArticles.map(article => (
-                                        <div key={article.id} style={{
-                                            background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem'
-                                        }}>
+                                        <div key={article.id} style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                                                 <div style={{ flex: 1, minWidth: '100%' }}>
                                                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--c-black)', marginBottom: '0.5rem' }}>
@@ -438,10 +412,7 @@ const handleHideBlog = async (id) => {
                                             <details style={{ marginTop: '1.5rem', borderTop: '2px dashed #ccc', paddingTop: '1rem' }}>
                                                 <summary style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', color: 'var(--c-black)' }}>View Full Content</summary>
                                                 <div style={{ marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#333', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1.5rem', border: '1px solid #ddd' }}>
-                                                    {article.contentHTML ?
-                                                        <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
-                                                        : article.content
-                                                    }
+                                                    {article.contentHTML ? <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} /> : article.content}
                                                 </div>
                                             </details>
                                         </div>
@@ -456,7 +427,7 @@ const handleHideBlog = async (id) => {
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     <input
                                         type="text"
-                                        placeholder="SEARCH_CATALOGUE > Enter article title, category, or author..."
+                                        placeholder="SEARCH_CATALOGUE > Enter title, author, category, or status (e.g. 'hidden')..."
                                         value={blogSearchQuery}
                                         onChange={(e) => setBlogSearchQuery(e.target.value)}
                                         style={{ width: '100%', padding: '0.75rem 1rem', background: '#040D1A', border: '2px solid var(--c-yellow)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', outline: 'none', boxShadow: '4px 4px 0 #000' }}
@@ -466,37 +437,56 @@ const handleHideBlog = async (id) => {
                                 {loadingBlogs ? (
                                     <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>READING CATALOGUE DATABASE CORES...</div>
                                 ) : filteredBlogs.length === 0 ? (
-                                    <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.5 }}>NO PUBLISHED ARTICLES MATCHING CRITERIA.</div>
+                                    <div style={{ fontFamily: 'var(--font-mono)', opacity: 0.5 }}>NO CATALOGUE ARTICLES MATCHING CRITERIA.</div>
                                 ) : (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                        {filteredBlogs.map((blog) => (
-                                            <div key={blog.id} style={{ background: '#0A192F', border: '2px solid var(--c-yellow)', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--c-yellow)', marginBottom: '0.25rem' }}>
-                                                        [{blog.category || 'GENERAL'}] By {blog.name || 'Contributor'}
+                                        {filteredBlogs.map((blog) => {
+                                            const isHidden = blog.status === 'hidden';
+                                            return (
+                                                <div key={blog.id} style={{ 
+                                                    background: isHidden ? '#0e1117' : '#0A192F', 
+                                                    border: isHidden ? '2px solid #4a5568' : '2px solid var(--c-yellow)', 
+                                                    padding: '1.5rem', display: 'flex', justifyContent: 'space-between', 
+                                                    alignItems: 'center', gap: '1rem', flexWrap: 'wrap',
+                                                    opacity: isHidden ? 0.75 : 1
+                                                }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: isHidden ? '#a0aec0' : 'var(--c-yellow)', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <span>[{blog.category || 'GENERAL'}] By {blog.name || 'Contributor'}</span>
+                                                            {isHidden && <span style={{ background: '#e53e3e', color: '#fff', padding: '1px 5px', fontSize: '0.55rem', fontWeight: 'bold', borderRadius: '3px' }}>HIDDEN</span>}
+                                                        </div>
+                                                        <h3 style={{ margin: 0, fontSize: '1.1rem', color: isHidden ? '#cbd5e0' : '#fff' }}>{blog.title}</h3>
+                                                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.subtitle}</p>
                                                     </div>
-                                                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{blog.title}</h3>
-                                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.subtitle}</p>
-                                                </div>
 
-                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    <button onClick={() => handleHideBlog(blog.id)} style={{ padding: '0.5rem 1rem', background: '#222', border: '2px solid #aaa', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}>
-                                                        👁️‍🗨️ HIDE
-                                                    </button>
-                                                    {isAL0 && (
-                                                        <button onClick={() => handlePermanentDeleteBlog(blog.id)} style={{ padding: '0.5rem 1rem', background: '#1A0B0B', border: '2px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}>
-                                                            🗑️ DELETE
+                                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                        <button 
+                                                            onClick={() => handleToggleVisibility(blog.id, blog.status)} 
+                                                            style={{ 
+                                                                padding: '0.5rem 1rem', 
+                                                                background: isHidden ? 'var(--c-yellow)' : '#222', 
+                                                                border: isHidden ? '2px solid var(--c-yellow)' : '2px solid #aaa', 
+                                                                color: isHidden ? '#000' : '#fff', 
+                                                                fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' 
+                                                            }}
+                                                        >
+                                                            {isHidden ? '👁️ SHOW' : '👁️‍🗨️ HIDE'}
                                                         </button>
-                                                    )}
+                                                        {isAL0 && (
+                                                            <button onClick={() => handlePermanentDeleteBlog(blog.id)} style={{ padding: '0.5rem 1rem', background: '#1A0B0B', border: '2px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', cursor: 'pointer' }}>
+                                                                🗑️ DELETE
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </>
                         )}
 
-                        {/* TAB 3: EVENTS ENTRY & MANAGE */}
+                        {/* TAB 3: EVENTS */}
                         {activeTab === 'events' && (
                             <div style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '2px solid #ddd', paddingBottom: '0.5rem' }}>
@@ -522,7 +512,7 @@ const handleHideBlog = async (id) => {
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                             <label style={labelStyle}>Event Title</label>
-                                            <input type="text" required placeholder="International Women's Day — Tech Panel" value={eventForm.title} onChange={e => setEventForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
+                                            <input type="text" required placeholder="International Women's Day" value={eventForm.title} onChange={e => setEventForm(p => ({ ...p, title: e.target.value }))} style={inputStyle} />
                                         </div>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
@@ -559,7 +549,7 @@ const handleHideBlog = async (id) => {
 
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                             <label style={labelStyle}>Poster Image URL</label>
-                                            <input type="url" placeholder="Optional raw GitHub link, Drive link, etc..." value={eventForm.posterUrl} onChange={e => setEventForm(p => ({ ...p, posterUrl: e.target.value }))} style={inputStyle} />
+                                            <input type="url" placeholder="Optional URL linkage..." value={eventForm.posterUrl} onChange={e => setEventForm(p => ({ ...p, posterUrl: e.target.value }))} style={inputStyle} />
                                         </div>
 
                                         <button type="submit" style={{ background: 'var(--c-yellow)', border: '2px solid var(--c-black)', padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', boxShadow: '4px 4px 0 #000', marginTop: '1rem' }}>
@@ -573,18 +563,14 @@ const handleHideBlog = async (id) => {
                                         ) : adminEvents.length === 0 ? (
                                             <p style={{ fontFamily: 'var(--font-mono)', color: '#555' }}>No events constructed yet.</p>
                                         ) : (
-                                            adminEvents.filter(ev => {
-                                                const d = new Date(ev.date);
-                                                d.setHours(0, 0, 0, 0);
-                                                return d < new Date(); // Past events only
-                                            }).map(ev => (
+                                            adminEvents.map(ev => (
                                                 <div key={ev.id} style={{ background: '#f5f5f5', border: '1px solid #ccc', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                                         <h3 className="serif-heading" style={{ margin: 0, fontSize: '1.2rem', color: 'var(--c-black)' }}>{ev.title}</h3>
                                                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, padding: '2px 6px', background: '#e0e0e0', color: '#000' }}>{ev.date}</span>
                                                     </div>
 
-                                                    {ev.posterUrl || ev.imageUrl ? (
+                                                    {(ev.posterUrl || ev.imageUrl) ? (
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                             <div style={{ width: '40px', height: '40px', background: '#ccc', backgroundImage: `url(${ev.posterUrl || ev.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--c-black)' }} />
                                                             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'green', fontWeight: 700 }}>Poster Bound</span>
@@ -594,24 +580,9 @@ const handleHideBlog = async (id) => {
                                                     )}
 
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem', borderTop: '1px solid #ddd', paddingTop: '0.5rem' }}>
-                                                        <input
-                                                            type="url" placeholder="Event Poster URL..."
-                                                            defaultValue={ev.posterUrl || ev.imageUrl || ''}
-                                                            id={`poster-input-${ev.id}`}
-                                                            style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
-                                                        />
-                                                        <input
-                                                            type="text" placeholder="Gallery Links (Comma separated)..."
-                                                            defaultValue={ev.galleryUrls || ''}
-                                                            id={`gallery-input-${ev.id}`}
-                                                            style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
-                                                        />
-                                                        <input
-                                                            type="text" placeholder="Geo-tagged Links (Comma separated)..."
-                                                            defaultValue={ev.geoTagUrls || ''}
-                                                            id={`geotag-input-${ev.id}`}
-                                                            style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
-                                                        />
+                                                        <input type="url" placeholder="Event Poster URL..." defaultValue={ev.posterUrl || ev.imageUrl || ''} id={`poster-input-${ev.id}`} style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
+                                                        <input type="text" placeholder="Gallery Links (Comma separated)..." defaultValue={ev.galleryUrls || ''} id={`gallery-input-${ev.id}`} style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
+                                                        <input type="text" placeholder="Geo-tagged Links..." defaultValue={ev.geoTagUrls || ''} id={`geotag-input-${ev.id}`} style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
                                                         <button
                                                             onClick={async () => {
                                                                 const p = document.getElementById(`poster-input-${ev.id}`).value;
@@ -625,7 +596,8 @@ const handleHideBlog = async (id) => {
                                                                     alert("Failed to update media links.");
                                                                 }
                                                             }}
-                                                            style={{ background: 'var(--c-black)', color: 'var(--c-white)', border: '1px solid var(--c-black)', padding: '0.5rem 1rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}>
+                                                            style={{ background: 'var(--c-black)', color: 'var(--c-white)', border: '1px solid var(--c-black)', padding: '0.5rem 1rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}
+                                                        >
                                                             SAVE MEDIA
                                                         </button>
                                                     </div>
@@ -679,7 +651,7 @@ const handleHideBlog = async (id) => {
                                                     </h3>
                                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
                                                         {groupUsers.map((u, i) => (
-                                                            <div key={i} style={{ background: '#0A192F', border: '2px dashed var(--c-yellow)', padding: '1.5rem', color: 'var(--c-white)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                                            <div key={u.id || i} style={{ background: '#0A192F', border: '2px dashed var(--c-yellow)', padding: '1.5rem', color: 'var(--c-white)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                                                 <div>
                                                                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', marginBottom: '0.25rem' }}>
                                                                         {u.name || 'Anonymous User'}
@@ -699,8 +671,8 @@ const handleHideBlog = async (id) => {
 
                                                                 {isAL0 && (
                                                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(250, 204, 21, 0.1)' }}>
-                                                                        <button onClick={() => handleRoleChange(u.username, u.groups, 'demote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#1A0B0B', border: '1px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▼ DEMOTE</button>
-                                                                        <button onClick={() => handleRoleChange(u.username, u.groups, 'promote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#0B1A0E', border: '1px solid #22C55E', color: '#86EFAC', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▲ PROMOTE</button>
+                                                                        <button onClick={() => handleRoleChange(u.id, u.groups, 'demote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#1A0B0B', border: '1px solid #EF4444', color: '#FCA5A5', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▼ DEMOTE</button>
+                                                                        <button onClick={() => handleRoleChange(u.id, u.groups, 'promote')} style={{ flex: 1, padding: '0.25rem 0.5rem', background: '#0B1A0E', border: '1px solid #22C55E', color: '#86EFAC', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', cursor: 'pointer' }}>▲ PROMOTE</button>
                                                                     </div>
                                                                 )}
                                                             </div>
