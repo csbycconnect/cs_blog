@@ -102,8 +102,8 @@ export default function YourBlogs() {
     };
 
     // Distribute records to tabs dynamically based on status properties
-    const published = useMemo(() => posts.filter(p => p.status === 'accepted'), [posts]);
-    const pending = useMemo(() => posts.filter(p => p.status === 'pending' || p.status === 'hidden'), [posts]);
+    const published = useMemo(() => posts.filter(p => p.status === 'accepted' || p.GSI3PK === 'STATUS#accepted'), [posts]);
+    const pending = useMemo(() => posts.filter(p => p.status === 'pending' || p.status === 'hidden' || p.GSI3PK === 'STATUS#pending'), [posts]);
 
     const getItemsForTab = () => {
         if (activeTab === 'published') return published;

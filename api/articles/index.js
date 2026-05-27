@@ -63,6 +63,7 @@ export default async function handler(req, res) {
                     club: body.club || "General",
                     category: body.category || "Article",
                     authorName: body.authorName || "Anonymous",
+                    authorId: body.authorId || body.authorSub || "GUEST",
                     authorSub: body.authorSub || "GUEST",
                     authorEmail: body.authorEmail || null,
                     status: "pending",

@@ -38,7 +38,7 @@ export default function ArticleList() {
 
                 // Filter down to accepted articles if the raw fallback pulled everything
                 const acceptedOnly = (data || []).filter(blog =>
-                    blog.status === 'accepted' || !blog.status
+                    blog.status === 'accepted' || blog.GSI3PK === 'STATUS#accepted' || !blog.status
                 );
 
                 // Slice the top 3 items for the home view grid stack
@@ -148,6 +148,8 @@ function ArticleListItem({ article, formatDate }) {
         setIsFavorite(newIsFavorite);
     };
 
+    const articleId = article.id || article.PK?.replace(/^ARTICLE#/, '') || article.PK;
+
     return (
         <div className="article-wrapper">
             <div className="article-shadow"></div>
@@ -166,7 +168,7 @@ function ArticleListItem({ article, formatDate }) {
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '1rem', borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                        <Link to={`/blog/${article.id}`} className="explore-btn" style={{ textDecoration: 'none', margin: 0, padding: '0.5rem 1rem', background: 'transparent', border: '2px solid var(--c-yellow)', color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                        <Link to={`/blog/${articleId}`} className="explore-btn" style={{ textDecoration: 'none', margin: 0, padding: '0.5rem 1rem', background: 'transparent', border: '2px solid var(--c-yellow)', color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold' }}>
                             EXPLORE NOW →
                         </Link>
 

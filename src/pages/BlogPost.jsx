@@ -202,9 +202,20 @@ export default function BlogPost() {
                         lineHeight: 1.8,
                         overflowX: 'hidden'
                     }}>
-                        {article.contentHTML ? (
-                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
-                        ) : (
+                        {(() => {
+                        const rawContent = article.contentHTML || article.content || '';
+                        const isHtml = /<[^>]+>/.test(rawContent);
+
+                        if (isHtml) {
+                            return (
+                                <div
+                                    style={{ lineHeight: 1.8, fontFamily: 'var(--font-serif, Georgia, serif)', color: '#1a1a1a' }}
+                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawContent) }}
+                                />
+                            );
+                        }
+
+                        return (
                             <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
@@ -227,9 +238,10 @@ export default function BlogPost() {
                                     hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
                                 }}
                             >
-                                {article.content}
+                                {rawContent}
                             </ReactMarkdown>
-                        )}
+                        );
+                    })()}
 
                         {/* Author Bio Section */}
                         {article.bio && (

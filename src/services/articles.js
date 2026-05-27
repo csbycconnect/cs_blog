@@ -24,6 +24,12 @@ export const ArticlesService = {
         return await res.json();
     },
 
+    async getPending() {
+        const res = await fetch(`${API_BASE}?status=pending`);
+        if (!res.ok) throw new Error("Failed to load pending articles");
+        return await res.json();
+    },
+
     async getByAuthor(userSubId) {
         if (!userSubId) return [];
         const res = await fetch(`${API_BASE}?author=${encodeURIComponent(userSubId)}`);
