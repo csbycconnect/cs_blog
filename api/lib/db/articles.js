@@ -48,12 +48,11 @@ export async function getAllArticles() {
 export async function getArticleById(id) {
     if (!id) return null;
 
-    // 1. Clean up any weird URL/colon formatting issues coming from the client
-    // This turns "ART:1" into "ART#1" dynamically
+    // Normalize potential ID string variations safely
     let normalizedId = id.replace("ART:", "ART#");
 
-    // 2. If it's a raw numeric string or string without prefix, ensure it matches the database pattern
-    if (!normalizedId.startsWith("ART#")) {
+    // Only apply standard 'ART#' prefixing logic if it isn't an explicit system UUID string format
+    if (!normalizedId.startsWith("ART#") && !normalizedId.includes("-")) {
         normalizedId = `ART#${normalizedId}`;
     }
 
@@ -69,7 +68,7 @@ export async function getArticleById(id) {
         return result.Item || null;
     } catch (error) {
         console.error("DynamoDB GetCommand Core Exception:", error);
-        throw new Error(`Database read execution failed for ID: ${normalizedId}`);
+        throw error; // Propagate down to catch blocks safely
     }
 }
 /* ------------------------------------------------ */
