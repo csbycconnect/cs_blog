@@ -427,6 +427,11 @@ export default async function handler(req, res) {
               We genuinely appreciate your effort and encourage you to continue contributing in the future.
 
               <br><br>
+              ${templateData && templateData.rejectionReason ? `
+                <div style="margin-top:12px;padding:12px;border-left:4px solid #dc2626;background:#fff5f5;color:#611;"><strong>Editor's Note:</strong><div style="margin-top:8px;color:#4b0f0f;">${templateData.rejectionReason}</div></div>
+              ` : ''}
+
+              <br><br>
 
               <span style="font-size:13px; color:#6b7280;">
                 Note: If you believe there may have been an issue during the review process,

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
-import emailjs from '@emailjs/browser';
 import { useNavigate } from 'react-router-dom';
 import { ArticlesService } from '../services/articles';
 import { UserService } from '../services/users';
@@ -20,11 +19,14 @@ export default function Admin() {
     const canReviewBlogs = isAL0 || isAL1;
 
     // Tabs
-    const [activeTab, setActiveTab] = useState('review'); // 'review', 'manage_blogs', 'events', 'users'
+    const [activeTab, setActiveTab] = useState('review'); // 'review', 'manage_blogs', 'events', 'users', 'rejected'
 
     // Tab 1: Review
     const [pendingArticles, setPendingArticles] = useState([]);
     const [loadingReview, setLoadingReview] = useState(true);
+    // Rejected tab
+    const [rejectedArticles, setRejectedArticles] = useState([]);
+    const [loadingRejected, setLoadingRejected] = useState(false);
 
     // Tab 2: Manage Blogs
     const [allBlogs, setAllBlogs] = useState([]); // Holds all articles (accepted + hidden)
@@ -70,6 +72,8 @@ export default function Admin() {
     useEffect(() => {
         if (activeTab === 'review' && canReviewBlogs) {
             fetchPendingArticles();
+        } else if (activeTab === 'rejected') {
+            fetchRejectedArticles();
         } else if (activeTab === 'manage_blogs') {
             if (cachedBlogs.length > 0) {
                 setAllBlogs(cachedBlogs);
@@ -88,6 +92,12 @@ export default function Admin() {
         // eslint-disable-next-line
     }, [activeTab, eventSubTab, canReviewBlogs, cachedBlogs, cachedUsers]);
 
+    // Rejection modal state
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [modalArticle, setModalArticle] = useState(null);
+    const [rejectionReason, setRejectionReason] = useState("");
+    const [isSubmittingReject, setIsSubmittingReject] = useState(false);
+
     const fetchPendingArticles = async () => {
         setLoadingReview(true);
         try {
@@ -97,6 +107,19 @@ export default function Admin() {
             console.error("Error fetching articles:", error);
         } finally {
             setLoadingReview(false);
+        }
+    };
+
+    const fetchRejectedArticles = async () => {
+        setLoadingRejected(true);
+        try {
+            const items = await ArticlesService.fetchByStatus('rejected');
+            setRejectedArticles(items);
+        } catch (error) {
+            console.error("Error fetching rejected articles:", error);
+            setRejectedArticles([]);
+        } finally {
+            setLoadingRejected(false);
         }
     };
 
@@ -182,27 +205,7 @@ export default function Admin() {
             // 1. Fire state change down to DynamoDB
             await ArticlesService.updateStatus(articleId, 'accepted');
 
-            // 2. Safely trigger your backend NodeMailer microservice (Drops emailjs completely)
-            if (recipientEmail) {
-                try {
-                    await fetch('/api/send-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            templateType: 'submission_success',
-                            toEmail: recipientEmail,
-                            templateData: {
-                                authorName: authorName,
-                                title: title,
-                                blogUrl: `${window.location.origin}/blogs/${encodeURIComponent(articleId)}`
-                            }
-                        })
-                    });
-                } catch (mailErr) {
-                    console.error("Backend notification transmission failed:", mailErr);
-                }
-            }
-
+            // The server handles dispatching notification emails; don't call mail from client.
             alert("Article successfully accepted and published!");
 
             // Refresh local view collections
@@ -226,36 +229,10 @@ export default function Admin() {
                 return;
             }
 
-            if (!window.confirm("Are you sure you want to reject this submission?")) return;
-
-            // 1. Move database lifecycle status to hidden/rejected
-            await ArticlesService.updateStatus(articleId, 'hidden');
-
-            // 2. Route clean fallback text notice out via your backend server
-            if (recipientEmail) {
-                try {
-                    await fetch('/api/send-email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            templateType: 'submission_reject',
-                            toEmail: recipientEmail,
-                            templateData: {
-                                authorName: authorName,
-                                title: title
-                            }
-                        })
-                    });
-                } catch (mailErr) {
-                    console.error("Backend rejection notice transmission failed:", mailErr);
-                }
-            }
-
-            alert("Submission declined. Notification sent.");
-
-            // Clear item out of pending UI arrays instantly
-            setPendingArticles(prev => prev.filter(a => a.id !== articleId && a.PK !== articleId));
-            if (typeof fetchAdminBlogs === 'function') fetchAdminBlogs();
+            // Open rejection modal to capture reason and confirm
+            setModalArticle(article);
+            setRejectionReason("");
+            setShowRejectModal(true);
 
         } catch (error) {
             console.error("Critical error in rejection flow execution:", error);
@@ -411,6 +388,7 @@ export default function Admin() {
                     <div style={{ marginBottom: '2.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', borderBottom: '2px solid rgba(255,255,255,0.1)' }}>
                         {[
                             { id: 'review', label: 'Editorial Review' },
+                            { id: 'rejected', label: 'Rejected' },
                             { id: 'manage_blogs', label: 'Manage Blogs' },
                             { id: 'events', label: 'Record / Event Entry' },
                             { id: 'users', label: 'User Directory' }
@@ -431,6 +409,43 @@ export default function Admin() {
                             </button>
                         ))}
                     </div>
+
+                    {/* Rejection modal (simple) */}
+                    {showRejectModal && modalArticle && (
+                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
+                            <div style={{ width: 'min(720px, 95%)', background: '#fff', padding: '1.25rem', borderRadius: '6px', boxShadow: '0 6px 30px rgba(0,0,0,0.4)', color: '#000' }}>
+                                <h3 style={{ marginTop: 0, fontFamily: 'var(--font-mono)', color: '#111', fontSize: '1.1rem' }}>Reject Submission: {modalArticle.title}</h3>
+                                <p style={{ fontFamily: 'var(--font-mono)', color: '#444', marginBottom: '0.5rem' }}>Provide a short reason to include in the author's notification (optional but recommended).</p>
+                                <textarea value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} rows={6} style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', marginBottom: '0.75rem', fontFamily: 'var(--font-mono)' }} />
+
+                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => { setShowRejectModal(false); setModalArticle(null); setRejectionReason(""); }} style={{ padding: '0.5rem 0.8rem', background: '#eee', border: '1px solid #ccc', cursor: 'pointer' }}>Cancel</button>
+                                    <button onClick={async () => {
+                                        if (!modalArticle) return;
+                                        setIsSubmittingReject(true);
+                                        try {
+                                            const id = modalArticle.id || modalArticle.PK;
+                                            await ArticlesService.updateStatus(id, 'rejected', rejectionReason || null);
+                                            // remove from pending pool
+                                            setPendingArticles(prev => prev.filter(a => (a.id || a.PK) !== id));
+                                            // refresh rejected list and admin catalog
+                                            await fetchRejectedArticles();
+                                            if (typeof fetchAdminBlogs === 'function') fetchAdminBlogs();
+                                            setShowRejectModal(false);
+                                            setModalArticle(null);
+                                            setRejectionReason("");
+                                            alert('Submission rejected and author notified.');
+                                        } catch (err) {
+                                            console.error('Failed to reject submission:', err);
+                                            alert('Failed to reject submission.');
+                                        } finally {
+                                            setIsSubmittingReject(false);
+                                        }
+                                    }} style={{ padding: '0.6rem 0.9rem', background: 'var(--c-black)', color: 'var(--c-yellow)', border: '2px solid var(--c-black)', cursor: 'pointer' }}>{isSubmittingReject ? 'Rejecting...' : 'Confirm Reject'}</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
@@ -501,6 +516,35 @@ export default function Admin() {
                         )}
 
                         {/* TAB 2: MANAGE BLOGS */}
+                        {activeTab === 'rejected' && (
+                            <>
+                                <h2 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: '1.6rem' }}>Rejected Submissions</h2>
+                                {loadingRejected ? (
+                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>Loading rejected submissions...</p>
+                                ) : rejectedArticles.length === 0 ? (
+                                    <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No rejected submissions found.</p>
+                                ) : (
+                                    rejectedArticles.map(item => (
+                                        <div key={item.id} style={{ background: '#111827', border: '2px solid #2d3748', padding: '1rem', marginBottom: '0.75rem', color: '#fff' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <h3 style={{ margin: 0, fontSize: '1.05rem' }}>{item.title}</h3>
+                                                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#9CA3AF' }}>By {item.name || item.authorName || 'Contributor'}</div>
+                                                </div>
+                                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#e2e8f0' }}>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ''}</div>
+                                            </div>
+                                            {item.rejectionReason && (
+                                                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#0b1220', borderLeft: '4px solid #ef4444', color: '#f8d7da' }}>
+                                                    <strong>Editor's Note:</strong>
+                                                    <div style={{ marginTop: '0.35rem', fontFamily: 'var(--font-mono)', color: '#ffdede' }}>{item.rejectionReason}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </>
+                        )}
+
                         {activeTab === 'manage_blogs' && (
                             <>
                                 <div style={{ marginBottom: '1.5rem' }}>

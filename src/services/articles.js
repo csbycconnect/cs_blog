@@ -89,11 +89,15 @@ export const ArticlesService = {
     },
 
     // Used by Admin.jsx to approve, reject, or archive posts
-    async updateStatus(id, status) {
+    // Accepts optional `rejectionReason` for rejected workflows
+    async updateStatus(id, status, rejectionReason = null) {
+        const body = { action: "updateStatus", id, status };
+        if (rejectionReason) body.rejectionReason = String(rejectionReason);
+
         const res = await fetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "updateStatus", id, status })
+            body: JSON.stringify(body)
         });
         if (!res.ok) throw new Error("Failed to update execution status metadata");
         return await res.json();
