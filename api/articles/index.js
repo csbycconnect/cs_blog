@@ -53,22 +53,33 @@ export default async function handler(req, res) {
                 const articleId = `ART_${uniqueShortId}`;
                 const timestamp = new Date().toISOString();
 
+                // Compute read time (minutes) based on 238 words/min and save as "X min read"
+                const rawContent = body.content || body.contentHTML || '';
+                const wordCount = String(rawContent).trim().split(/\s+/).filter(Boolean).length;
+                const minutes = Math.max(1, Math.round(wordCount / 238));
+                const readTimeLabel = `${minutes} min read`;
+
                 const itemPayload = {
                     PK: `ARTICLE#${articleId}`,
                     SK: "METADATA",
                     id: articleId,
                     title: body.title ? body.title.trim() : "Untitled Dispatch",
-                    subtitle: body.subtitle ? body.subtitle.trim() : "",
-                    content: body.content || "",
+                    // canonical excerpt column
+                    excerpt: body.excerpt ? body.excerpt.trim() : (body.subtitle ? body.subtitle.trim() : ''),
+                    // store both plain content and contentHTML for rendering
+                    content: body.content || body.contentHTML || "",
+                    contentHTML: body.contentHTML || body.content || "",
                     club: body.club || "General",
                     category: body.category || "Article",
                     tags: Array.isArray(body.tags) ? body.tags : (body.tags ? [body.tags] : []),
-                    authorName: body.authorName || "Anonymous",
+                    // Save author name under `name` to align with frontend expectations
+                    name: body.authorName || body.name || "Anonymous",
                     authorId: body.authorId || body.authorSub || "GUEST",
                     authorSub: body.authorSub || "GUEST",
                     // Store a single canonical email field — prefer `email` over `authorEmail`
                     email: body.email || body.authorEmail || null,
-                    readTime: body.readTime || 5,
+                    // store readTime as human-friendly label (e.g., "3 min read")
+                    readTime: body.readTime || readTimeLabel,
                     status: "pending",
 
                     GSI1PK: `STATUS#pending#CLUB#${body.club || "General"}`,

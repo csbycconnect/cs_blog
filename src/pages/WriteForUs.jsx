@@ -145,7 +145,7 @@ export default function WriteForUs() {
     // helper used by validation and live word count
     const stripHtml = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const wordCount = useMemo(() => stripHtml(editorHtml).split(' ').filter(Boolean).length, [editorHtml]);
-    const readTime = useMemo(() => Math.max(1, Math.round(wordCount / 220)), [wordCount]);
+    const readTime = useMemo(() => Math.max(1, Math.round(wordCount / 238)), [wordCount]);
 
     const set = (k) => (e) => {
         setForm(f => ({ ...f, [k]: e.target.value }));
@@ -181,21 +181,27 @@ const handleSubmit = async (e) => {
     try {
         // Sanitize rich text HTML to keep things clean and secure
         const cleanHtml = DOMPurify.sanitize(editorHtml);
-        
+
+        const minutes = Math.max(1, Math.round(wordCount / 238));
+        const readTimeLabel = `${minutes} min read`;
+
         // 🚀 STEP 1 FIX: Aligned perfectly to match your Step 2 Backend API keys
         const payload = {
             title: form.title.trim(),
-            subtitle: form.excerpt.trim(),
+            // use canonical `excerpt` column
+            excerpt: form.excerpt.trim(),
             content: cleanHtml,
+            contentHTML: cleanHtml,
             category: form.category.trim(),
             club: form.club || "General",
             tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(t => t) : [],
-            authorName: user?.name || form.name || "Anonymous",
+            // Save author under `name`
+            name: user?.name || form.name || "Anonymous",
             authorId: user?.sub || "GUEST",
             authorSub: user?.sub || "GUEST",
             // store canonical `email` field (avoid duplicate `authorEmail`)
             email: user?.email || form.email || null,
-            readTime: Math.ceil(wordCount / 200) || 5
+            readTime: readTimeLabel
         };
 
         // Fire off to your production backend route!
@@ -207,7 +213,7 @@ const handleSubmit = async (e) => {
                 to_name: (user?.name || form.name).split(' ')[0],
                 to_email: user?.email || form.email || '',
                 article_title: form.title.trim(),
-                read_time: readTime
+                read_time: `${minutes} min read`
             });
         } catch (emailError) {
             console.error('Email notification failed to dispatch:', emailError);

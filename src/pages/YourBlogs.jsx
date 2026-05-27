@@ -63,9 +63,9 @@ export default function YourBlogs() {
                     const combinedDataset = [...(accepted || []), ...(pending || [])];
                     data = combinedDataset.filter(art => 
                         (art.email && art.email.toLowerCase() === userEmail) ||
-                        (art.authorSub && art.authorSub.toLowerCase() === userSubLower) ||
-                        (art.authorId && art.authorId.toLowerCase() === userSubLower) ||
-                        (art.authorName && art.authorName.toLowerCase() === userName)
+                            (art.authorSub && art.authorSub.toLowerCase() === userSubLower) ||
+                            (art.authorId && art.authorId.toLowerCase() === userSubLower) ||
+                            (art.name && art.name.toLowerCase() === userName)
                     );
                 }
 
@@ -250,7 +250,7 @@ export default function YourBlogs() {
                                 </h3>
                                 
                                 <p style={{ margin: 0, fontFamily: 'var(--font-serif)', color: '#444', fontSize: '0.95rem', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                    {item.subtitle || (item.contentHTML ? stripHtml(item.contentHTML).substring(0, 160) + '...' : item.content?.substring(0, 160) + '...') || "No content logging attached."}
+                                    {item.excerpt || (item.contentHTML ? stripHtml(item.contentHTML).substring(0, 160) + '...' : item.content?.substring(0, 160) + '...') || "No content logging attached."}
                                 </p>
                             </div>
 

@@ -52,10 +52,13 @@ function normalizeArticle(article) {
         id: article.id || extractArticleId(article.PK),
         // canonicalize email from legacy authorEmail if present
         email: article.email || article.authorEmail || null,
+        // canonicalize author name to `name`
+        name: article.name || article.authorName || article.author || null,
     };
 
-    // remove legacy field to avoid duplication in API responses
+    // remove legacy fields to avoid duplication in API responses
     if (normalized.authorEmail) delete normalized.authorEmail;
+    if (normalized.authorName) delete normalized.authorName;
 
     return normalized;
 }

@@ -167,7 +167,7 @@ export default function BlogPost() {
                         marginBottom: '1rem',
                         letterSpacing: '0.05em'
                     }}>
-                        {article.category || 'Article'} • {article.readTime ? `${article.readTime} MIN READ` : '5 MIN READ'}
+                        {article.category || 'Article'} • {article.readTime || '5 min read'}
                     </div>
                     <h1 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem' }}>
                         {article.title}

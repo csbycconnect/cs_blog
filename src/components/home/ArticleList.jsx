@@ -159,7 +159,7 @@ function ArticleListItem({ article, formatDate }) {
                         // {article.category || 'GENERAL'}
                     </div>
                     <h2 className="article-title" style={{ margin: '0 0 0.5rem 0', color: '#fff', fontSize: '1.4rem' }}>{article.title}</h2>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#8892b0', lineHeight: '1.4' }}>{article.subtitle}</p>
+                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: '#8892b0', lineHeight: '1.4' }}>{article.excerpt || article.subtitle}</p>
 
                     <div className="article-meta" style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: '#a8b2d1', marginBottom: '1.5rem' }}>
                         <span>{formatDate(article.date || article.createdAt)}</span>

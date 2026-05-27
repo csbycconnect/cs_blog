@@ -40,7 +40,8 @@ export const ArticleAPI = {
             status: 'pending',
             date: dateStr,
             createdAt: dateStr, // alias for consistency with external schemas
-            readTime: Math.max(1, Math.round(wordCount / 220)) + ' min read',
+            readTime: Math.max(1, Math.round(wordCount / 238)) + ' min read',
+            excerpt: formData.excerpt || formData.subtitle || '',
             views: 0,
             likes: 0,
             comments: 0,

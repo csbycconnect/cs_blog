@@ -64,13 +64,13 @@ export default function Blogs() {
                     ...item,
 
                     // Normalize author field
-                    author: item.authorName || item.name || 'Anonymous',
+                    author: item.name || item.authorName || 'Anonymous',
 
                     // Safe avatar fallback
                     avatar:
                         item.avatarUrl ||
                         `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
-                            item.authorName || item.name || 'A'
+                            item.name || item.authorName || 'A'
                         )}&backgroundColor=0d2142&textColor=ffffff`,
                 }));
 

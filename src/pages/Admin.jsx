@@ -171,7 +171,7 @@ export default function Admin() {
             const articleId = article.id || article.PK;
             // Fallbacks matching your exact single-table fields
             const recipientEmail = article.email;
-            const authorName = article.authorName || article.name || "Contributor";
+            const authorName = article.name || article.authorName || "Contributor";
             const title = article.title || "Untitled Article";
 
             if (!articleId) {
@@ -218,7 +218,7 @@ export default function Admin() {
         try {
             const articleId = article.id || article.PK;
             const recipientEmail = article.email;
-            const authorName = article.authorName || article.name || "Contributor";
+            const authorName = article.name || article.authorName || "Contributor";
             const title = article.title || "Untitled Article";
 
             if (!articleId) {
@@ -452,14 +452,13 @@ export default function Admin() {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
                                                 <div style={{ flex: 1, minWidth: '280px' }}>
                                                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#000000', marginBottom: '0.5rem' }}>
-                                                        {/* ✅ FIXED: Matches authorName field from database */}
-                                                        {article.category || 'Article'} • By {article.authorName || article.name || 'Anonymous'} • {article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Recent'}
+                                                        {article.category || 'Article'} • By {article.name || article.authorName || 'Anonymous'} • {article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Recent'}
                                                     </div>
                                                     <h2 className="serif-heading" style={{ fontSize: '1.8rem', color: 'var(--c-black)', marginBottom: '1rem', lineHeight: 1.2 }}>
                                                         {article.title}
                                                     </h2>
                                                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#333333', marginBottom: '1.5rem', lineHeight: 1.6, wordWrap: 'break-word', wordBreak: 'break-word' }}>
-                                                        {article.subtitle || article.excerpt || "No subtitle provided."}
+                                                        {article.excerpt || article.subtitle || "No subtitle provided."}
                                                     </p>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', minWidth: '120px' }}>
@@ -536,7 +535,7 @@ export default function Admin() {
                                                             {isHidden && <span style={{ background: '#e53e3e', color: '#fff', padding: '1px 5px', fontSize: '0.55rem', fontWeight: 'bold', borderRadius: '3px' }}>HIDDEN</span>}
                                                         </div>
                                                         <h3 style={{ margin: 0, fontSize: '1.1rem', color: isHidden ? '#cbd5e0' : '#fff' }}>{blog.title}</h3>
-                                                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.subtitle}</p>
+                                                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#8892b0' }}>{blog.excerpt || blog.subtitle}</p>
                                                     </div>
 
                                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
