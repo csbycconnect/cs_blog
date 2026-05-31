@@ -32,14 +32,12 @@ export default function Events() {
             const data = await EventService.fetchAllEvents();
 
             // Map the data to ensure flat structure if your DB returns nested DynamoDB format
-            const normalizedData = data.map(item => ({
+            const normalizedData = (data || []).map(item => ({
                 ...item,
-                // Handle nested time object if it exists
                 startTime: item.time?.start?.S || item.time?.start || item.timeStart || "",
                 endTime: item.time?.end?.S || item.time?.end || item.timeEnd || ""
             }));
 
-            // Sort: Upcoming (Ascending), Past (Descending)
             setAllEvents(normalizedData);
         } catch (e) {
             console.error("Failed to fetch events:", e);
@@ -78,51 +76,35 @@ export default function Events() {
         const d = new Date(ev.date);
         d.setHours(0, 0, 0, 0);
         return d.getTime() > now.getTime();
-    }).sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort upcoming events ascending
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     const pastEvents = filtered.filter(ev => {
         const d = new Date(ev.date);
         d.setHours(0, 0, 0, 0);
         return d.getTime() < now.getTime();
-    }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort past events descending
+    }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Reusable Event Card Component
-    const EventCard = ({ event, index, expandedEvents, toggleExpand }) => {
+    const EventCard = ({ event, index }) => {
         const cat = categoryColors[event.category] || { bg: '#eee', text: '#000' };
         const isExpanded = !!expandedEvents[event.id];
 
-        // Format times properly if available
-        // Format times properly for DynamoDB JSON structure
         let timeDisplay = '';
-        
-        // Check if event.time exists and has the DynamoDB "S" (String) format
-        if (event.time && typeof event.time === 'object') {
-            // If it's the raw DynamoDB format: { start: { S: "06:00" } }
-            if (event.time.start?.S) {
-                timeDisplay = `${event.time.start.S} – ${event.time.end.S}`;
-            } 
-            // If it's already a flat object: { start: "06:00" }
-            else if (event.time.start) {
-                timeDisplay = `${event.time.start} – ${event.time.end}`;
-            }
-        } 
-        // Fallback for older entries or direct fields
-        else if (event.timeStart) {
+        if (event.startTime) {
+            timeDisplay = `${event.startTime} – ${event.endTime}`;
+        } else if (event.timeStart) {
             timeDisplay = `${event.timeStart} – ${event.timeEnd}`;
         }
 
         return (
             <AnimateOnScroll animationClass="animate-slide-up" delay={0.1 * index} threshold={0.05}>
                 <div style={{ position: 'relative', height: '100%' }}>
-                    {/* shadow block */}
                     <div style={{ position: 'absolute', top: '8px', left: '8px', width: '100%', height: '100%', border: '2px solid var(--c-yellow)', zIndex: 0 }} />
-                    {/* card */}
                     <div style={{
                         position: 'relative', zIndex: 1,
                         backgroundColor: 'var(--c-white)', border: '2px solid var(--c-black)',
                         padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%'
                     }}>
-                        {/* Category pill */}
                         <span style={{
                             alignSelf: 'flex-start', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 700,
                             textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: cat.bg, color: cat.text,
@@ -139,72 +121,35 @@ export default function Events() {
                             {event.description}
                         </p>
 
-                        {/* Meta */}
                         <div style={{ borderTop: '2px solid var(--c-black)', paddingTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#555', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                             <span>📅 {event.date} {timeDisplay ? `· ${timeDisplay}` : ''}</span>
                             <span>📍 {event.venue || event.department}</span>
                         </div>
 
-                        {/* Expansion Area */}
-                        {isExpanded && (() => {
-                            const poster = event.posterUrl || event.imageUrl;
-                            const gallery = event.galleryUrls ? event.galleryUrls.split(',').map(s => s.trim()).filter(Boolean) : [];
-                            const geotags = event.geoTagUrls ? event.geoTagUrls.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-                            return (
-                                <div style={{
-                                    marginTop: '1rem', borderTop: '2px dashed #ccc', paddingTop: '1rem',
-                                    animation: 'fadeIn 0.3s ease-out'
-                                }}>
-                                    {poster && (
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Event Poster</p>
-                                            <img src={poster} alt="Poster" style={{ width: '100%', aspectRatio: '12.5 / 21.22', objectFit: 'contain', border: '2px solid var(--c-black)', display: 'block' }} />
-                                        </div>
-                                    )}
-
-                                    {gallery.length > 0 && (
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Photo Gallery</p>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
-                                                {gallery.map((url, i) => (
-                                                    <img key={i} src={url} alt={`Gallery ${i}`} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', border: '1px solid var(--c-black)', display: 'block' }} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {geotags.length > 0 && (
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Geo-tagged Documentation</p>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
-                                                {geotags.map((url, i) => (
-                                                    <img key={i} src={url} alt={`Geotag ${i}`} style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', border: '1px solid var(--c-black)', display: 'block' }} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {event.note ? (
-                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#000', lineHeight: 1.6, background: '#f5f5f5', padding: '1rem', border: '1px solid #ddd' }}>
-                                            <strong>Notes:</strong> {event.note}
-                                        </p>
-                                    ) : (
-                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#777', fontStyle: 'italic' }}>No additional notes available.</p>
-                                    )}
-                                </div>
-                            );
-                        })()}
+                        {isExpanded && (
+                            <div style={{ marginTop: '1rem', borderTop: '2px dashed #ccc', paddingTop: '1rem', animation: 'fadeIn 0.3s ease-out' }}>
+                                {(event.posterUrl || event.imageUrl) && (
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Event Poster</p>
+                                        <img src={event.posterUrl || event.imageUrl} alt="Poster" style={{ width: '100%', border: '2px solid var(--c-black)', display: 'block' }} />
+                                    </div>
+                                )}
+                                {event.note ? (
+                                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#000', lineHeight: 1.6, background: '#f5f5f5', padding: '1rem', border: '1px solid #ddd' }}>
+                                        <strong>Notes:</strong> {event.note}
+                                    </p>
+                                ) : (
+                                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#777', fontStyle: 'italic' }}>No additional notes available.</p>
+                                )}
+                            </div>
+                        )}
 
                         <button onClick={() => toggleExpand(event.id)} style={{
                             alignSelf: 'flex-start', marginTop: '1rem',
                             fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em',
                             backgroundColor: 'var(--c-black)', color: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '4px 4px 0 var(--c-yellow)',
                             padding: '0.6rem 1.25rem', cursor: 'pointer', transition: 'all 0.1s'
-                        }}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'translate(-2px, -2px)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-                        >
+                        }}>
                             <ShuffleText text={isExpanded ? "Collapse ▲" : "Learn More ▼"} />
                         </button>
                     </div>
@@ -218,8 +163,6 @@ export default function Events() {
             <Navbar />
             <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 5% 5rem', width: '100%' }}>
                 <BackButton />
-
-                {/* Page Header */}
                 <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.05}>
                     <div style={{ marginBottom: '2rem', borderBottom: '2px solid var(--c-white)', paddingBottom: '1rem' }}>
                         <h1 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1 }}>
@@ -231,7 +174,6 @@ export default function Events() {
                     </div>
                 </AnimateOnScroll>
 
-                {/* Search Bar */}
                 <AnimateOnScroll animationClass="animate-slide-up" delay={0.15} threshold={0.05}>
                     <div style={{ marginBottom: '3.5rem', position: 'relative' }}>
                         <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', width: '100%', maxWidth: '480px' }}>
@@ -245,11 +187,6 @@ export default function Events() {
                                 <button onClick={() => setSearchQuery('')} aria-label="Clear search" style={{ position: 'absolute', right: '0.65rem', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '1rem', lineHeight: 1, padding: '0' }}>×</button>
                             )}
                         </div>
-                        {searchQuery && (
-                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem' }}>
-                                {filtered.length} result{filtered.length !== 1 ? 's' : ''} for "{searchQuery}"
-                            </p>
-                        )}
                     </div>
                 </AnimateOnScroll>
 
@@ -259,25 +196,19 @@ export default function Events() {
                     </div>
                 ) : (
                     <>
-                        {/* TODAY'S EVENTS */}
                         {todaysEvents.length > 0 && (
                             <>
                                 <h2 className="serif-heading" style={{ color: 'var(--c-white)', borderBottom: '2px solid var(--c-yellow)', display: 'inline-block', fontSize: '2rem', marginBottom: '1.5rem' }}>Today's Events</h2>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2rem', marginBottom: '5rem' }}>
-                                    {todaysEvents.map((event, i) => (
-                                        <EventCard key={event.id} event={event} index={i} />
-                                    ))}
+                                    {todaysEvents.map((event, i) => <EventCard key={event.id} event={event} index={i} />)}
                                 </div>
                             </>
                         )}
 
-                        {/* UPCOMING EVENTS */}
                         <h2 className="serif-heading" style={{ color: 'var(--c-yellow)', fontSize: '2rem', marginBottom: '1.5rem' }}>Upcoming Sessions</h2>
                         {upcomingEvents.length > 0 ? (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2rem', marginBottom: '5rem' }}>
-                                {upcomingEvents.map((event, i) => (
-                                    <EventCard key={event.id} event={event} index={i} />
-                                ))}
+                                {upcomingEvents.map((event, i) => <EventCard key={event.id} event={event} index={i} />)}
                             </div>
                         ) : (
                             <div style={{ textAlign: 'center', padding: '2rem', border: '2px dashed rgba(255,255,255,0.2)', marginBottom: '5rem' }}>
@@ -285,13 +216,10 @@ export default function Events() {
                             </div>
                         )}
 
-                        {/* PAST EVENTS GALLERY */}
                         <h2 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: '2rem', marginBottom: '1.5rem', borderTop: '2px solid rgba(255,255,255,0.1)', paddingTop: '3rem' }}>Event Archives</h2>
                         {pastEvents.length > 0 ? (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '2rem' }}>
-                                {pastEvents.map((event, i) => (
-                                    <EventCard key={event.id} event={event} index={i} />
-                                ))}
+                                {pastEvents.map((event, i) => <EventCard key={event.id} event={event} index={i} />)}
                             </div>
                         ) : (
                             <div style={{ textAlign: 'center', padding: '2rem', border: '2px dashed rgba(255,255,255,0.2)' }}>
