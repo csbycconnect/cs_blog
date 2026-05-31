@@ -4,7 +4,7 @@ import Footer from '../components/layout/Footer';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import ShuffleText from '../components/shared/ShuffleText';
 import BackButton from '../components/shared/BackButton';
-import { ArticleAPI } from '../lib/api';
+import { EventService } from '../services/events';
 
 const categoryColors = {
     Competition: { bg: '#f7d000', text: '#000' },
@@ -16,7 +16,7 @@ const categoryColors = {
 export default function Events() {
     const [searchQuery, setSearchQuery] = useState('');
     const [isFocused, setIsFocused] = useState(false);
-    
+
     // Dynamic Events State
     const [allEvents, setAllEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,10 +29,20 @@ export default function Events() {
     const fetchDynamicEvents = async () => {
         setLoading(true);
         try {
-            const data = await ArticleAPI.fetchAllEvents();
-            setAllEvents(data);
+            const data = await EventService.fetchAllEvents();
+
+            // Map the data to ensure flat structure if your DB returns nested DynamoDB format
+            const normalizedData = data.map(item => ({
+                ...item,
+                // Handle nested time object if it exists
+                startTime: item.time?.start?.S || item.time?.start || item.timeStart || "",
+                endTime: item.time?.end?.S || item.time?.end || item.timeEnd || ""
+            }));
+
+            // Sort: Upcoming (Ascending), Past (Descending)
+            setAllEvents(normalizedData);
         } catch (e) {
-            console.error("Failed to fetch events from DynamoDB", e);
+            console.error("Failed to fetch events:", e);
         } finally {
             setLoading(false);
         }
@@ -56,36 +66,48 @@ export default function Events() {
     });
 
     const now = new Date();
-    now.setHours(0,0,0,0);
-    
+    now.setHours(0, 0, 0, 0);
+
     const todaysEvents = filtered.filter(ev => {
         const d = new Date(ev.date);
-        d.setHours(0,0,0,0);
+        d.setHours(0, 0, 0, 0);
         return d.getTime() === now.getTime();
     });
 
     const upcomingEvents = filtered.filter(ev => {
         const d = new Date(ev.date);
-        d.setHours(0,0,0,0);
+        d.setHours(0, 0, 0, 0);
         return d.getTime() > now.getTime();
-    }).sort((a,b) => new Date(a.date) - new Date(b.date)); // Sort upcoming events ascending
+    }).sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort upcoming events ascending
 
     const pastEvents = filtered.filter(ev => {
         const d = new Date(ev.date);
-        d.setHours(0,0,0,0);
+        d.setHours(0, 0, 0, 0);
         return d.getTime() < now.getTime();
-    }).sort((a,b) => new Date(b.date) - new Date(a.date)); // Sort past events descending
+    }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort past events descending
 
     // Reusable Event Card Component
-    const EventCard = ({ event, index }) => {
+    const EventCard = ({ event, index, expandedEvents, toggleExpand }) => {
         const cat = categoryColors[event.category] || { bg: '#eee', text: '#000' };
         const isExpanded = !!expandedEvents[event.id];
 
         // Format times properly if available
+        // Format times properly for DynamoDB JSON structure
         let timeDisplay = '';
+        
+        // Check if event.time exists and has the DynamoDB "S" (String) format
         if (event.time && typeof event.time === 'object') {
-            timeDisplay = `${event.time.start} – ${event.time.end}`;
-        } else if (event.timeStart) {
+            // If it's the raw DynamoDB format: { start: { S: "06:00" } }
+            if (event.time.start?.S) {
+                timeDisplay = `${event.time.start.S} – ${event.time.end.S}`;
+            } 
+            // If it's already a flat object: { start: "06:00" }
+            else if (event.time.start) {
+                timeDisplay = `${event.time.start} – ${event.time.end}`;
+            }
+        } 
+        // Fallback for older entries or direct fields
+        else if (event.timeStart) {
             timeDisplay = `${event.timeStart} – ${event.timeEnd}`;
         }
 
@@ -130,7 +152,7 @@ export default function Events() {
                             const geotags = event.geoTagUrls ? event.geoTagUrls.split(',').map(s => s.trim()).filter(Boolean) : [];
 
                             return (
-                                <div style={{ 
+                                <div style={{
                                     marginTop: '1rem', borderTop: '2px dashed #ccc', paddingTop: '1rem',
                                     animation: 'fadeIn 0.3s ease-out'
                                 }}>
@@ -140,27 +162,27 @@ export default function Events() {
                                             <img src={poster} alt="Poster" style={{ width: '100%', aspectRatio: '12.5 / 21.22', objectFit: 'contain', border: '2px solid var(--c-black)', display: 'block' }} />
                                         </div>
                                     )}
-                                    
+
                                     {gallery.length > 0 && (
-                                         <div style={{ marginBottom: '1.5rem' }}>
+                                        <div style={{ marginBottom: '1.5rem' }}>
                                             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Photo Gallery</p>
                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '0.5rem' }}>
                                                 {gallery.map((url, i) => (
                                                     <img key={i} src={url} alt={`Gallery ${i}`} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', border: '1px solid var(--c-black)', display: 'block' }} />
                                                 ))}
                                             </div>
-                                         </div>
+                                        </div>
                                     )}
 
                                     {geotags.length > 0 && (
-                                         <div style={{ marginBottom: '1.5rem' }}>
+                                        <div style={{ marginBottom: '1.5rem' }}>
                                             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Geo-tagged Documentation</p>
                                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
                                                 {geotags.map((url, i) => (
                                                     <img key={i} src={url} alt={`Geotag ${i}`} style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', border: '1px solid var(--c-black)', display: 'block' }} />
                                                 ))}
                                             </div>
-                                         </div>
+                                        </div>
                                     )}
 
                                     {event.note ? (
@@ -180,8 +202,8 @@ export default function Events() {
                             backgroundColor: 'var(--c-black)', color: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '4px 4px 0 var(--c-yellow)',
                             padding: '0.6rem 1.25rem', cursor: 'pointer', transition: 'all 0.1s'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'translate(-2px, -2px)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translate(-2px, -2px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
                         >
                             <ShuffleText text={isExpanded ? "Collapse ▲" : "Learn More ▼"} />
                         </button>
