@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { useNavigate } from 'react-router-dom';
 import { ArticlesService } from '../services/articles';
+import { EventService } from '../services/events';
 import { UserService } from '../services/users';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
@@ -179,7 +180,8 @@ export default function Admin() {
     const fetchAdminEvents = async () => {
         setLoadingAdminEvents(true);
         try {
-            const allEvs = await ArticlesService.fetchAllEvents();
+            // Change this from ArticlesService to EventService
+            const allEvs = await EventService.fetchAllEvents();
             setAdminEvents(allEvs);
         } catch (error) {
             console.error(error);
@@ -284,21 +286,21 @@ export default function Admin() {
     const handleEventSubmit = async (e) => {
         e.preventDefault();
         try {
-            await ArticlesService.createEvent({
+            // Change this to use your new EventService.save() method
+            await EventService.save({
                 date: eventForm.date,
                 department: eventForm.department,
                 title: eventForm.title,
-                time: {
-                    start: eventForm.timeStart,
-                    end: eventForm.timeEnd
-                },
+                time: { start: eventForm.timeStart, end: eventForm.timeEnd },
                 venue: eventForm.venue,
                 description: eventForm.description,
                 note: eventForm.note,
                 category: eventForm.category
-            });
+            }, 'create');
+
             alert("Event created successfully!");
             setEventForm({ date: '', timeStart: '', timeEnd: '', department: '', title: '', venue: '', description: '', note: '', category: '', posterUrl: '' });
+            fetchAdminEvents(); // Refresh the list
         } catch (err) {
             console.error(err);
             alert("Failed to create event.");
