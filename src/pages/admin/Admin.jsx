@@ -1,16 +1,13 @@
-// Inside Admin.jsx
-import React, { useState, useEffect } from 'react';
-import AdminEvents from './events/EventsDashboard';
-import Sidebar from '../../components/home/Sidebar';
-import EditorialReview from './blogs/EditorialReview';
-import RejectedArticles from './blogs/RejectedArticles';
-import ManageBlogs from './blogs/ManageBlogs';
-import UserManagement from './users/UserManagement';
+// src/pages/Admin.jsx
+import React from 'react';
 
 export default function Admin() {
+    console.log("Admin Component is mounting!"); // Check console for this
+    
     return (
-        <div style={{ background: 'red', height: '100vh', width: '100%', color: 'white', padding: '50px' }}>
-            <h1>If you see this RED BACKGROUND, your Admin page IS loading!</h1>
+        <div style={{ padding: '100px', background: 'blue', color: 'white', minHeight: '100vh' }}>
+            <h1>Admin Shell is Loading Successfully</h1>
+            <p>If you see this, the shell works. The error is in one of the sub-components.</p>
         </div>
     );
 }
