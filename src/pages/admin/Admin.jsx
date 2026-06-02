@@ -8,19 +8,9 @@ import ManageBlogs from './blogs/ManageBlogs';
 import UserManagement from './users/UserManagement';
 
 export default function Admin() {
-    const [activeTab, setActiveTab] = useState('review');
-
-    // ONLY the shell logic here.
     return (
-        <div className="admin-layout">
-            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-            <main className="content-area">
-                {activeTab === 'review' && <EditorialReview />}
-                {activeTab === 'rejected' && <RejectedArticles />}
-                {activeTab === 'manage_blogs' && <ManageBlogs />}
-                {activeTab === 'events' && <AdminEvents />}
-                {activeTab === 'users' && <UserManagement />}
-            </main>
+        <div style={{ background: 'red', height: '100vh', width: '100%', color: 'white', padding: '50px' }}>
+            <h1>If you see this RED BACKGROUND, your Admin page IS loading!</h1>
         </div>
     );
 }
