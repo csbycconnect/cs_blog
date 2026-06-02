@@ -13,8 +13,12 @@ export default function AdminRoute({ children }) {
         return <Navigate to="/login" replace />;
     }
 
-    const groups = user.groups || [];
-    const isAdmin = groups.includes('AL0') || groups.includes('AL1') || groups.includes('AL2') || (user.role && user.role !== 'student');
+    const rawGroups = user.groups;
+    const groups = Array.isArray(rawGroups) ? rawGroups : rawGroups ? [rawGroups] : [];
+    const isAdmin = groups.some(g => ['AL0', 'AL1', 'AL2'].includes(String(g))) ||
+                    groups.some(g => /admin/i.test(String(g))) ||
+                    /admin/i.test(String(user.role || '')) ||
+                    (user.role && user.role !== 'student');
 
     if (!isAdmin) {
         return <Navigate to="/" replace />;

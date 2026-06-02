@@ -69,7 +69,8 @@ export function AuthProvider({ children }) {
                     return;
                 }
                 const idToken = session.getIdToken().decodePayload();
-                const groups = idToken['cognito:groups'] || [];
+                const rawGroups = idToken['cognito:groups'];
+                const groups = Array.isArray(rawGroups) ? rawGroups : rawGroups ? [rawGroups] : [];
 
                 cognitoUser.getUserAttributes(async (err, attributes) => {
                     if (err) {

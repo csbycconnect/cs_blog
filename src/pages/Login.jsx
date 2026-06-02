@@ -58,9 +58,10 @@ export default function Login() {
         try {
             const result = await login(adminForm.username, adminForm.password);
             const idToken = result.getIdToken().decodePayload();
-            const groups = idToken['cognito:groups'] || [];
+            const rawGroups = idToken['cognito:groups'];
+            const groups = Array.isArray(rawGroups) ? rawGroups : rawGroups ? [rawGroups] : [];
 
-            if (groups.includes('AL0') || groups.includes('AL1') || groups.includes('AL2')) {
+            if (groups.some(g => ['AL0', 'AL1', 'AL2'].includes(String(g))) || groups.some(g => /admin/i.test(String(g)))) {
                 setNotification({ title: 'Authenticated', message: 'Admin Login Successful! Redirecting...', type: 'success' });
                 setTimeout(() => navigate('/admin'), 1500);
             } else {
@@ -79,8 +80,9 @@ export default function Login() {
     // (or waiting for verification) then we can immediately leave this page.
     React.useEffect(() => {
         if (user && !isRegisterMode && !showVerification) {
-            const groups = user.groups || [];
-            if (groups.includes('AL0') || groups.includes('AL1') || groups.includes('AL2')) {
+            const groups = Array.isArray(user.groups) ? user.groups : user.groups ? [user.groups] : [];
+            const isAdminUser = groups.some(g => ['AL0', 'AL1', 'AL2'].includes(String(g))) || groups.some(g => /admin/i.test(String(g))) || /admin/i.test(String(user.role || ''));
+            if (isAdminUser) {
                 navigate('/admin');
             } else {
                 navigate('/');
