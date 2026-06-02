@@ -1,27 +1,38 @@
 import React from 'react';
 import '../../styles/components.css';
 
-export default function Sidebar() {
-    const quickLinks = [
-        { name: 'ABOUT', href: '#about' },
-        { name: 'FEATURED', href: '#featured' },
-        { name: 'FAQ', href: '#faq' },
-        { name: 'CONNECT', href: '#connect' }
+// Added setActiveTab as a prop
+export default function Sidebar({ activeTab, setActiveTab }) {
+    const adminLinks = [
+        { name: 'Review', id: 'review' },
+        { name: 'Rejected', id: 'rejected' },
+        { name: 'Manage Blogs', id: 'manage_blogs' },
+        { name: 'Events', id: 'events' },
+        { name: 'Users', id: 'users' }
     ];
 
     return (
-        <div className="sidebar-wrapper">
-            <div className="sidebar-shadow"></div>
-            <aside className="sidebar">
-                <h2>Quick Access</h2>
-                <div className="filter-list">
-                    {quickLinks.map(link => (
-                        <a key={link.name} href={link.href} className="filter-item" style={{ textDecoration: 'none' }}>
-                            {link.name}
-                        </a>
-                    ))}
-                </div>
-            </aside>
-        </div>
+        <aside className="sidebar">
+            <h2>Admin Panel</h2>
+            <div className="filter-list">
+                {adminLinks.map(link => (
+                    <button 
+                        key={link.id} 
+                        onClick={() => setActiveTab(link.id)}
+                        className={`filter-item ${activeTab === link.id ? 'active' : ''}`}
+                        style={{ 
+                            background: 'none', 
+                            border: 'none', 
+                            color: activeTab === link.id ? 'gold' : 'white',
+                            cursor: 'pointer',
+                            display: 'block',
+                            padding: '10px 0'
+                        }}
+                    >
+                        {link.name}
+                    </button>
+                ))}
+            </div>
+        </aside>
     );
 }
