@@ -1,13 +1,37 @@
+// Inside Admin.jsx
+import React, { useState, useEffect } from 'react';
+import AdminEvents from './events/EventsDashboard';
+import Sidebar from '../../components/home/Sidebar';
+import EditorialReview from './blogs/EditorialReview';
+import RejectedArticles from './blogs/RejectedArticles';
+import ManageBlogs from './blogs/ManageBlogs';
+import UserManagement from './users/UserManagement';
+
 // src/pages/Admin.jsx
-import React from 'react';
 
 export default function Admin() {
-    console.log("Admin Component is mounting!"); // Check console for this
-    
+    const [activeTab, setActiveTab] = useState('review');
+
     return (
-        <div style={{ padding: '100px', background: 'blue', color: 'white', minHeight: '100vh' }}>
-            <h1>Admin Shell is Loading Successfully</h1>
-            <p>If you see this, the shell works. The error is in one of the sub-components.</p>
+        // Add this style prop temporarily to force visibility
+        <div className="admin-layout" style={{ 
+            display: 'flex', 
+            minHeight: '100vh', 
+            backgroundColor: '#111' 
+        }}>
+            <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+            
+            <main className="content-area" style={{ 
+                flex: 1, 
+                padding: '2rem',
+                color: 'white' 
+            }}>
+                {activeTab === 'review' && <EditorialReview />}
+                {activeTab === 'rejected' && <RejectedArticles />}
+                {activeTab === 'manage_blogs' && <ManageBlogs />}
+                {activeTab === 'events' && <AdminEvents />}
+                {activeTab === 'users' && <UserManagement />}
+            </main>
         </div>
     );
 }
