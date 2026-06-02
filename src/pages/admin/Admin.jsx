@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { useNavigate } from 'react-router-dom';
-import { ArticlesService } from '../services/articles';
-import { UserService } from '../services/users';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
-import AnimateOnScroll from '../components/shared/AnimateOnScroll';
-import { useAuth } from '../context/AuthContext';
+import { ArticlesService } from '../../services/articles';
+import { UserService } from '../../services/users';
+import Navbar from '../../components/layout/Navbar';
+import Footer from '../../components/layout/Footer';
+import AnimateOnScroll from '../../components/shared/AnimateOnScroll';
+import { useAuth } from '../../context/AuthContext';
+import AdminEvents from './events/events';
 
 export default function Admin() {
     const navigate = useNavigate();
