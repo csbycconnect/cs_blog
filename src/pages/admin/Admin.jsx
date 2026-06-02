@@ -1,4 +1,5 @@
 // Inside Admin.jsx
+import React, { useState, useEffect } from 'react';
 import AdminEvents from './events/EventsDashboard';
 import EditorialReview from './blogs/EditorialReview';
 import RejectedArticles from './blogs/RejectedArticles';
