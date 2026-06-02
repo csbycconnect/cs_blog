@@ -49,6 +49,10 @@ export const ArticlesService = {
         return await res.json();
     },
 
+    async fetchAll() {
+        return this.fetchAllAdminBlogs();
+    },
+
     // Used by WriteForUs.jsx to safely submit draft dispatches
     async create(payload) {
         const timestamp = new Date().toISOString();

@@ -7,7 +7,7 @@ export default function ManageBlogs() {
 
     useEffect(() => {
         const fetchAll = async () => {
-            const data = await ArticlesService.fetchAll();
+            const data = await ArticlesService.fetchAllAdminBlogs();
             setBlogs(data);
         };
         fetchAll();

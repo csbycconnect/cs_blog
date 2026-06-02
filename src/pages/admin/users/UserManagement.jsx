@@ -13,7 +13,7 @@ export default function UserManagement() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const data = await UserService.fetchAllUsers();
+            const data = await UserService.fetchAll();
             setUsers(data);
         } catch (err) {
             console.error("Failed to fetch users:", err);

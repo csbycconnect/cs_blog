@@ -26,12 +26,26 @@ export const UserService = {
         return await res.json();
     },
 
+    async fetchAllUsers() {
+        return this.fetchAll();
+    },
+
     getAllUsers: async () => {
         const response = await fetch('/api/admin/users', {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
         if (!response.ok) throw new Error('Failed to load user records from the network.');
+        return response.json();
+    },
+
+    async updateRole(userId, currentGroups, action) {
+        const response = await fetch('/api/admin/update-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, currentGroups, action })
+        });
+        if (!response.ok) throw new Error('Failed to update user role');
         return response.json();
     },
 

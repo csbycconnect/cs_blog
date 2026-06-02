@@ -14,7 +14,7 @@ export default function AdminRoute({ children }) {
     }
 
     const groups = user.groups || [];
-    const isAdmin = groups.includes('AL0') || groups.includes('AL1') || groups.includes('AL2');
+    const isAdmin = groups.includes('AL0') || groups.includes('AL1') || groups.includes('AL2') || (user.role && user.role !== 'student');
 
     if (!isAdmin) {
         return <Navigate to="/" replace />;
