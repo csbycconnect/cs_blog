@@ -15,7 +15,7 @@ const Gallery = lazy(() => import('./pages/Gallery'));
 const WriteForUs = lazy(() => import('./pages/WriteForUs'));
 const CSConnect = lazy(() => import('./pages/CSConnect'));
 const FacultyProfile = lazy(() => import('./pages/FacultyProfile'));
-const Admin = lazy(() => import('./pages/Admin'));
+const Admin = lazy(() => import('./pages/admin/Admin'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const YourBlogs = lazy(() => import('./pages/YourBlogs'));
 const Account = lazy(() => import('./pages/Account'));
