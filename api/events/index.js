@@ -1,11 +1,12 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from 'uuid';
+import { TABLES } from "../lib/constants/tables.js";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME = process.env.TABLES.EVENTS || 'bb_gallery_events';
+const TABLE_NAME = TABLES.EVENTS || 'bb_gallery_events';
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
