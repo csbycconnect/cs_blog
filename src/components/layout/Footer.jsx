@@ -44,7 +44,7 @@ export default function Footer() {
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: '2rem' }}>
                     <div>
                         <h3 style={{ margin: 0, color: 'var(--c-yellow)', fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '1rem' }}>Designed By</h3>
-                        <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>Vishnu S, Naveen and Joel</p>
+                        <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>Vishnu S, Naveen, Kishan, Aishwarya and Joel</p>
                     </div>
 
                     <button
