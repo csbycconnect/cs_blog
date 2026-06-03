@@ -29,30 +29,20 @@ export default function Events() {
     const fetchDynamicEvents = async () => {
         setLoading(true);
         try {
-            const data = await EventService.fetchAllEvents();
-            console.log("DEBUG: Raw data from EventService:", data); // Check console!
+            const response = await fetch('/api/events'); // Ensure this path is 100% correct
 
-            // If the API returns an object with a 'data' property, fix it:
-            const rawArray = Array.isArray(data) ? data : (data?.items || data?.events || []);
+            // Add this check
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("Backend returned HTML instead of JSON. Check your API route!");
+            }
 
-            const normalizedData = rawArray.map(item => {
-                // Handle different possible structures for Date and Time
-                const date = item.date || item.eventDate || "";
-                const startTime = item.time?.start || item.timeStart || item.startTime || "";
-                const endTime = item.time?.end || item.timeEnd || item.endTime || "";
-
-                return {
-                    ...item,
-                    date,
-                    startTime,
-                    endTime
-                };
-            });
-
-            console.log("DEBUG: Normalized data:", normalizedData);
-            setAllEvents(normalizedData);
+            const data = await response.json();
+            setAllEvents(data);
         } catch (e) {
-            console.error("Failed to fetch events:", e);
+            console.error("CRITICAL ERROR:", e.message);
+            // Fallback: set an empty array so the page doesn't break
+            setAllEvents([]);
         } finally {
             setLoading(false);
         }
