@@ -35,7 +35,7 @@ export default function Footer() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <Link to="/" style={{ color: '#fff9db', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#f7d000'} onMouseLeave={e => e.target.style.color = '#fff9db'}>Home</Link>
                         <Link to="/blogs" style={{ color: '#fff9db', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#f7d000'} onMouseLeave={e => e.target.style.color = '#fff9db'}>Blogs</Link>
-                        <Link to="/gallery" style={{ color: '#fff9db', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#f7d000'} onMouseLeave={e => e.target.style.color = '#fff9db'}>Gallery</Link>
+                        { /* <Link to="/gallery" style={{ color: '#fff9db', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#f7d000'} onMouseLeave={e => e.target.style.color = '#fff9db'}>Gallery</Link> */ }
                         <Link to="/cs-connect" style={{ color: '#fff9db', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={e => e.target.style.color = '#f7d000'} onMouseLeave={e => e.target.style.color = '#fff9db'}>CS-Connect</Link>
                     </div>
                 </div>
