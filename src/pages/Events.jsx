@@ -30,14 +30,26 @@ export default function Events() {
         setLoading(true);
         try {
             const data = await EventService.fetchAllEvents();
+            console.log("DEBUG: Raw data from EventService:", data); // Check console!
 
-            // Map the data to ensure flat structure if your DB returns nested DynamoDB format
-            const normalizedData = (data || []).map(item => ({
-                ...item,
-                startTime: item.time?.start?.S || item.time?.start || item.timeStart || "",
-                endTime: item.time?.end?.S || item.time?.end || item.timeEnd || ""
-            }));
+            // If the API returns an object with a 'data' property, fix it:
+            const rawArray = Array.isArray(data) ? data : (data?.items || data?.events || []);
 
+            const normalizedData = rawArray.map(item => {
+                // Handle different possible structures for Date and Time
+                const date = item.date || item.eventDate || "";
+                const startTime = item.time?.start || item.timeStart || item.startTime || "";
+                const endTime = item.time?.end || item.timeEnd || item.endTime || "";
+
+                return {
+                    ...item,
+                    date,
+                    startTime,
+                    endTime
+                };
+            });
+
+            console.log("DEBUG: Normalized data:", normalizedData);
             setAllEvents(normalizedData);
         } catch (e) {
             console.error("Failed to fetch events:", e);

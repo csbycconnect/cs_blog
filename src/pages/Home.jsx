@@ -193,7 +193,7 @@ export default function Home() {
                                             <label style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', textTransform: 'uppercase' }}>Name</label>
                                             <input
                                                 type="text"
-                                                placeholder="John Doe"
+                                                placeholder="Your name"
                                                 style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none' }}
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
@@ -204,7 +204,7 @@ export default function Home() {
                                             <label style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', textTransform: 'uppercase' }}>Email</label>
                                             <input
                                                 type="email"
-                                                placeholder="john@example.com"
+                                                placeholder="user@bcah.christuniversity.in"
                                                 style={{ padding: '1rem', border: '2px solid var(--c-black)', fontFamily: 'var(--font-mono)', backgroundColor: '#f9f9f9', outline: 'none' }}
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}

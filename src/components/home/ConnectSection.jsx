@@ -28,7 +28,7 @@ export default function ConnectSection() {
                         <label>Name</label>
                         <input
                             type="text"
-                            placeholder="John Doe"
+                            placeholder="Your name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required

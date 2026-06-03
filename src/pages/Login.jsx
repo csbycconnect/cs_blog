@@ -187,7 +187,7 @@ export default function Login() {
                                                     <input
                                                         type="text"
                                                         required
-                                                        placeholder="John Doe"
+                                                        placeholder="Your full name"
                                                         value={studentForm.name}
                                                         onChange={e => setStudentForm(p => ({ ...p, name: e.target.value }))}
                                                         style={inputStyle}
