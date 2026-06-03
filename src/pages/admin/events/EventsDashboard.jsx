@@ -20,6 +20,8 @@ export default function EventsDashboard() {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
+    const [filterCategory, setFilterCategory] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         if (subTab === 'manage') fetchEvents();
@@ -71,6 +73,27 @@ export default function EventsDashboard() {
             alert('Failed to save media links.');
         }
     };
+
+    const handleToggleStatus = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'visible' ? 'hidden' : 'visible';
+        await EventService.updateEventStatus(id, newStatus);
+        fetchDynamicEvents(); // Refresh list
+    };
+
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure?")) {
+            await EventService.deleteEvent(id);
+            fetchDynamicEvents();
+        }
+    };
+
+    const filteredEvents = allEvents.filter(ev => {
+        const matchesSearch = ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            ev.department?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = filterCategory === 'All' || ev.category === filterCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     const field = (key) => ({ value: form[key], onChange: e => setForm(p => ({ ...p, [key]: e.target.value })) });
 
