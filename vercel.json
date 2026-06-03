@@ -17,6 +17,14 @@
       "destination": "/api/articles/index.js"
     },
     {
+      "source": "/api/events/index.js",
+      "destination": "/api/events/index.js"
+    },
+    {
+      "source": "api/events/:path*",
+      "destination": "/api/events/index.js"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },
