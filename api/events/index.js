@@ -1,5 +1,5 @@
 import { ScanCommand, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { TABLES } from "../lib/constants/tables.js";
 
 import { dynamoDb } from "../lib/aws/dynamodb.js";
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         // POST - create event
         if (req.method === 'POST') {
             const body = req.body || {};
-            const eventId = uuidv4();
+            const eventId = typeof randomUUID === 'function' ? randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2,8);
 
             const newItem = {
                 PK: 'EVENT',
