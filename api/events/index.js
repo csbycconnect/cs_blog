@@ -1,90 +1,77 @@
-const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
-const { v4: uuidv4 } = require('uuid');
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { v4 as uuidv4 } from 'uuid';
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-// Use your specific table name
 const TABLE_NAME = process.env.TABLE_NAME || 'bb_gallery_events';
 
-exports.handler = async (event) => {
-    const method = event.httpMethod;
-    const path = event.path; // e.g., /api/events or /api/events/{id}/status
+export default async function handler(req, res) {
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    if (req.method === "OPTIONS") return res.status(200).end();
 
     try {
-        // 1. GET ALL EVENTS
-        if (method === 'GET') {
+        const urlParts = req.url.split('?')[0].split('/');
+
+        // GET all events
+        if (req.method === 'GET') {
             const command = new ScanCommand({ TableName: TABLE_NAME });
             const response = await docClient.send(command);
-            return {
-                statusCode: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(response.Items)
-            };
+            return res.status(200).json(response.Items || []);
         }
 
-        // 2. CREATE (POST)
-        if (method === 'POST') {
-            const body = JSON.parse(event.body);
+        // POST - create event
+        if (req.method === 'POST') {
+            const body = req.body || {};
             const eventId = uuidv4();
-            
+
             const newItem = {
                 PK: 'EVENT',
                 SK: `EV#${eventId}`,
-                id: eventId, // Storing ID for easier frontend access
+                id: eventId,
                 ...body.eventData,
-                status: 'visible', // Default to visible
+                status: 'visible',
                 createdAt: new Date().toISOString()
             };
 
-            await docClient.send(new PutCommand({ 
-                TableName: TABLE_NAME, 
-                Item: newItem 
-            }));
-            
-            return {
-                statusCode: 201,
-                body: JSON.stringify({ message: "Event created successfully", id: eventId })
-            };
+            await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: newItem }));
+            return res.status(201).json({ message: 'Event created successfully', id: eventId });
         }
 
-        // 3. UPDATE STATUS (PATCH - Hide/Show)
-        // Expected Path: /api/events/{id}/status
-        if (method === 'PATCH' && path.includes('/status')) {
-            const pathParts = path.split('/');
-            const eventId = pathParts[pathParts.length - 2]; 
-            const { status } = JSON.parse(event.body);
-            
+        // PATCH - update status at /api/events/{id}/status
+        if (req.method === 'PATCH' && urlParts.includes('status')) {
+            const eventId = urlParts[urlParts.length - 2];
+            const { status } = req.body || {};
+            if (!eventId || typeof status === 'undefined') return res.status(400).json({ error: 'Missing parameters' });
+
             await docClient.send(new UpdateCommand({
                 TableName: TABLE_NAME,
                 Key: { PK: 'EVENT', SK: `EV#${eventId}` },
-                UpdateExpression: "set #s = :s",
-                ExpressionAttributeNames: { "#s": "status" },
-                ExpressionAttributeValues: { ":s": status }
+                UpdateExpression: 'SET #s = :s',
+                ExpressionAttributeNames: { '#s': 'status' },
+                ExpressionAttributeValues: { ':s': status }
             }));
-            
-            return { statusCode: 200, body: JSON.stringify({ message: "Status updated" }) };
+
+            return res.status(200).json({ message: 'Status updated' });
         }
 
-        // 4. DELETE
-        // Expected Path: /api/events/{id}
-        if (method === 'DELETE') {
-            const pathParts = path.split('/');
-            const eventId = pathParts[pathParts.length - 1];
-            
-            await docClient.send(new DeleteCommand({ 
-                TableName: TABLE_NAME, 
-                Key: { PK: 'EVENT', SK: `EV#${eventId}` } 
-            }));
-            
-            return { statusCode: 200, body: JSON.stringify({ message: "Event deleted" }) };
+        // DELETE - /api/events/{id}
+        if (req.method === 'DELETE') {
+            const eventId = urlParts[urlParts.length - 1];
+            if (!eventId) return res.status(400).json({ error: 'Missing ID' });
+
+            await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: 'EVENT', SK: `EV#${eventId}` } }));
+            return res.status(200).json({ message: 'Event deleted' });
         }
 
-        return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
-
+        return res.status(405).json({ error: `Method ${req.method} not allowed` });
     } catch (err) {
-        console.error("Backend Error:", err);
-        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+        console.error('Backend Error:', err);
+        return res.status(500).json({ error: err.message || String(err) });
     }
-};
+}
