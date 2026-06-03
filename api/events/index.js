@@ -6,7 +6,7 @@ import { TABLES } from "../lib/constants/tables.js";
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME = TABLES.EVENTS || 'bb_gallery_events';
+const TABLE_NAME = TABLES.EVENTS;
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
