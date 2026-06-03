@@ -1,12 +1,10 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { ScanCommand, PutCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from 'uuid';
 import { TABLES } from "../lib/constants/tables.js";
 
-const client = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(client);
+import { dynamoDb } from "../lib/aws/dynamodb.js";
 
-const TABLE_NAME = TABLES.EVENTS;
+const TABLE_NAME = TABLES.EVENTS || process.env.TABLE_NAME || 'bb_gallery_events';
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -22,7 +20,7 @@ export default async function handler(req, res) {
         // GET all events
         if (req.method === 'GET') {
             const command = new ScanCommand({ TableName: TABLE_NAME });
-            const response = await docClient.send(command);
+            const response = await dynamoDb.send(command);
             return res.status(200).json(response.Items || []);
         }
 
@@ -40,7 +38,7 @@ export default async function handler(req, res) {
                 createdAt: new Date().toISOString()
             };
 
-            await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: newItem }));
+            await dynamoDb.send(new PutCommand({ TableName: TABLE_NAME, Item: newItem }));
             return res.status(201).json({ message: 'Event created successfully', id: eventId });
         }
 
@@ -50,7 +48,7 @@ export default async function handler(req, res) {
             const { status } = req.body || {};
             if (!eventId || typeof status === 'undefined') return res.status(400).json({ error: 'Missing parameters' });
 
-            await docClient.send(new UpdateCommand({
+            await dynamoDb.send(new UpdateCommand({
                 TableName: TABLE_NAME,
                 Key: { PK: 'EVENT', SK: `EV#${eventId}` },
                 UpdateExpression: 'SET #s = :s',
@@ -66,7 +64,7 @@ export default async function handler(req, res) {
             const eventId = urlParts[urlParts.length - 1];
             if (!eventId) return res.status(400).json({ error: 'Missing ID' });
 
-            await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: 'EVENT', SK: `EV#${eventId}` } }));
+            await dynamoDb.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { PK: 'EVENT', SK: `EV#${eventId}` } }));
             return res.status(200).json({ message: 'Event deleted' });
         }
 
