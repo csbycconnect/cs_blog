@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArticlesService } from '../../../services/articles';
+import { EventService } from '../../../services/events';
 
 const EMPTY_FORM = {
-    date: '', timeStart: '', timeEnd: '', department: '',
+    date: '', startTime: '', endTime: '', department: '',
     title: '', venue: '', description: '', note: '', category: '', posterUrl: ''
 };
 
@@ -22,6 +22,7 @@ export default function EventsDashboard() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [filterCategory, setFilterCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [dateFilter, setDateFilter] = useState('');
 
     useEffect(() => {
         if (subTab === 'manage') fetchEvents();
@@ -30,10 +31,11 @@ export default function EventsDashboard() {
     const fetchEvents = async () => {
         setLoading(true);
         try {
-            const all = await ArticlesService.fetchAllEvents();
-            setEvents(all);
+            const all = await EventService.fetchAllEvents();
+            setEvents(all || []);
         } catch (err) {
-            console.error(err);
+            console.error('Failed to load events', err);
+            setEvents([]);
         } finally {
             setLoading(false);
         }
@@ -42,11 +44,12 @@ export default function EventsDashboard() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await ArticlesService.createEvent({
+            await EventService.createEvent({
                 date: form.date,
+                startTime: form.startTime,
+                endTime: form.endTime,
                 department: form.department,
                 title: form.title,
-                time: { start: form.timeStart, end: form.timeEnd },
                 venue: form.venue,
                 description: form.description,
                 note: form.note,
@@ -56,43 +59,42 @@ export default function EventsDashboard() {
             alert('Event created successfully.');
             setForm(EMPTY_FORM);
         } catch (err) {
-            console.error(err);
+            console.error('Create event failed', err);
             alert('Failed to create event.');
-        }
-    };
-
-    const handleSaveMedia = async (ev) => {
-        const poster = document.getElementById(`poster-${ev.id}`).value;
-        const gallery = document.getElementById(`gallery-${ev.id}`).value;
-        const geo = document.getElementById(`geo-${ev.id}`).value;
-        try {
-            await ArticlesService.updateEventMedia(ev.id, { posterUrl: poster, galleryUrls: gallery, geoTagUrls: geo });
-            alert('Media links saved.');
-            fetchEvents();
-        } catch (err) {
-            alert('Failed to save media links.');
         }
     };
 
     const handleToggleStatus = async (id, currentStatus) => {
         const newStatus = currentStatus === 'visible' ? 'hidden' : 'visible';
-        await EventService.updateEventStatus(id, newStatus);
-        fetchDynamicEvents(); // Refresh list
-    };
-
-
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure?")) {
-            await EventService.deleteEvent(id);
-            fetchDynamicEvents();
+        try {
+            await EventService.updateEventStatus(id, newStatus);
+            fetchEvents();
+        } catch (err) {
+            console.error('Status update failed', err);
+            alert('Unable to update event status.');
         }
     };
 
-    const filteredEvents = allEvents.filter(ev => {
-        const matchesSearch = ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ev.department?.toLowerCase().includes(searchQuery.toLowerCase());
+    const handleDelete = async (id) => {
+        if (!window.confirm('Delete this event forever?')) return;
+
+        try {
+            await EventService.deleteEvent(id);
+            fetchEvents();
+        } catch (err) {
+            console.error('Delete failed', err);
+            alert('Unable to delete event.');
+        }
+    };
+
+    const filteredEvents = events.filter(ev => {
+        const query = searchQuery.trim().toLowerCase();
+        const matchesSearch = !query || [ev.title, ev.department, ev.venue, ev.category]
+            .filter(Boolean)
+            .some(value => value.toLowerCase().includes(query));
         const matchesCategory = filterCategory === 'All' || ev.category === filterCategory;
-        return matchesSearch && matchesCategory;
+        const matchesDate = !dateFilter || ev.date === dateFilter;
+        return matchesSearch && matchesCategory && matchesDate;
     });
 
     const field = (key) => ({ value: form[key], onChange: e => setForm(p => ({ ...p, [key]: e.target.value })) });
@@ -136,11 +138,11 @@ export default function EventsDashboard() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                             <label style={labelStyle}>Start Time</label>
-                            <input type="time" required style={inputStyle} {...field('timeStart')} />
+                            <input type="time" required style={inputStyle} {...field('startTime')} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                             <label style={labelStyle}>End Time</label>
-                            <input type="time" required style={inputStyle} {...field('timeEnd')} />
+                            <input type="time" required style={inputStyle} {...field('endTime')} />
                         </div>
                     </div>
 
@@ -176,40 +178,66 @@ export default function EventsDashboard() {
                 </form>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px 200px 140px', gap: '1rem', alignItems: 'end' }}>
+                        <div>
+                            <label style={labelStyle}>Search</label>
+                            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search title, department, venue..." style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Category</label>
+                            <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} style={inputStyle}>
+                                <option value="All">All Categories</option>
+                                <option value="Competition">Competition</option>
+                                <option value="Lecture">Lecture</option>
+                                <option value="Workshop">Workshop</option>
+                                <option value="Editorial">Editorial</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Date</label>
+                            <input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} style={inputStyle} />
+                        </div>
+                        <button onClick={fetchEvents} style={{ background: 'var(--c-black)', color: 'var(--c-white)', border: '2px solid var(--c-black)', padding: '0.85rem 1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, cursor: 'pointer' }}>
+                            Refresh
+                        </button>
+                    </div>
+
                     {loading ? (
                         <p style={{ fontFamily: 'var(--font-mono)' }}>Loading events...</p>
-                    ) : events.length === 0 ? (
-                        <p style={{ fontFamily: 'var(--font-mono)', color: '#555' }}>No events yet.</p>
+                    ) : filteredEvents.length === 0 ? (
+                        <p style={{ fontFamily: 'var(--font-mono)', color: '#555' }}>No events match your filters.</p>
                     ) : (
-                        events.map(ev => (
-                            <div key={ev.id} style={{ background: '#f5f5f5', border: '1px solid #ccc', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <h3 className="serif-heading" style={{ margin: 0, fontSize: '1.2rem', color: 'var(--c-black)' }}>{ev.title}</h3>
-                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, padding: '2px 6px', background: '#e0e0e0' }}>{ev.date}</span>
-                                </div>
-
-                                {(ev.posterUrl || ev.imageUrl) ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <div style={{ width: '40px', height: '40px', background: '#ccc', backgroundImage: `url(${ev.posterUrl || ev.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', border: '1px solid var(--c-black)' }} />
-                                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'green', fontWeight: 700 }}>Poster Bound</span>
-                                    </div>
-                                ) : (
-                                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#c53030', fontWeight: 700 }}>No Poster</span>
-                                )}
-
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem', borderTop: '1px solid #ddd', paddingTop: '0.5rem' }}>
-                                    <input id={`poster-${ev.id}`} type="url" placeholder="Event Poster URL..." defaultValue={ev.posterUrl || ev.imageUrl || ''} style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
-                                    <input id={`gallery-${ev.id}`} type="text" placeholder="Gallery Links (comma separated)..." defaultValue={ev.galleryUrls || ''} style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
-                                    <input id={`geo-${ev.id}`} type="text" placeholder="Geo-tagged Links..." defaultValue={ev.geoTagUrls || ''} style={{ padding: '0.4rem', border: '1px solid var(--c-black)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }} />
-                                    <button
-                                        onClick={() => handleSaveMedia(ev)}
-                                        style={{ background: 'var(--c-black)', color: 'var(--c-white)', border: '1px solid var(--c-black)', padding: '0.5rem 1rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}
-                                    >
-                                        SAVE MEDIA
-                                    </button>
-                                </div>
-                            </div>
-                        ))
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ background: '#000', color: '#fff' }}>
+                                    <th style={{ padding: '0.85rem', textAlign: 'left', border: '1px solid #ccc' }}>Title</th>
+                                    <th style={{ padding: '0.85rem', textAlign: 'left', border: '1px solid #ccc' }}>Category</th>
+                                    <th style={{ padding: '0.85rem', textAlign: 'left', border: '1px solid #ccc' }}>Department</th>
+                                    <th style={{ padding: '0.85rem', textAlign: 'left', border: '1px solid #ccc' }}>Date</th>
+                                    <th style={{ padding: '0.85rem', textAlign: 'left', border: '1px solid #ccc' }}>Status</th>
+                                    <th style={{ padding: '0.85rem', textAlign: 'left', border: '1px solid #ccc' }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredEvents.map(ev => (
+                                    <tr key={ev.id} style={{ opacity: ev.status === 'hidden' ? 0.55 : 1 }}>
+                                        <td style={{ padding: '0.85rem', border: '1px solid #ccc' }}>{ev.title}</td>
+                                        <td style={{ padding: '0.85rem', border: '1px solid #ccc' }}>{ev.category || 'N/A'}</td>
+                                        <td style={{ padding: '0.85rem', border: '1px solid #ccc' }}>{ev.department || ev.venue || 'N/A'}</td>
+                                        <td style={{ padding: '0.85rem', border: '1px solid #ccc' }}>{ev.date || '—'}</td>
+                                        <td style={{ padding: '0.85rem', border: '1px solid #ccc', textTransform: 'capitalize' }}>{ev.status || 'visible'}</td>
+                                        <td style={{ padding: '0.85rem', border: '1px solid #ccc', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                            <button onClick={() => handleToggleStatus(ev.id, ev.status)} style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--c-black)', background: ev.status === 'visible' ? '#000' : '#f5f5f5', color: ev.status === 'visible' ? '#fff' : '#000', cursor: 'pointer' }}>
+                                                {ev.status === 'visible' ? 'Hide' : 'Show'}
+                                            </button>
+                                            <button onClick={() => handleDelete(ev.id)} style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--c-black)', background: '#c53030', color: '#fff', cursor: 'pointer' }}>
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
                 </div>
             )}
