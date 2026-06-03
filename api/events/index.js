@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME = process.env.TABLE_NAME || 'bb_gallery_events';
+const TABLE_NAME = process.env.TABLES.EVENTS || 'bb_gallery_events';
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", "true");
