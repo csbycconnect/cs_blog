@@ -510,12 +510,81 @@ Thank you for attending the interview process with <strong>TheByteBoard Team</st
 We are pleased to inform you that you have been successfully selected and will be joining our contributor team.<br>
 <strong>Role:</strong> ${roleDisplay}<br><br>
 Below are the platform resources:<br><br>
-<img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/ed962fcb536472adbe33117cf546c10db6fc0c9e/logo/GitHub_Lockup_Black_Clearspace.png" alt="GitHub" width="120" style="vertical-align:middle;">
-&nbsp;<a class="link" href="https://github.com/csbycconnect/cs_blog">Access Repository</a><br><br>
-<img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/7a794075fc379bc621c141e2c00fc0e0232b6b91/logo/Christ-logo-round.png" alt="TheByteBoard" height="28" style="vertical-align:middle;border-radius:50%;">
-&nbsp;<a class="link" href="https://www.thebyteboard-csbyc.blog">Visit TheByteBoard</a><br><br>
-<img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/ed962fcb536472adbe33117cf546c10db6fc0c9e/logo/Doc_logo.png" alt="Documentation" height="28" style="vertical-align:middle;">
-&nbsp;<a class="link" href="https://docs.google.com/document/d/1Udw-cilltKUlhqE96Sks-uOjRr5Upr_ynuwbq52wMHw/edit?usp=sharing">Read Documentation</a>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:15px;">
+
+<tr>
+<td width="60" valign="middle" style="padding:10px 0;">
+<img
+src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/fc0f1a34f25be43aca0587ae365db643f978e5d9/logo/GitHub_Invertocat_Black_Clearspace.png"
+alt="GitHub"
+width="42"
+style="display:block;"
+>
+</td>
+
+<td valign="middle" style="padding:10px 0;">
+<div style="font-size:15px;font-weight:bold;color:#111827;">
+GitHub Repository
+</div>
+
+<a
+href="https://github.com/csbycconnect/cs_blog"
+style="color:#16a34a;text-decoration:none;font-size:13px;"
+>
+Access Repository →
+</a>
+</td>
+</tr>
+
+<tr>
+<td width="60" valign="middle" style="padding:10px 0;">
+<img
+src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/7a794075fc379bc621c141e2c00fc0e0232b6b91/logo/Christ-logo-round.png"
+alt="TheByteBoard"
+width="42"
+style="display:block;border-radius:50%;"
+>
+</td>
+
+<td valign="middle" style="padding:10px 0;">
+<div style="font-size:15px;font-weight:bold;color:#111827;">
+TheByteBoard
+</div>
+
+<a
+href="https://www.thebyteboard-csbyc.blog"
+style="color:#16a34a;text-decoration:none;font-size:13px;"
+>
+Visit Website →
+</a>
+</td>
+</tr>
+
+<tr>
+<td width="60" valign="middle" style="padding:10px 0;">
+<img
+src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/ed962fcb536472adbe33117cf546c10db6fc0c9e/logo/Doc_logo.png"
+alt="Documentation"
+width="42"
+style="display:block;"
+>
+</td>
+
+<td valign="middle" style="padding:10px 0;">
+<div style="font-size:15px;font-weight:bold;color:#111827;">
+Documentation
+</div>
+
+<a
+href="https://docs.google.com/document/d/1Udw-cilltKUlhqE96Sks-uOjRr5Upr_ynuwbq52wMHw/edit?usp=sharing"
+style="color:#16a34a;text-decoration:none;font-size:13px;"
+>
+Read Documentation →
+</a>
+</td>
+</tr>
+
+</table>
 <div class="note">
 <strong>Important Note</strong><br><br>
 You are kindly requested to register using your Christ University email address and use your CU password at:<br><br>
