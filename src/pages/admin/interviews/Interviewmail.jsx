@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
 const ROLES = [
-    { value: 'dev', label: 'Dev Team',                       display: 'Dev (Codebase Access)' },
-    { value: 'qa',  label: 'Quality Assurance (QA) Team',    display: 'Quality Assurance (QA)' },
-    { value: 'cr',  label: 'Class Representative (CR)',       display: 'Class Representative (CR)' },
+    { value: 'dev', label: 'Dev Team',                       display: 'Development Team' },
+    { value: 'qa',  label: 'Quality Assurance Team',    display: 'Quality Assurance Team' },
+    { value: 'cr',  label: 'Class Representative',       display: 'Class Representative' },
 ];
 
 const inputStyle = {
