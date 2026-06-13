@@ -468,7 +468,73 @@ export default async function handler(req, res) {
 
 </body>
 </html>`;
-    } else {
+    }
+
+    // ==========================================
+    // TEMPLATE 3: Interview Selection
+    // ==========================================
+    else if (templateType === 'interview_selection') {
+      const recipientName = templateData?.recipientName || '';
+      const roleDisplay   = templateData?.roleDisplay   || 'Contributor';
+
+      subject = `✔ Interview Result: You've Been Selected — TheByteBoard`;
+
+      htmlBody = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;padding:0;background:#f3f4f6;font-family:"Courier New",monospace;color:#111827;}
+table{border-spacing:0;}
+.wrapper{width:100%;padding:40px 15px;}
+.container{max-width:600px;width:100%;background:#ffffff;border:1px solid #e5e7eb;padding:40px;}
+.brand{font-size:13px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;padding-bottom:20px;}
+.status{font-size:16px;font-weight:bold;color:#16a34a;padding-bottom:25px;}
+.title{font-size:24px;font-weight:bold;color:#111827;padding-bottom:20px;line-height:1.4;}
+.content{font-size:14px;line-height:1.8;color:#374151;}
+.link{color:#16a34a;text-decoration:none;font-weight:bold;}
+.note{margin-top:20px;padding:15px;border-left:4px solid #16a34a;background:#f0fdf4;}
+.footer{margin-top:35px;padding-top:20px;border-top:1px dashed #d1d5db;font-size:11px;line-height:1.7;color:#6b7280;}
+</style>
+</head>
+<body>
+<table width="100%" class="wrapper"><tr><td align="center">
+<table class="container">
+<tr><td class="brand">THEBYTEBOARD</td></tr>
+<tr><td class="status">✔ INTERVIEW RESULT</td></tr>
+<tr><td class="title">Congratulations! You have been selected.</td></tr>
+<tr><td class="content">
+Hello${recipientName ? ` ${recipientName}` : ''},<br><br>
+Thank you for attending the interview process with <strong>TheByteBoard Team</strong>.<br><br>
+We are pleased to inform you that you have been successfully selected and will be joining our contributor team.<br>
+<strong>Role:</strong> ${roleDisplay}<br><br>
+Below are the platform resources:<br><br>
+<img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/ed962fcb536472adbe33117cf546c10db6fc0c9e/logo/GitHub_Lockup_Black_Clearspace.png" alt="GitHub" width="120" style="vertical-align:middle;">
+&nbsp;<a class="link" href="https://github.com/csbycconnect/cs_blog">Access Repository</a><br><br>
+<img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/7a794075fc379bc621c141e2c00fc0e0232b6b91/logo/Christ-logo-round.png" alt="TheByteBoard" height="28" style="vertical-align:middle;border-radius:50%;">
+&nbsp;<a class="link" href="https://www.thebyteboard-csbyc.blog">Visit TheByteBoard</a><br><br>
+<img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/ed962fcb536472adbe33117cf546c10db6fc0c9e/logo/Doc_logo.png" alt="Documentation" height="28" style="vertical-align:middle;">
+&nbsp;<a class="link" href="https://docs.google.com/document/d/1Udw-cilltKUlhqE96Sks-uOjRr5Upr_ynuwbq52wMHw/edit?usp=sharing">Read Documentation</a>
+<div class="note">
+<strong>Important Note</strong><br><br>
+You are kindly requested to register using your Christ University email address and use your CU password at:<br><br>
+<a class="link" href="https://www.thebyteboard-csbyc.blog/login">https://www.thebyteboard-csbyc.blog/login</a><br><br>
+Roles and permissions will be assigned within the next <strong>2 days</strong>.
+</div>
+<br>We look forward to working with you and seeing your contributions to TheByteBoard community.
+</td></tr>
+<tr><td class="footer">
+This is an official communication from TheByteBoard Team.<br>
+Please do not reply directly to this email.
+</td></tr>
+</table>
+</td></tr></table>
+</body>
+</html>`;
+    }
+
+    else {
       return res.status(400).json({ error: "Invalid templateType provided" });
     }
 
