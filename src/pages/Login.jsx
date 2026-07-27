@@ -8,6 +8,49 @@ import ShuffleText from '../components/shared/ShuffleText';
 import BackButton from '../components/shared/BackButton';
 import NotificationModal from '../components/shared/NotificationModal';
 
+// Cognito user pool policy: min 8 chars, 1 number, 1 lowercase, 1 uppercase, 1 symbol
+const getPasswordChecks = (password) => ({
+    length: password.length >= 8,
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    number: /[0-9]/.test(password),
+    symbol: /[-!"#$%&'()*+,./:;<=>?@[\]^_`{|}~\\]/.test(password),
+});
+
+const isPasswordValid = (password) => Object.values(getPasswordChecks(password)).every(Boolean);
+
+function PasswordRequirements({ password }) {
+    const checks = getPasswordChecks(password);
+    const rules = [
+        { key: 'length', label: 'At least 8 characters' },
+        { key: 'lowercase', label: 'One lowercase letter (a-z)' },
+        { key: 'uppercase', label: 'One uppercase letter (A-Z)' },
+        { key: 'number', label: 'One number (0-9)' },
+        { key: 'symbol', label: 'One symbol (-,.@# etc.)' },
+    ];
+    return (
+        <ul style={{
+            listStyle: 'none', padding: '0.75rem 1rem', margin: 0,
+            backgroundColor: '#f2f2ea', border: '1px solid #ccc',
+            display: 'flex', flexDirection: 'column', gap: '0.3rem'
+        }}>
+            {rules.map(({ key, label }) => {
+                const passed = checks[key];
+                return (
+                    <li key={key} style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '0.78rem',
+                        color: passed ? 'green' : '#666',
+                        display: 'flex', alignItems: 'center', gap: '0.5rem'
+                    }}>
+                        <span>{passed ? '✓' : '○'}</span>
+                        <span>{label}</span>
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
+
 export default function Login() {
     const navigate = useNavigate();
     const { user, register, confirmRegistration, login, logout, signInWithProvider } = useAuth();
@@ -18,16 +61,31 @@ export default function Login() {
     const [tab, setTab] = useState('student'); // 'student' | 'admin'
     const [isRegisterMode, setIsRegisterMode] = useState(initialRegisterMode);
 
-    const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '', verificationCode: '' });
+    const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '', confirmPassword: '', verificationCode: '' });
     const [adminForm, setAdminForm] = useState({ username: '', password: '' });
     const [showStudentPw, setShowStudentPw] = useState(false);
+    const [showStudentConfirmPw, setShowStudentConfirmPw] = useState(false);
     const [showAdminPw, setShowAdminPw] = useState(false);
+    const [passwordFocused, setPasswordFocused] = useState(false);
     const [showVerification, setShowVerification] = useState(false);
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null); // { title: '', message: '', type: '' }
 
     const handleStudentSubmit = async (e) => {
         e.preventDefault();
+
+        // client-side password validation, only relevant when registering
+        if (!showVerification && isRegisterMode) {
+            if (!isPasswordValid(studentForm.password)) {
+                setNotification({ title: 'Weak Password', message: 'Your password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one symbol (e.g. -,.@#).', type: 'error' });
+                return;
+            }
+            if (studentForm.password !== studentForm.confirmPassword) {
+                setNotification({ title: 'Password Mismatch', message: 'Your password and confirm password do not match.', type: 'error' });
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             if (showVerification) {
@@ -219,7 +277,7 @@ export default function Login() {
                                                         value={studentForm.password}
                                                         onChange={e => setStudentForm(p => ({ ...p, password: e.target.value }))}
                                                         style={{ ...inputStyle, paddingRight: '3.5rem' }}
-                                                        onFocus={e => e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'}
+                                                        onFocus={e => { e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'; setPasswordFocused(true); }}
                                                         onBlur={e => e.target.style.boxShadow = 'none'}
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
@@ -230,15 +288,59 @@ export default function Login() {
                                                     />
                                                     <button type="button" onClick={() => setShowStudentPw(v => !v)} style={eyeBtnStyle}>{showStudentPw ? '🙈' : '👁'}</button>
                                                 </div>
+                                                {isRegisterMode && (passwordFocused || studentForm.password.length > 0) && (
+                                                    <PasswordRequirements password={studentForm.password} />
+                                                )}
                                             </div>
+                                            {isRegisterMode && (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                                    <label style={labelStyle}>Confirm Password</label>
+                                                    <div style={{ position: 'relative' }}>
+                                                        <input
+                                                            type={showStudentConfirmPw ? 'text' : 'password'}
+                                                            required
+                                                            placeholder="••••••••"
+                                                            value={studentForm.confirmPassword}
+                                                            onChange={e => setStudentForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                                                            style={{
+                                                                ...inputStyle,
+                                                                paddingRight: '3.5rem',
+                                                                borderColor: studentForm.confirmPassword.length > 0
+                                                                    ? (studentForm.confirmPassword === studentForm.password ? 'green' : '#c0392b')
+                                                                    : 'var(--c-black)'
+                                                            }}
+                                                            onFocus={e => e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'}
+                                                            onBlur={e => e.target.style.boxShadow = 'none'}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    document.getElementById('student-submit-btn').click();
+                                                                }
+                                                            }}
+                                                        />
+                                                        <button type="button" onClick={() => setShowStudentConfirmPw(v => !v)} style={eyeBtnStyle}>{showStudentConfirmPw ? '🙈' : '👁'}</button>
+                                                    </div>
+                                                    {studentForm.confirmPassword.length > 0 && studentForm.confirmPassword !== studentForm.password && (
+                                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#c0392b', margin: 0 }}>
+                                                            Passwords do not match.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                             {!isRegisterMode && (
                                                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                                     <a href="#" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#555', textDecoration: 'underline' }}>Forgot password?</a>
                                                 </div>
                                             )}
-                                            <button id="student-submit-btn" type="submit" disabled={loading} style={{ ...submitBtnStyle, opacity: loading ? 0.7 : 1 }}>
-                                                <ShuffleText text={loading ? "Processing..." : isRegisterMode ? "Register as Student →" : "Login as Student →"} />
-                                            </button>
+                                            {(() => {
+                                                const registerBlocked = isRegisterMode && (!isPasswordValid(studentForm.password) || studentForm.password !== studentForm.confirmPassword);
+                                                const isDisabled = loading || registerBlocked;
+                                                return (
+                                                    <button id="student-submit-btn" type="submit" disabled={isDisabled} style={{ ...submitBtnStyle, opacity: isDisabled ? 0.5 : 1, cursor: isDisabled ? 'not-allowed' : 'pointer' }}>
+                                                        <ShuffleText text={loading ? "Processing..." : isRegisterMode ? "Register as Student →" : "Login as Student →"} />
+                                                    </button>
+                                                );
+                                            })()}
 
                                             {/* social providers (only shown during login mode) 
                                             {!isRegisterMode && !showVerification && (
