@@ -15,7 +15,6 @@ import ShuffleText from '../components/shared/ShuffleText';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import BackButton from '../components/shared/BackButton';
 
-// ─── OPTIONS ──────────────────────────────────────────────────────────────────
 const CLUBS = ['S.H.E.I.L.D', 'OffTopic', 'W.I.S.T.', 'VaultVortex', 'Vizerion'];
 
 const GUIDELINES = [
@@ -34,7 +33,6 @@ const ADDITIONALINFORMATION = [
     'Follow our style guide for consistent formatting'
 ];
 
-// ─── REUSABLE FIELD WRAPPER ───────────────────────────────────────────────────
 function Field({ label, required, error, hint, counter, children }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
@@ -56,7 +54,6 @@ function Field({ label, required, error, hint, counter, children }) {
     );
 }
 
-// ─── SHARED INPUT STYLE BUILDER ───────────────────────────────────────────────
 const baseInput = {
     fontFamily: 'Space Mono, monospace', fontSize: '0.85rem', color: '#0A192F',
     background: '#fff', border: '2px solid #000', outline: 'none',
@@ -68,7 +65,6 @@ const statusStyle = (touched, hasErr) =>
         : touched && !hasErr ? { boxShadow: '3px 3px 0 #000' }
             : {};
 
-// ─── SECTION HEADER ───────────────────────────────────────────────────────────
 function SectionHead({ num, title }) {
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.75rem', paddingBottom: '0.85rem', borderBottom: '2px solid #000' }}>
@@ -78,10 +74,8 @@ function SectionHead({ num, title }) {
     );
 }
 
-// ─── NEW COMPONENTS ───────────────────────────────────────────────────────────
-
-function GuidelinesGateModal({ onAgree, onDecline }) {
-    const [scrolledToBottom, setScrolledToBottom] = useState(false);
+function GuidelinesGateModal({ onAgree, onDecline, readOnly = false, onClose }) {
+    const [scrolledToBottom, setScrolledToBottom] = useState(readOnly);
 
     const handleScroll = (e) => {
         const el = e.target;
@@ -93,11 +87,9 @@ function GuidelinesGateModal({ onAgree, onDecline }) {
     return (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', background: 'rgba(10,25,47,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', padding: '1rem' }}>
             <div style={{ width: '100%', maxWidth: '620px', maxHeight: '85vh', background: '#fff', border: '2px solid #000', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '8px 8px 0 #000' }}>
-                
                 <div style={{ padding: '1.25rem 1.5rem', background: '#0A192F', color: '#f7d000', borderBottom: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                     Submission Guidelines
                 </div>
-
                 <div onScroll={handleScroll} style={{ overflowY: 'auto', flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div>
                         <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#0A192F', marginBottom: '0.75rem' }}>Guidelines</div>
@@ -107,16 +99,14 @@ function GuidelinesGateModal({ onAgree, onDecline }) {
                             </div>
                         ))}
                     </div>
-
                     <div>
                         <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#0A192F', marginBottom: '0.75rem' }}>Additional Information</div>
                         {ADDITIONALINFORMATION.map((c, i) => (
                             <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555', marginBottom: '0.5rem', display: 'flex', gap: '0.5rem' }}>
-                                <span>{['①', '②', '③', '④'][i] || '•'}</span><span>{c}</span>
+                                <span>{['①', '②', '③'][i] || '•'}</span><span>{c}</span>
                             </div>
                         ))}
                     </div>
-
                     <div>
                         <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#0A192F', marginBottom: '0.75rem' }}>Review Process</div>
                         {['Submit form', 'Editorial review (3–5 days)', 'Feedback / approval email', 'Revisions if needed', 'Published on ByteBoard'].map((step, i) => (
@@ -126,22 +116,25 @@ function GuidelinesGateModal({ onAgree, onDecline }) {
                         ))}
                     </div>
                 </div>
-
                 <div style={{ padding: '1rem 1.5rem', background: '#f9f9f9', borderTop: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', color: scrolledToBottom ? '#2e8540' : '#c53030', fontWeight: 700 }}>
-                        {scrolledToBottom ? '✓ Ready to proceed' : '↓ Please read to the bottom'}
+                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', color: readOnly ? '#999' : (scrolledToBottom ? '#2e8540' : '#c53030'), fontWeight: 700 }}>
+                        {readOnly ? 'For your reference' : (scrolledToBottom ? '✓ Ready to proceed' : '↓ Please read to the bottom')}
                     </span>
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button onClick={onDecline} style={{ background: '#fff', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: 'pointer', color: '#000' }}>
-                            Decline
-                        </button>
-                        <button
-                            disabled={!scrolledToBottom}
-                            onClick={() => scrolledToBottom && onAgree()}
-                            style={{ background: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: scrolledToBottom ? 'pointer' : 'not-allowed', color: '#000', opacity: scrolledToBottom ? 1 : 0.5 }}
-                        >
-                            I Agree, Continue →
-                        </button>
+                        {readOnly ? (
+                            <button onClick={onClose} style={{ background: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1.25rem', cursor: 'pointer', color: '#000' }}>
+                                Close
+                            </button>
+                        ) : (
+                            <>
+                                <button onClick={onDecline} style={{ background: '#fff', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: 'pointer', color: '#000' }}>
+                                    Decline
+                                </button>
+                                <button disabled={!scrolledToBottom} onClick={() => scrolledToBottom && onAgree()} style={{ background: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: scrolledToBottom ? 'pointer' : 'not-allowed', color: '#000', opacity: scrolledToBottom ? 1 : 0.5 }}>
+                                    I Agree, Continue →
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -149,77 +142,65 @@ function GuidelinesGateModal({ onAgree, onDecline }) {
     );
 }
 
-function FullPreviewModal({ form, editorHtml, readTime, onClose }) {
+function ArticlePreviewPanel({ form, editorHtml, readTime }) {
     const cleanHtml = editorHtml ? DOMPurify.sanitize(editorHtml) : '';
     const hasContent = cleanHtml.replace(/<[^>]+>/g, '').trim().length > 0;
 
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#0A192F', overflowY: 'auto' }}>
-            <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '2px solid #000', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
-                <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem', color: '#0A192F', textTransform: 'uppercase' }}>Preview</span>
-                <button onClick={onClose} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.4rem 0.8rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>
-                    ✕ Close Preview
-                </button>
+        <div style={{ background: '#0A192F', border: '2px solid #000', boxShadow: '6px 6px 0 #f7d000', padding: '1.5rem', position: 'sticky', top: '1.5rem' }}>
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#f7d000', marginBottom: '1.1rem' }}>
+                👁 Live Preview
             </div>
 
-            <div style={{ padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ maxWidth: 860, width: '100%', marginBottom: '2rem' }}>
-                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
-                        {form.category || 'CATEGORY'} · {readTime} MIN READ
-                    </div>
-                    <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, margin: '0 0 1rem 0' }}>
-                        {form.title || 'Untitled Article'}
-                    </h1>
-                    
-                    {form.tags && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                            {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
-                                <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.2rem 0.6rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700 }}>
-                                    {t.trim()}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2rem' }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', color: '#000' }}>
-                            {(form.name || 'A').charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>
-                            {form.name || 'Author Name'}
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
+                {form.category || 'Category'} · {readTime} min read
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.3rem', color: '#fff', lineHeight: 1.25, margin: '0 0 0.75rem 0', wordBreak: 'break-word' }}>
+                {form.title || 'Untitled Article'}
+            </h3>
+            {form.tags && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+                    {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
+                        <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.15rem 0.5rem', fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', fontWeight: 700 }}>
+                            {t.trim()}
                         </span>
-                    </div>
+                    ))}
                 </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', color: '#000', flexShrink: 0 }}>
+                    {(form.name || 'A').charAt(0).toUpperCase()}
+                </div>
+                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#fff', fontWeight: 700 }}>
+                    {form.name || 'Author Name'}
+                </span>
+            </div>
 
-                <div style={{ maxWidth: 860, width: '100%' }}>
-                    <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
-                        {form.excerpt && (
-                            <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                                {form.excerpt}
-                            </p>
-                        )}
-                        {hasContent ? (
-                            <div className="tiptap" dangerouslySetInnerHTML={{ __html: cleanHtml }} />
-                        ) : (
-                            <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.1rem', color: '#888', fontStyle: 'italic', textAlign: 'center', padding: '3rem 0' }}>
-                                No article content yet — keep writing!
-                            </div>
-                        )}
-                    </div>
-                </div>
+            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '4px 4px 0 rgba(247,208,0,0.6)', padding: '1.1rem', maxHeight: 360, overflowY: 'auto' }}>
+                {form.excerpt && (
+                    <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '0.85rem', color: '#555', fontStyle: 'italic', lineHeight: 1.55, marginBottom: '0.9rem', paddingBottom: '0.9rem', borderBottom: '1.5px solid #eee' }}>
+                        {form.excerpt}
+                    </p>
+                )}
+                {hasContent ? (
+                    <div className="tiptap" style={{ fontSize: '0.8rem' }} dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                ) : (
+                    <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '0.85rem', color: '#999', fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
+                        Nothing written yet — keep going!
+                    </p>
+                )}
             </div>
         </div>
     );
 }
 
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function WriteForUs() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const draftIndex = searchParams.get('draft');
 
     const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
-    const [previewOpen, setPreviewOpen] = useState(false);
+    const [showHelpModal, setShowHelpModal] = useState(false);
 
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
@@ -240,7 +221,6 @@ export default function WriteForUs() {
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
-    // Initialize from draft or autosave if provided
     useEffect(() => {
         if (draftIndex !== null) {
             const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
@@ -250,7 +230,6 @@ export default function WriteForUs() {
                 setEditorHtml(saved.editorHtml || saved.content || '');
             }
         } else {
-            // Attempt to load autosaved session
             const autosave = JSON.parse(localStorage.getItem('bb_autosave'));
             if (autosave) {
                 const { editorHtml: savedHtml, ...savedForm } = autosave;
@@ -260,7 +239,6 @@ export default function WriteForUs() {
         }
     }, [draftIndex]);
 
-    // Auto-save session debounced
     useEffect(() => {
         const handler = setTimeout(() => {
             if (form.title || editorHtml) {
@@ -270,12 +248,10 @@ export default function WriteForUs() {
         return () => clearTimeout(handler);
     }, [form, editorHtml]);
 
-    // populate author information when Cognito user is available
     const { user, loading: authLoading } = useAuth();
     useEffect(() => {
         if (!authLoading) {
             if (!user) {
-                // redirect unauthenticated visitors to login page
                 navigate('/login');
             } else {
                 setForm(f => ({
@@ -288,7 +264,6 @@ export default function WriteForUs() {
         }
     }, [user, authLoading, navigate]);
 
-    // helper used by validation and live word count
     const stripHtml = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     const wordCount = useMemo(() => stripHtml(editorHtml).split(' ').filter(Boolean).length, [editorHtml]);
     const readTime = useMemo(() => Math.max(1, Math.round(wordCount / 238)), [wordCount]);
@@ -297,7 +272,6 @@ export default function WriteForUs() {
         setForm(f => ({ ...f, [k]: e.target.value }));
         setTouched(t => ({ ...t, [k]: true }));
     };
-
 
     const validate = () => {
         const e = {};
@@ -309,77 +283,62 @@ export default function WriteForUs() {
         if (!form.category.trim()) e.category = 'Category is required.';
         if (!form.excerpt.trim()) e.excerpt = 'A summary is required.';
         else if (form.excerpt.trim().length > 150) e.excerpt = 'Keep it under 150 characters.';
-        // validate rich-text editor instead of raw markdown
         if (!stripHtml(editorHtml)) e.content = 'Article content is required.';
         else if (wordCount > 1000) e.content = `Only ${wordCount} words — maximum is 1000.`;
         return e;
     };
 
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    const allTouched = Object.fromEntries(Object.keys(form).map(k => [k, true]));
-    setTouched(allTouched);
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length) return;
-    setSubmitting(true);
-    
-    try {
-        // Sanitize rich text HTML to keep things clean and secure
-        const cleanHtml = DOMPurify.sanitize(editorHtml);
-
-        const minutes = Math.max(1, Math.round(wordCount / 238));
-        const readTimeLabel = `${minutes} min read`;
-
-        // 🚀 STEP 1 FIX: Aligned perfectly to match your Step 2 Backend API keys
-        const payload = {
-            title: form.title.trim(),
-            // use canonical `excerpt` column
-            excerpt: form.excerpt.trim(),
-            content: cleanHtml,
-            contentHTML: cleanHtml,
-            category: form.category.trim(),
-            club: form.club || "General",
-            tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(t => t) : [],
-            // Save author under `name`
-            name: user?.name || form.name || "Anonymous",
-            authorId: user?.sub || "GUEST",
-            authorSub: user?.sub || "GUEST",
-            // store canonical `email` field (avoid duplicate `authorEmail`)
-            email: user?.email || form.email || null,
-            readTime: readTimeLabel
-        };
-
-        // Fire off to your production backend route!
-        await ArticlesService.create(payload);
-
-        // Confirmation Email Dispatch
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const allTouched = Object.fromEntries(Object.keys(form).map(k => [k, true]));
+        setTouched(allTouched);
+        const errs = validate();
+        setErrors(errs);
+        if (Object.keys(errs).length) return;
+        setSubmitting(true);
         try {
-            await EmailService.sendSubmissionConfirmation({
-                to_name: (user?.name || form.name).split(' ')[0],
-                to_email: user?.email || form.email || '',
-                article_title: form.title.trim(),
-                read_time: `${minutes} min read`
-            });
-        } catch (emailError) {
-            console.error('Email notification failed to dispatch:', emailError);
+            const cleanHtml = DOMPurify.sanitize(editorHtml);
+            const minutes = Math.max(1, Math.round(wordCount / 238));
+            const readTimeLabel = `${minutes} min read`;
+            const payload = {
+                title: form.title.trim(),
+                excerpt: form.excerpt.trim(),
+                content: cleanHtml,
+                contentHTML: cleanHtml,
+                category: form.category.trim(),
+                club: form.club || "General",
+                tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(t => t) : [],
+                name: user?.name || form.name || "Anonymous",
+                authorId: user?.sub || "GUEST",
+                authorSub: user?.sub || "GUEST",
+                email: user?.email || form.email || null,
+                readTime: readTimeLabel
+            };
+            await ArticlesService.create(payload);
+            try {
+                await EmailService.sendSubmissionConfirmation({
+                    to_name: (user?.name || form.name).split(' ')[0],
+                    to_email: user?.email || form.email || '',
+                    article_title: form.title.trim(),
+                    read_time: `${minutes} min read`
+                });
+            } catch (emailError) {
+                console.error('Email notification failed to dispatch:', emailError);
+            }
+            if (draftIndex !== null) {
+                const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
+                drafts.splice(Number(draftIndex), 1);
+                localStorage.setItem('bb_drafts', JSON.stringify(drafts));
+            }
+            localStorage.removeItem('bb_autosave');
+            setSubmitted(true);
+        } catch (error) {
+            console.error("Submission error:", error);
+            alert("Failed to submit article. Please verify your AWS backend configuration connection.");
+        } finally {
+            setSubmitting(false);
         }
-
-        // Clean up local drafting caches on success
-        if (draftIndex !== null) {
-            const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-            drafts.splice(Number(draftIndex), 1);
-            localStorage.setItem('bb_drafts', JSON.stringify(drafts));
-        }
-        localStorage.removeItem('bb_autosave');
-        setSubmitted(true);
-    } catch (error) {
-        console.error("Submission error:", error);
-        alert("Failed to submit article. Please verify your AWS backend configuration connection.");
-    } finally {
-        setSubmitting(false);
-    }
-};
+    };
 
     const handleSaveDraft = () => {
         const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
@@ -402,7 +361,6 @@ const handleSubmit = async (e) => {
         cursor: 'pointer',
     });
 
-    // ---------- rich editor configurations ----------
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -424,19 +382,17 @@ const handleSubmit = async (e) => {
         }
     });
 
-    // Hydrate Tiptap editor if content was loaded from a Draft
     useEffect(() => {
         if (editor && editorHtml && editor.getHTML() !== editorHtml) {
             editor.commands.setContent(editorHtml);
         }
     }, [editor, editorHtml]);
 
-    // ─── TOOLBAR COMPONENT ────────────────────────────────────────────────────
     const ToolbarBtn = ({ icon, label, onClick, active }) => (
         <button
             type="button"
             onMouseDown={(e) => {
-                e.preventDefault(); // Prevent focus stealing away from Editor
+                e.preventDefault();
                 onClick(e);
             }}
             title={label}
@@ -459,7 +415,6 @@ const handleSubmit = async (e) => {
         setErrors({}); setTouched({}); setSubmitted(false);
     };
 
-    // ── Success State ─────────────────────────────────────────────────────────
     if (submitted) {
         return (
             <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
@@ -468,11 +423,9 @@ const handleSubmit = async (e) => {
                     <BackButton />
                     <div style={{ maxWidth: 580, width: '100%' }}>
                         <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '12px 12px 0 #f7d000', overflow: 'hidden' }}>
-                            {/* Success header bar */}
                             <div style={{ background: '#0A192F', padding: '1rem 1.5rem', borderBottom: '2px solid #000', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f7d000' }}>Submission Received</span>
                             </div>
-                            {/* Body */}
                             <div style={{ padding: '2.5rem', textAlign: 'center' }}>
                                 <div style={{ fontSize: '3.5rem', marginBottom: '1rem', lineHeight: 1 }}>✓</div>
                                 <div style={{ display: 'inline-block', background: '#f7d000', border: '2px solid #000', padding: '0.3rem 0.9rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.25rem' }}>
@@ -487,7 +440,6 @@ const handleSubmit = async (e) => {
                                 <p style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.78rem', color: '#888', lineHeight: 1.6, marginBottom: '2rem' }}>
                                     We'll email you at <strong style={{ color: '#0A192F' }}>{form.email}</strong> within 3–5 business days.
                                 </p>
-                                {/* Review steps */}
                                 <div style={{ background: '#f9f9f9', border: '1.5px solid #e0e0e0', padding: '1rem 1.25rem', textAlign: 'left', marginBottom: '2rem' }}>
                                     {['Editorial review', 'Feedback email', 'Revisions (if any)', 'Published on ByteBoard'].map((step, i) => (
                                         <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', color: i === 0 ? '#0A192F' : '#aaa', padding: '0.3rem 0', display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: i === 0 ? 700 : 400 }}>
@@ -513,11 +465,10 @@ const handleSubmit = async (e) => {
         );
     }
 
-    // ── Form ──────────────────────────────────────────────────────────────────
     return (
         <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             {!guidelinesAccepted && <GuidelinesGateModal onAgree={handleAgreeGuidelines} onDecline={handleDeclineGuidelines} />}
-            {previewOpen && guidelinesAccepted && <FullPreviewModal form={form} editorHtml={editorHtml} readTime={readTime} onClose={() => setPreviewOpen(false)} />}
+            {showHelpModal && guidelinesAccepted && <GuidelinesGateModal readOnly onClose={() => setShowHelpModal(false)} />}
             <div style={{
                 filter: guidelinesAccepted ? 'none' : 'blur(6px)',
                 pointerEvents: guidelinesAccepted ? 'auto' : 'none',
@@ -526,150 +477,135 @@ const handleSubmit = async (e) => {
             }}>
                 <Navbar />
                 <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
-                <BackButton />
-
-                {/* Page Header */}
-                <AnimateOnScroll animationClass="animate-slide-up" delay={0.05} threshold={0.02}>
-                    <div style={{ marginBottom: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '1.25rem' }}>
-                        <div style={{ display: 'inline-block', background: '#f7d000', border: '2px solid #000', padding: '0.25rem 0.85rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1rem' }}>
-                            Contributor Submission
-                        </div>
-                        <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, marginBottom: '0.75rem' }}>
-                            Write for us<span style={{ color: '#f7d000' }}>.</span>
-                        </h1>
-                        <p style={{ fontFamily: 'Space Mono, monospace', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', maxWidth: 560 }}>
-                            Share your ideas, research, and insights with the CS community at CHRIST University.
-                        </p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                        <BackButton />
+                        <button
+                            type="button"
+                            onClick={() => setShowHelpModal(true)}
+                            style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                        >
+                            ℹ️ Guidelines &amp; Help
+                        </button>
                     </div>
-                </AnimateOnScroll>
-
-                {/* Two-column layout that collapses on mobile */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
-
-                    {/* ─── FORM CARD ─── */}
-                    <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.02}>
-                        <div style={{ position: 'relative' }}>
-                            {/* Brutalist shadow */}
-                            <div style={{ position: 'absolute', top: 10, left: 10, width: '100%', height: '100%', border: '2px solid #f7d000', zIndex: 0, pointerEvents: 'none' }} />
-
-                            <form
-                                onSubmit={handleSubmit}
-                                noValidate
-                                style={{ position: 'relative', zIndex: 1, background: '#fff', border: '2px solid #000', padding: '2.5rem' }}
-                            >
-                                {/* ── SECTION 01: Author Information ────────── */}
-                                <SectionHead num="01" title="Author Information" />
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                                    <Field label="Full Name" required error={touched.name && errors.name}>
-                                        <input type="text" placeholder="e.g. Vishnu Sharma" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} maxLength={80} />
-                                    </  Field>
-                                    <Field label="Email Address" required error={touched.email && errors.email}>
-                                        <input type="email" placeholder="you@example.com" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
-                                    </Field>
-                                </div>
-
-                                <div style={{ marginBottom: '2.25rem' }}>
-                                    <Field label="Short Bio" hint="Appears under your published article (optional)">
-                                        <input type="text" placeholder="3rd year CSE · AI enthusiast" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} maxLength={120} />
-                                    </Field>
-                                </div>
-
-                                {/* ── Separator ── */}
-                                <div style={{ height: 2, background: '#f5f0e8', margin: '0 -2.5rem 2.25rem' }} />
-
-                                {/* ── SECTION 02: Article Details ───────────── */}
-                                <SectionHead num="02" title="Article Details" />
-
-                                <div style={{ marginBottom: '1.25rem' }}>
-                                    <Field label="Article Title" required error={touched.title && errors.title}>
-                                        <input type="text" placeholder="e.g. Understanding Transformers from First Principles" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '1rem' }} maxLength={160} />
-                                    </Field>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                                    <Field label="Category" required error={touched.category && errors.category}>
-                                        <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
-                                    </Field>
-                                    <Field label="Club" hint="Which club does this represent?">
-                                        <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
-                                            <option value="">Select club…</option>
-                                            {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </Field>
-                                </div>
-
-                                <div style={{ marginBottom: '1.25rem' }}>
-                                    <Field label="Tags" hint="Comma-separated keywords, e.g.  Machine Learning, Python, NLP">
-                                        <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
-                                    </Field>
-                                </div>
-
-                                <Field
-                                    label="Article Summary / Excerpt"
-                                    required
-                                    error={touched.excerpt && errors.excerpt}
-                                    hint="This is displayed on the blog card. Keep it punchy."
-                                    counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}
+                    <AnimateOnScroll animationClass="animate-slide-up" delay={0.05} threshold={0.02}>
+                        <div style={{ marginBottom: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '1.25rem' }}>
+                            <div style={{ display: 'inline-block', background: '#f7d000', border: '2px solid #000', padding: '0.25rem 0.85rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1rem' }}>
+                                Contributor Submission
+                            </div>
+                            <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, marginBottom: '0.75rem' }}>
+                                Write for us<span style={{ color: '#f7d000' }}>.</span>
+                            </h1>
+                            <p style={{ fontFamily: 'Space Mono, monospace', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', maxWidth: 560 }}>
+                                Share your ideas, research, and insights with the CS community at CHRIST University.
+                            </p>
+                        </div>
+                    </AnimateOnScroll>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
+                        <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.02}>
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', top: 10, left: 10, width: '100%', height: '100%', border: '2px solid #f7d000', zIndex: 0, pointerEvents: 'none' }} />
+                                <form
+                                    onSubmit={handleSubmit}
+                                    noValidate
+                                    style={{ position: 'relative', zIndex: 1, background: '#fff', border: '2px solid #000', padding: '2.5rem' }}
                                 >
-                                    <textarea
-                                        placeholder="A 1–3 sentence hook that makes readers want to read more…"
-                                        value={form.excerpt}
-                                        onChange={set('excerpt')}
-                                        rows={3}
-                                        maxLength={150}
-                                        style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }}
-                                    />
-                                </Field>
-
-                                {/* ── Separator ── */}
-                                <div style={{ height: 2, background: '#f5f0e8', margin: '2.25rem -2.5rem' }} />
-
-                                {/* ── SECTION 03: Full Article ───────────────── */}
-                                <SectionHead num="03" title="Full Article Content" />
-
-                                <Field
-                                    label="Article Body"
-                                    required
-                                    error={touched.content && errors.content}
-                                    hint={wordCount > 0 ? `${wordCount.toLocaleString()} words · ~${readTime} min read` : 'Maximum 1000 words. Use toolbar to format.'}
-                                >
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        {editor && (
-                                            <div style={{ display: 'flex', gap: '0.4rem', padding: '0.4rem', borderTop: '2px solid #000', borderLeft: '2px solid #000', borderRight: '2px solid #000', background: '#e0e0e0', flexWrap: 'wrap' }}>
-                                                <ToolbarBtn icon="B" label="Bold (Ctrl+B)" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} />
-                                                <ToolbarBtn icon="I" label="Italic (Ctrl+I)" onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} />
-                                                <ToolbarBtn icon="U" label="Underline (Ctrl+U)" onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} />
-                                                <ToolbarBtn icon="S" label="Strike (Ctrl+Shift+X)" onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} />
-                                                <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} /> {/* divider */}
-                                                <ToolbarBtn icon="H1" label="Heading 1 (Ctrl+Alt+1)" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} />
-                                                <ToolbarBtn icon="H2" label="Heading 2 (Ctrl+Alt+2)" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} />
-                                                <ToolbarBtn icon="H3" label="Heading 3 (Ctrl+Alt+3)" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} />
-                                                <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
-                                                <ToolbarBtn icon="“" label="Blockquote (Ctrl+Shift+B)" onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} />
-                                                <ToolbarBtn icon="<>" label="Code Block (Ctrl+Alt+C)" onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} />
-                                                <ToolbarBtn icon="🔗" label="Link" onClick={() => {
-                                                    const previousUrl = editor.getAttributes('link').href;
-                                                    const url = window.prompt('URL', previousUrl);
-                                                    if (url === null) return;
-                                                    if (url === '') {
-                                                        editor.chain().focus().extendMarkRange('link').unsetLink().run();
-                                                    } else {
-                                                        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                                                    }
-                                                }} active={editor.isActive('link')} />
-                                                <ToolbarBtn icon="🖼️" label="Image" onClick={() => {
-                                                    const url = window.prompt('Image URL');
-                                                    if (url) {
-                                                        editor.chain().focus().setImage({ src: url }).run();
-                                                    }
-                                                }} />
-                                                <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
-                                                <ToolbarBtn icon="•" label="Bullet List (Ctrl+Shift+8)" onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} />
-                                                <ToolbarBtn icon="1." label="Ordered List (Ctrl+Shift+7)" onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} />
-                                            </div>
-                                        )}
-                                        <style>{`
+                                    <SectionHead num="01" title="Author Information" />
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                                        <Field label="Full Name" required error={touched.name && errors.name}>
+                                            <input type="text" placeholder="e.g. Vishnu Sharma" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} maxLength={80} />
+                                        </  Field>
+                                        <Field label="Email Address" required error={touched.email && errors.email}>
+                                            <input type="email" placeholder="you@example.com" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
+                                        </Field>
+                                    </div>
+                                    <div style={{ marginBottom: '2.25rem' }}>
+                                        <Field label="Short Bio" hint="Appears under your published article (optional)">
+                                            <input type="text" placeholder="3rd year CSE · AI enthusiast" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} maxLength={120} />
+                                        </Field>
+                                    </div>
+                                    <div style={{ height: 2, background: '#f5f0e8', margin: '0 -2.5rem 2.25rem' }} />
+                                    <SectionHead num="02" title="Article Details" />
+                                    <div style={{ marginBottom: '1.25rem' }}>
+                                        <Field label="Article Title" required error={touched.title && errors.title}>
+                                            <input type="text" placeholder="e.g. Understanding Transformers from First Principles" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '1rem' }} maxLength={160} />
+                                        </Field>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                                        <Field label="Category" required error={touched.category && errors.category}>
+                                            <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
+                                        </Field>
+                                        <Field label="Club" hint="Which club does this represent?">
+                                            <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
+                                                <option value="">Select club…</option>
+                                                {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </Field>
+                                    </div>
+                                    <div style={{ marginBottom: '1.25rem' }}>
+                                        <Field label="Tags" hint="Comma-separated keywords, e.g.  Machine Learning, Python, NLP">
+                                            <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
+                                        </Field>
+                                    </div>
+                                    <Field
+                                        label="Article Summary / Excerpt"
+                                        required
+                                        error={touched.excerpt && errors.excerpt}
+                                        hint="This is displayed on the blog card. Keep it punchy."
+                                        counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}
+                                    >
+                                        <textarea
+                                            placeholder="A 1–3 sentence hook that makes readers want to read more…"
+                                            value={form.excerpt}
+                                            onChange={set('excerpt')}
+                                            rows={3}
+                                            maxLength={150}
+                                            style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }}
+                                        />
+                                    </Field>
+                                    <div style={{ height: 2, background: '#f5f0e8', margin: '2.25rem -2.5rem' }} />
+                                    <SectionHead num="03" title="Full Article Content" />
+                                    <Field
+                                        label="Article Body"
+                                        required
+                                        error={touched.content && errors.content}
+                                        hint={wordCount > 0 ? `${wordCount.toLocaleString()} words · ~${readTime} min read` : 'Maximum 1000 words. Use toolbar to format.'}
+                                    >
+                                        <div style={{ marginBottom: '1rem' }}>
+                                            {editor && (
+                                                <div style={{ display: 'flex', gap: '0.4rem', padding: '0.4rem', borderTop: '2px solid #000', borderLeft: '2px solid #000', borderRight: '2px solid #000', background: '#e0e0e0', flexWrap: 'wrap' }}>
+                                                    <ToolbarBtn icon="B" label="Bold (Ctrl+B)" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} />
+                                                    <ToolbarBtn icon="I" label="Italic (Ctrl+I)" onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} />
+                                                    <ToolbarBtn icon="U" label="Underline (Ctrl+U)" onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} />
+                                                    <ToolbarBtn icon="S" label="Strike (Ctrl+Shift+X)" onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} />
+                                                    <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
+                                                    <ToolbarBtn icon="H1" label="Heading 1 (Ctrl+Alt+1)" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} />
+                                                    <ToolbarBtn icon="H2" label="Heading 2 (Ctrl+Alt+2)" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} />
+                                                    <ToolbarBtn icon="H3" label="Heading 3 (Ctrl+Alt+3)" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} />
+                                                    <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
+                                                    <ToolbarBtn icon="“" label="Blockquote (Ctrl+Shift+B)" onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} />
+                                                    <ToolbarBtn icon="<>" label="Code Block (Ctrl+Alt+C)" onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} />
+                                                    <ToolbarBtn icon="🔗" label="Link" onClick={() => {
+                                                        const previousUrl = editor.getAttributes('link').href;
+                                                        const url = window.prompt('URL', previousUrl);
+                                                        if (url === null) return;
+                                                        if (url === '') {
+                                                            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                                                        } else {
+                                                            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                                                        }
+                                                    }} active={editor.isActive('link')} />
+                                                    <ToolbarBtn icon="🖼️" label="Image" onClick={() => {
+                                                        const url = window.prompt('Image URL');
+                                                        if (url) {
+                                                            editor.chain().focus().setImage({ src: url }).run();
+                                                        }
+                                                    }} />
+                                                    <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
+                                                    <ToolbarBtn icon="•" label="Bullet List (Ctrl+Shift+8)" onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} />
+                                                    <ToolbarBtn icon="1." label="Ordered List (Ctrl+Shift+7)" onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} />
+                                                </div>
+                                            )}
+                                            <style>{`
                                             .tiptap p { margin-bottom: 0.75em; }
                                             .tiptap blockquote { border-left: 3px solid #f7d000; margin: 1rem 0; padding-left: 1rem; font-style: italic; color: #555; background: #f9f9f9; padding-top: 0.5rem; padding-bottom: 0.5rem; }
                                             .tiptap pre { background: #0A192F; color: #fff; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: 'Space Mono', monospace; margin: 1rem 0; }
@@ -679,163 +615,101 @@ const handleSubmit = async (e) => {
                                             .tiptap img { max-width: 100%; height: auto; display: block; margin: 1rem auto; padding: 0.5rem; border: 1.5px solid #ccc; }
                                             .tiptap a { color: #000; text-decoration: underline; text-decoration-color: #f7d000; text-decoration-thickness: 2px; }
                                         `}</style>
-                                        <EditorContent editor={editor} />
-                                    </div>
-                                </Field>
-
-                                {/* ── Live preview strip ── */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f9f9f9', borderLeft: '4px solid #f7d000', padding: '1.25rem', marginTop: '1.5rem', borderRight: '1.5px solid #e0e0e0', borderTop: '1.5px solid #e0e0e0', borderBottom: '1.5px solid #e0e0e0', gap: '1rem', flexWrap: 'wrap' }}>
-                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555' }}>Preview how your article will look when published.</span>
-                                    <button 
-                                        type="button"
-                                        disabled={!form.title && !editorHtml}
-                                        onClick={() => setPreviewOpen(true)}
-                                        style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: (!form.title && !editorHtml) ? 'not-allowed' : 'pointer', boxShadow: '3px 3px 0 #000', opacity: (!form.title && !editorHtml) ? 0.5 : 1 }}
-                                        onMouseEnter={e => (!form.title && !editorHtml) ? null : (e.currentTarget.style.transform = 'translate(1px,1px)', e.currentTarget.style.boxShadow = '2px 2px 0 #000')}
-                                        onMouseLeave={e => (!form.title && !editorHtml) ? null : (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '3px 3px 0 #000')}
-                                    >
-                                        👁 Full Preview →
-                                    </button>
-                                </div>
-
-                                {/* ── Submit Row ── */}
-                                <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderTop: '2px solid #000', paddingTop: '1.5rem' }}>
-                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', color: '#999' }}>
-                                        <span style={{ color: '#c53030' }}>*</span> Required fields
-                                        {Object.keys(validate()).length > 0 && Object.keys(touched).length > 0 && (
-                                            <span style={{ color: '#c53030', marginLeft: '0.75rem' }}>
-                                                · {Object.keys(validate()).length} field{Object.keys(validate()).length > 1 ? 's' : ''} need attention
-                                            </span>
-                                        )}
-                                    </span>
-                                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                        <button
-                                            type="button"
-                                            onClick={handleSaveDraft}
-                                            disabled={submitting}
-                                            style={{
-                                                background: '#fff',
-                                                border: '2px solid #000', color: '#000',
-                                                fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem',
-                                                padding: '0.8rem 1.5rem', cursor: submitting ? 'wait' : 'pointer',
-                                                boxShadow: '3px 3px 0 #ccc',
-                                                transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                            }}
-                                            onMouseEnter={e => !submitting && (e.currentTarget.style.transform = 'translate(1px,1px)', e.currentTarget.style.boxShadow = '2px 2px 0 #ccc')}
-                                            onMouseLeave={e => !submitting && (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '3px 3px 0 #ccc')}
-                                        >
-                                            <ShuffleText text="SAVE DRAFT" />
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={submitting}
-                                            style={{
-                                                background: submitting ? '#e0e0e0' : '#f7d000',
-                                                border: '2px solid #000', color: '#000',
-                                                fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem',
-                                                padding: '0.8rem 2.5rem', cursor: submitting ? 'wait' : 'pointer',
-                                                boxShadow: submitting ? 'none' : '5px 5px 0 #000',
-                                                transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                            }}
-                                            onMouseEnter={e => !submitting && (e.currentTarget.style.transform = 'translate(2px,2px)', e.currentTarget.style.boxShadow = '3px 3px 0 #000')}
-                                            onMouseLeave={e => !submitting && (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '5px 5px 0 #000')}
-                                        >
-                                            {submitting
-                                                ? <span>SUBMITTING…</span>
-                                                : <ShuffleText text="SUBMIT ARTICLE →" />
-                                            }
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </AnimateOnScroll>
-
-                    {/* ─── SIDEBAR ─── */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-                        {/* Guidelines */}
-                        <AnimateOnScroll animationClass="animate-slide-up" delay={0.18} threshold={0.02}>
-                            <div style={{ background: '#0A192F', border: '2px solid #000', boxShadow: '6px 6px 0 #f7d000', padding: '1.75rem', position: 'sticky', top: '1.5rem' }}>
-                                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#f7d000', marginBottom: '1.25rem' }}>
-                                    📋 Submission Guidelines
-                                </div>
-                                {GUIDELINES.map((g, i) => (
-                                    <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.76rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, paddingLeft: '0.75rem', borderLeft: '2px solid rgba(247,208,0,0.5)', marginBottom: '0.7rem' }}>
-                                        {g}
-                                    </div>
-                                ))}
-
-                            <div style={{ marginTop: '1.5rem', height: 2, background: 'rgba(255,255,255,0.1)' }} />
-                                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f7d000', margin: '1.25rem 0 0.85rem' }}>
-                                    ℹ️ Additional Information 
-                                </div>
-                                {ADDITIONALINFORMATION.map((c, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.5rem' }}>
-                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, color: '#f7d000', flexShrink: 0, minWidth: 16 }}>
-                                            {['①', '②', '③', '④'][i]}
+                                            <EditorContent editor={editor} />
+                                        </div>
+                                    </Field>
+                                    <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderTop: '2px solid #000', paddingTop: '1.5rem' }}>
+                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', color: '#999' }}>
+                                            <span style={{ color: '#c53030' }}>*</span> Required fields
+                                            {Object.keys(validate()).length > 0 && Object.keys(touched).length > 0 && (
+                                                <span style={{ color: '#c53030', marginLeft: '0.75rem' }}>
+                                                    · {Object.keys(validate()).length} field{Object.keys(validate()).length > 1 ? 's' : ''} need attention
+                                                </span>
+                                            )}
                                         </span>
-                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{c}</span>
-                                    </div>
-                                ))}
-
-                                {/* Review Process */}
-                                <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.25rem' }}>
-                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#f7d000', marginBottom: '0.85rem' }}>
-                                        Review Process
-                                    </div>
-                                    {['Submit form', 'Editorial review (3–5 days)', 'Feedback / approval email', 'Revisions if needed', 'Published on ByteBoard'].map((step, i) => (
-                                        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.5rem' }}>
-                                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, color: '#f7d000', flexShrink: 0, minWidth: 16 }}>
-                                                {['①', '②', '③', '④', '⑤'][i]}
-                                            </span>
-                                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{step}</span>
+                                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveDraft}
+                                                disabled={submitting}
+                                                style={{
+                                                    background: '#fff',
+                                                    border: '2px solid #000', color: '#000',
+                                                    fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem',
+                                                    padding: '0.8rem 1.5rem', cursor: submitting ? 'wait' : 'pointer',
+                                                    boxShadow: '3px 3px 0 #ccc',
+                                                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                                }}
+                                                onMouseEnter={e => !submitting && (e.currentTarget.style.transform = 'translate(1px,1px)', e.currentTarget.style.boxShadow = '2px 2px 0 #ccc')}
+                                                onMouseLeave={e => !submitting && (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '3px 3px 0 #ccc')}
+                                            >
+                                                <ShuffleText text="SAVE DRAFT" />
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={submitting}
+                                                style={{
+                                                    background: submitting ? '#e0e0e0' : '#f7d000',
+                                                    border: '2px solid #000', color: '#000',
+                                                    fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem',
+                                                    padding: '0.8rem 2.5rem', cursor: submitting ? 'wait' : 'pointer',
+                                                    boxShadow: submitting ? 'none' : '5px 5px 0 #000',
+                                                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                                }}
+                                                onMouseEnter={e => !submitting && (e.currentTarget.style.transform = 'translate(2px,2px)', e.currentTarget.style.boxShadow = '3px 3px 0 #000')}
+                                                onMouseLeave={e => !submitting && (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '5px 5px 0 #000')}
+                                            >
+                                                {submitting
+                                                    ? <span>SUBMITTING…</span>
+                                                    : <ShuffleText text="SUBMIT ARTICLE →" />
+                                                }
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                </form>
                             </div>
                         </AnimateOnScroll>
-
-                        {/* Keyboard Shortcuts */}
-                        <AnimateOnScroll animationClass="animate-slide-up" delay={0.2} threshold={0.02}>
-                            <div style={{ background: '#f9f9f9', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem', position: 'sticky', top: '1.5rem' }}>
-                                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '1.25rem' }}>⌨️ Keyboard Shortcuts</div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                    {[
-                                        { key: 'Ctrl + B', label: 'Bold' },
-                                        { key: 'Ctrl + I', label: 'Italic' },
-                                        { key: 'Ctrl + 1', label: 'Heading 1' },
-                                        { key: 'Ctrl + 2', label: 'Heading 2' },
-                                        { key: 'Ctrl + Q', label: 'Quote' },
-                                        { key: 'Ctrl + E', label: 'Code' },
-                                        { key: 'Ctrl + K', label: 'Link' },
-                                        { key: 'Ctrl + L', label: 'List' }
-                                    ].map((sc, i) => (
-                                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', color: '#555' }}>{sc.label}</span>
-                                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', fontWeight: 700, background: '#e0e0e0', padding: '0.15rem 0.4rem', borderRadius: 3, display: 'inline-block', width: 'fit-content', color: '#000' }}>{sc.key}</span>
-                                        </div>
-                                    ))}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            <AnimateOnScroll animationClass="animate-slide-up" delay={0.18} threshold={0.02}>
+                                <ArticlePreviewPanel form={form} editorHtml={editorHtml} readTime={readTime} />
+                            </AnimateOnScroll>
+                            <AnimateOnScroll animationClass="animate-slide-up" delay={0.2} threshold={0.02}>
+                                <div style={{ background: '#f9f9f9', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem', position: 'sticky', top: '1.5rem' }}>
+                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '1.25rem' }}>⌨️ Keyboard Shortcuts</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                        {[
+                                            { key: 'Ctrl + B', label: 'Bold' },
+                                            { key: 'Ctrl + I', label: 'Italic' },
+                                            { key: 'Ctrl + 1', label: 'Heading 1' },
+                                            { key: 'Ctrl + 2', label: 'Heading 2' },
+                                            { key: 'Ctrl + Q', label: 'Quote' },
+                                            { key: 'Ctrl + E', label: 'Code' },
+                                            { key: 'Ctrl + K', label: 'Link' },
+                                            { key: 'Ctrl + L', label: 'List' }
+                                        ].map((sc, i) => (
+                                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', color: '#555' }}>{sc.label}</span>
+                                                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', fontWeight: 700, background: '#e0e0e0', padding: '0.15rem 0.4rem', borderRadius: 3, display: 'inline-block', width: 'fit-content', color: '#000' }}>{sc.key}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        </AnimateOnScroll>
-
-                        {/* Contact card */}
-                        <AnimateOnScroll animationClass="animate-slide-up" delay={0.22} threshold={0.02}>
-                            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem' }}>
-                                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '0.65rem' }}>Questions?</div>
-                                <p style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.76rem', color: '#666', lineHeight: 1.65, marginBottom: '0.75rem' }}>
-                                    Reach out to the editorial team before submitting:
-                                </p>
-                                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.82rem', fontWeight: 700, color: '#0A192F', borderBottom: '2px solid #f7d000', display: 'inline-block', paddingBottom: 1 }}>
-                                    byteboard@christuniversity.in
+                            </AnimateOnScroll>
+                            <AnimateOnScroll animationClass="animate-slide-up" delay={0.22} threshold={0.02}>
+                                <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem' }}>
+                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '0.65rem' }}>Questions?</div>
+                                    <p style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.76rem', color: '#666', lineHeight: 1.65, marginBottom: '0.75rem' }}>
+                                        Reach out to the editorial team before submitting:
+                                    </p>
+                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.82rem', fontWeight: 700, color: '#0A192F', borderBottom: '2px solid #f7d000', display: 'inline-block', paddingBottom: 1 }}>
+                                        byteboard@christuniversity.in
+                                    </div>
                                 </div>
-                            </div>
-                        </AnimateOnScroll>
+                            </AnimateOnScroll>
+                        </div>
                     </div>
-                </div>
-            </main>
-            <Footer />
+                </main>
+                <Footer />
             </div>
         </div>
     );
