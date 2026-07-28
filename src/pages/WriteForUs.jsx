@@ -78,11 +78,157 @@ function SectionHead({ num, title }) {
     );
 }
 
+// ─── NEW COMPONENTS ───────────────────────────────────────────────────────────
+
+function GuidelinesGateModal({ onAgree, onDecline }) {
+    const [scrolledToBottom, setScrolledToBottom] = useState(false);
+
+    const handleScroll = (e) => {
+        const el = e.target;
+        if (el.scrollHeight - el.scrollTop - el.clientHeight < 12) {
+            setScrolledToBottom(true);
+        }
+    };
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', background: 'rgba(10,25,47,0.55)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', padding: '1rem' }}>
+            <div style={{ width: '100%', maxWidth: '620px', maxHeight: '85vh', background: '#fff', border: '2px solid #000', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '8px 8px 0 #000' }}>
+                
+                <div style={{ padding: '1.25rem 1.5rem', background: '#0A192F', color: '#f7d000', borderBottom: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Submission Guidelines
+                </div>
+
+                <div onScroll={handleScroll} style={{ overflowY: 'auto', flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#0A192F', marginBottom: '0.75rem' }}>Guidelines</div>
+                        {GUIDELINES.map((g, i) => (
+                            <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555', marginBottom: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                                <span>•</span><span>{g}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#0A192F', marginBottom: '0.75rem' }}>Additional Information</div>
+                        {ADDITIONALINFORMATION.map((c, i) => (
+                            <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555', marginBottom: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                                <span>{['①', '②', '③', '④'][i] || '•'}</span><span>{c}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: '#0A192F', marginBottom: '0.75rem' }}>Review Process</div>
+                        {['Submit form', 'Editorial review (3–5 days)', 'Feedback / approval email', 'Revisions if needed', 'Published on ByteBoard'].map((step, i) => (
+                            <div key={i} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555', marginBottom: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                                <span>{['①', '②', '③', '④', '⑤'][i]}</span><span>{step}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div style={{ padding: '1rem 1.5rem', background: '#f9f9f9', borderTop: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.7rem', color: scrolledToBottom ? '#2e8540' : '#c53030', fontWeight: 700 }}>
+                        {scrolledToBottom ? '✓ Ready to proceed' : '↓ Please read to the bottom'}
+                    </span>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button onClick={onDecline} style={{ background: '#fff', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: 'pointer', color: '#000' }}>
+                            Decline
+                        </button>
+                        <button
+                            disabled={!scrolledToBottom}
+                            onClick={() => scrolledToBottom && onAgree()}
+                            style={{ background: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: scrolledToBottom ? 'pointer' : 'not-allowed', color: '#000', opacity: scrolledToBottom ? 1 : 0.5 }}
+                        >
+                            I Agree, Continue →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function FullPreviewModal({ form, editorHtml, readTime, onClose }) {
+    const cleanHtml = editorHtml ? DOMPurify.sanitize(editorHtml) : '';
+    const hasContent = cleanHtml.replace(/<[^>]+>/g, '').trim().length > 0;
+
+    return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#0A192F', overflowY: 'auto' }}>
+            <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '2px solid #000', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+                <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem', color: '#0A192F', textTransform: 'uppercase' }}>Preview</span>
+                <button onClick={onClose} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.4rem 0.8rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>
+                    ✕ Close Preview
+                </button>
+            </div>
+
+            <div style={{ padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ maxWidth: 860, width: '100%', marginBottom: '2rem' }}>
+                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
+                        {form.category || 'CATEGORY'} · {readTime} MIN READ
+                    </div>
+                    <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, margin: '0 0 1rem 0' }}>
+                        {form.title || 'Untitled Article'}
+                    </h1>
+                    
+                    {form.tags && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
+                                <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.2rem 0.6rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700 }}>
+                                    {t.trim()}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2rem' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', color: '#000' }}>
+                            {(form.name || 'A').charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>
+                            {form.name || 'Author Name'}
+                        </span>
+                    </div>
+                </div>
+
+                <div style={{ maxWidth: 860, width: '100%' }}>
+                    <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
+                        {form.excerpt && (
+                            <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
+                                {form.excerpt}
+                            </p>
+                        )}
+                        {hasContent ? (
+                            <div className="tiptap" dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                        ) : (
+                            <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.1rem', color: '#888', fontStyle: 'italic', textAlign: 'center', padding: '3rem 0' }}>
+                                No article content yet — keep writing!
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function WriteForUs() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const draftIndex = searchParams.get('draft');
+
+    const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
+    const [previewOpen, setPreviewOpen] = useState(false);
+
+    const handleAgreeGuidelines = () => {
+        sessionStorage.setItem('bb_writeforus_accepted', 'true');
+        setGuidelinesAccepted(true);
+    };
+
+    const handleDeclineGuidelines = () => {
+        navigate('/');
+    };
 
     const [form, setForm] = useState({
         name: '', email: '', bio: '',
@@ -370,8 +516,16 @@ const handleSubmit = async (e) => {
     // ── Form ──────────────────────────────────────────────────────────────────
     return (
         <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
-            <Navbar />
-            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
+            {!guidelinesAccepted && <GuidelinesGateModal onAgree={handleAgreeGuidelines} onDecline={handleDeclineGuidelines} />}
+            {previewOpen && guidelinesAccepted && <FullPreviewModal form={form} editorHtml={editorHtml} readTime={readTime} onClose={() => setPreviewOpen(false)} />}
+            <div style={{
+                filter: guidelinesAccepted ? 'none' : 'blur(6px)',
+                pointerEvents: guidelinesAccepted ? 'auto' : 'none',
+                userSelect: guidelinesAccepted ? 'auto' : 'none',
+                transition: 'filter 0.2s'
+            }}>
+                <Navbar />
+                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
                 <BackButton />
 
                 {/* Page Header */}
@@ -530,15 +684,19 @@ const handleSubmit = async (e) => {
                                 </Field>
 
                                 {/* ── Live preview strip ── */}
-                                {form.title && form.excerpt && (
-                                    <div style={{ background: '#f9f9f9', border: '1.5px solid #e0e0e0', padding: '1.25rem', marginTop: '1.5rem', borderLeft: '4px solid #f7d000' }}>
-                                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#aaa', marginBottom: '0.5rem' }}>Card Preview</div>
-                                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', color: '#888', marginBottom: '0.25rem' }}>{form.name || 'Your Name'} · {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {readTime} min read</div>
-                                        <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.1rem', color: '#0A192F', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3 }}>{form.title}</div>
-                                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.78rem', color: '#555', lineHeight: 1.6 }}>{form.excerpt}</div>
-                                        {form.tags && <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>{form.tags.split(',').filter(t => t.trim()).map(t => <span key={t} style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', background: '#f7d000', border: '1.5px solid #000', padding: '1px 6px' }}>{t.trim()}</span>)}</div>}
-                                    </div>
-                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f9f9f9', borderLeft: '4px solid #f7d000', padding: '1.25rem', marginTop: '1.5rem', borderRight: '1.5px solid #e0e0e0', borderTop: '1.5px solid #e0e0e0', borderBottom: '1.5px solid #e0e0e0', gap: '1rem', flexWrap: 'wrap' }}>
+                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555' }}>Preview how your article will look when published.</span>
+                                    <button 
+                                        type="button"
+                                        disabled={!form.title && !editorHtml}
+                                        onClick={() => setPreviewOpen(true)}
+                                        style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: (!form.title && !editorHtml) ? 'not-allowed' : 'pointer', boxShadow: '3px 3px 0 #000', opacity: (!form.title && !editorHtml) ? 0.5 : 1 }}
+                                        onMouseEnter={e => (!form.title && !editorHtml) ? null : (e.currentTarget.style.transform = 'translate(1px,1px)', e.currentTarget.style.boxShadow = '2px 2px 0 #000')}
+                                        onMouseLeave={e => (!form.title && !editorHtml) ? null : (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '3px 3px 0 #000')}
+                                    >
+                                        👁 Full Preview →
+                                    </button>
+                                </div>
 
                                 {/* ── Submit Row ── */}
                                 <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderTop: '2px solid #000', paddingTop: '1.5rem' }}>
@@ -615,7 +773,7 @@ const handleSubmit = async (e) => {
                                 {ADDITIONALINFORMATION.map((c, i) => (
                                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.5rem' }}>
                                         <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, color: '#f7d000', flexShrink: 0, minWidth: 16 }}>
-                                            {['①', '②', '③'][i]}
+                                            {['①', '②', '③', '④'][i]}
                                         </span>
                                         <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.5 }}>{c}</span>
                                     </div>
@@ -678,6 +836,7 @@ const handleSubmit = async (e) => {
                 </div>
             </main>
             <Footer />
+            </div>
         </div>
     );
 }
