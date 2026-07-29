@@ -206,7 +206,7 @@ export default function BlogPost() {
                     </div>
                 </header>
 
-                <div style={{ maxWidth: 860, margin: '0 auto', width: '100%' }}>
+                <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
                     <article className="blog-post-article" style={{
                         background: 'var(--c-white)',
                         border: '2px solid var(--c-black)',
