@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -142,6 +142,33 @@ function GuidelinesGateModal({ onAgree, onDecline, readOnly = false, onClose }) 
     );
 }
 
+function ShortcutsModal({ onClose }) {
+    return (
+        <>
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 998 }} />
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 450, maxWidth: '90vw', background: '#fff', zIndex: 999, border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h2 style={{ fontFamily: 'Space Mono, monospace', fontSize: '1.1rem', fontWeight: 700, margin: 0, color: '#0A192F', textTransform: 'uppercase' }}>⌨️ Shortcuts</h2>
+                    <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    {[
+                        { key: 'Ctrl+B', label: 'Bold' }, { key: 'Ctrl+I', label: 'Italic' },
+                        { key: 'Ctrl+1', label: 'Heading 1' }, { key: 'Ctrl+2', label: 'Heading 2' },
+                        { key: 'Ctrl+Q', label: 'Quote' }, { key: 'Ctrl+E', label: 'Code' },
+                        { key: 'Ctrl+K', label: 'Link' }, { key: 'Ctrl+L', label: 'List' }
+                    ].map((sc, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', color: '#555' }}>{sc.label}</span>
+                            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, background: '#e0e0e0', padding: '0.2rem 0.5rem', borderRadius: 4, display: 'inline-block', width: 'fit-content', color: '#000' }}>{sc.key}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </>
+    );
+}
+
 function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime, submitting, handleSaveDraft, onClose }) {
     return (
         <>
@@ -190,22 +217,7 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
                     <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555', marginBottom: '1.5rem' }}>
                         📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read
                     </div>
-                    <div style={{ background: '#f9f9f9', border: '2px solid #000', padding: '1rem', marginBottom: '1rem' }}>
-                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '0.75rem' }}>⌨️ Shortcuts</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                            {[
-                                { key: 'Ctrl+B', label: 'Bold' }, { key: 'Ctrl+I', label: 'Italic' },
-                                { key: 'Ctrl+1', label: 'Heading 1' }, { key: 'Ctrl+2', label: 'Heading 2' },
-                                { key: 'Ctrl+Q', label: 'Quote' }, { key: 'Ctrl+E', label: 'Code' },
-                                { key: 'Ctrl+K', label: 'Link' }, { key: 'Ctrl+L', label: 'List' }
-                            ].map((sc, i) => (
-                                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', color: '#555' }}>{sc.label}</span>
-                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.55rem', fontWeight: 700, background: '#e0e0e0', padding: '0.1rem 0.35rem', borderRadius: 3, display: 'inline-block', width: 'fit-content', color: '#000' }}>{sc.key}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+
                 </div>
                 <div style={{ padding: '1rem 1.5rem', borderTop: '2px solid #000', background: '#f9f9f9', display: 'flex', flexDirection: 'column', gap: '0.75rem', flexShrink: 0 }}>
                     <button type="button" onClick={handleSaveDraft} disabled={submitting} style={{ width: '100%', background: '#fff', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0 #ccc' }}>
@@ -230,6 +242,7 @@ export default function WriteForUs() {
     const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [panelOpen, setPanelOpen] = useState(false);
+    const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
@@ -514,6 +527,7 @@ export default function WriteForUs() {
                             onClose={() => setPanelOpen(false)}
                         />
                     )}
+                    {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
                     {/* Sticky Top Bar */}
                     <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#fff', borderBottom: '2px solid #000', padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -527,6 +541,9 @@ export default function WriteForUs() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
                                 ℹ️ Guidelines
+                            </button>
+                            <button type="button" onClick={() => setShortcutsOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                ⌨ Shortcuts
                             </button>
                             <button type="button" onClick={() => setPanelOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
                                 ⚙ Settings
@@ -621,8 +638,24 @@ export default function WriteForUs() {
                                 <EditorContent editor={editor} />
                             </div>
                         </div>
+                        
+                        {/* Bottom Action Bar */}
+                        <div style={{ maxWidth: 860, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button type="button" onClick={() => setShortcutsOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    ⌨ Shortcuts
+                                </button>
+                                <button type="button" onClick={() => setPanelOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    ⚙ Settings
+                                </button>
+                            </div>
+                            <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1.5rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '4px 4px 0 #000' }}>
+                                {submitting ? 'SUBMITTING…' : 'SUBMIT ARTICLE →'}
+                            </button>
+                        </div>
                     </div>
                 </form>
+                <Footer />
             </div>
         </div>
     );
