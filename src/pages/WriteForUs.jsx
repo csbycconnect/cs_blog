@@ -529,35 +529,38 @@ export default function WriteForUs() {
                     )}
                     {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
                     {/* Sticky Top Bar */}
-                    <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--c-white, #Fdfbf7)', borderBottom: '2px solid #000', padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <img 
-                                src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" 
-                                alt="CHRIST University Logo" 
-                                onClick={() => navigate('/')}
-                                style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }} 
-                            />
-                            <button type="button" onClick={() => navigate(-1)} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.7rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000', textTransform: 'uppercase' }}>
-                                ← Back
-                            </button>
-                            <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', color: '#0A192F', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                ByteBoard Editor
-                            </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
-                                ℹ️ Guidelines
-                            </button>
-                            <button type="button" onClick={() => setShortcutsOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
-                                ⌨ Shortcuts
-                            </button>
-                            <button type="button" onClick={() => setPanelOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
-                                ⚙ Settings
-                            </button>
-                            <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '2px 2px 0 #000' }}>
-                                {submitting ? 'SUBMITTING…' : 'SUBMIT →'}
-                            </button>
-                        </div>
+                    <div className="top-nav-container" style={{ position: 'sticky', top: '1rem', zIndex: 100, width: 'calc(100% - 2rem)', margin: '1rem auto', maxWidth: '1400px' }}>
+                        <div className="nav-shadow"></div>
+                        <nav className="brutal-navbar" style={{ padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <img 
+                                    src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" 
+                                    alt="CHRIST University Logo" 
+                                    onClick={() => navigate('/')}
+                                    style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }} 
+                                />
+                                <button type="button" onClick={() => navigate(-1)} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.7rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000', textTransform: 'uppercase' }}>
+                                    ← Back
+                                </button>
+                                <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', color: '#0A192F', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    ByteBoard Editor
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                    ℹ️ Guidelines
+                                </button>
+                                <button type="button" onClick={() => setShortcutsOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                    ⌨ Shortcuts
+                                </button>
+                                <button type="button" onClick={() => setPanelOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                    ⚙ Settings
+                                </button>
+                                <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '2px 2px 0 #000' }}>
+                                    {submitting ? 'SUBMITTING…' : 'SUBMIT →'}
+                                </button>
+                            </div>
+                        </nav>
                     </div>
 
                     {/* Dark Navy Editor Area */}
