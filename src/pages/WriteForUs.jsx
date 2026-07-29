@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -142,62 +142,81 @@ function GuidelinesGateModal({ onAgree, onDecline, readOnly = false, onClose }) 
     );
 }
 
-function FullPreviewModal({ form, editorHtml, readTime, onClose }) {
-    const cleanHtml = editorHtml ? DOMPurify.sanitize(editorHtml) : '';
-    const hasContent = cleanHtml.replace(/<[^>]+>/g, '').trim().length > 0;
-
+function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime, submitting, handleSaveDraft, onClose }) {
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#0A192F', overflowY: 'auto' }}>
-            <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '2px solid #000', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
-                <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem', color: '#0A192F', textTransform: 'uppercase' }}>Preview</span>
-                <button onClick={onClose} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.4rem 0.8rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>
-                    ✕ Close Preview
-                </button>
-            </div>
-            <div style={{ padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ maxWidth: 860, width: '100%', marginBottom: '2rem' }}>
-                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
-                        {form.category || 'CATEGORY'} · {readTime} MIN READ
+        <>
+            <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 899 }} />
+            <div style={{ position: 'fixed', top: 0, right: 0, width: 380, maxWidth: '100vw', height: '100vh', background: '#fff', zIndex: 900, display: 'flex', flexDirection: 'column', borderLeft: '2px solid #000', boxShadow: '-6px 0 0 #f7d000' }}>
+                <div style={{ background: '#0A192F', padding: '1rem 1.5rem', borderBottom: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f7d000' }}>Article Settings</span>
+                    <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#f7d000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1.1rem', cursor: 'pointer', padding: '0.25rem' }}>✕</button>
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+                    <SectionHead num="01" title="Author Information" />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <Field label="Full Name" required error={touched.name && errors.name}>
+                            <input type="text" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} />
+                        </Field>
+                        <Field label="Email Address" required error={touched.email && errors.email}>
+                            <input type="email" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
+                        </Field>
+                        <Field label="Short Bio" hint="Appears under your published article">
+                            <input type="text" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} />
+                        </Field>
                     </div>
-                    <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, margin: '0 0 1rem 0' }}>
-                        {form.title || 'Untitled Article'}
-                    </h1>
-                    {form.tags && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                            {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
-                                <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.2rem 0.6rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700 }}>
-                                    {t.trim()}
-                                </span>
+                    <div style={{ height: 2, background: '#f5f0e8', margin: '0 -1.5rem 1.5rem' }} />
+                    <SectionHead num="02" title="Article Details" />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <Field label="Article Title" required error={touched.title && errors.title}>
+                            <input type="text" placeholder="e.g. Understanding Transformers" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '0.85rem' }} maxLength={160} />
+                        </Field>
+                        <Field label="Category" required error={touched.category && errors.category}>
+                            <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
+                        </Field>
+                        <Field label="Club" hint="Which club does this represent?">
+                            <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
+                                <option value="">Select club…</option>
+                                {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </Field>
+                        <Field label="Tags" hint="Comma-separated keywords">
+                            <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
+                        </Field>
+                        <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
+                            <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }} />
+                        </Field>
+                    </div>
+                    <div style={{ height: 2, background: '#f5f0e8', margin: '0 -1.5rem 1.5rem' }} />
+                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555', marginBottom: '1.5rem' }}>
+                        📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read
+                    </div>
+                    <div style={{ background: '#f9f9f9', border: '2px solid #000', padding: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '0.75rem' }}>⌨️ Shortcuts</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                            {[
+                                { key: 'Ctrl+B', label: 'Bold' }, { key: 'Ctrl+I', label: 'Italic' },
+                                { key: 'Ctrl+1', label: 'Heading 1' }, { key: 'Ctrl+2', label: 'Heading 2' },
+                                { key: 'Ctrl+Q', label: 'Quote' }, { key: 'Ctrl+E', label: 'Code' },
+                                { key: 'Ctrl+K', label: 'Link' }, { key: 'Ctrl+L', label: 'List' }
+                            ].map((sc, i) => (
+                                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', color: '#555' }}>{sc.label}</span>
+                                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.55rem', fontWeight: 700, background: '#e0e0e0', padding: '0.1rem 0.35rem', borderRadius: 3, display: 'inline-block', width: 'fit-content', color: '#000' }}>{sc.key}</span>
+                                </div>
                             ))}
                         </div>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2rem' }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', color: '#000' }}>
-                            {(form.name || 'A').charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>
-                            {form.name || 'Author Name'}
-                        </span>
                     </div>
                 </div>
-                <div style={{ maxWidth: 860, width: '100%' }}>
-                    <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
-                        {form.excerpt && (
-                            <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                                {form.excerpt}
-                            </p>
-                        )}
-                        {hasContent ? (
-                            <div className="tiptap" dangerouslySetInnerHTML={{ __html: cleanHtml }} />
-                        ) : (
-                            <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.1rem', color: '#888', fontStyle: 'italic', textAlign: 'center', padding: '3rem 0' }}>
-                                No article content yet — keep writing!
-                            </div>
-                        )}
-                    </div>
+                <div style={{ padding: '1rem 1.5rem', borderTop: '2px solid #000', background: '#f9f9f9', display: 'flex', flexDirection: 'column', gap: '0.75rem', flexShrink: 0 }}>
+                    <button type="button" onClick={handleSaveDraft} disabled={submitting} style={{ width: '100%', background: '#fff', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0 #ccc' }}>
+                        SAVE DRAFT
+                    </button>
+                    <button type="submit" disabled={submitting} style={{ width: '100%', background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '4px 4px 0 #000' }}>
+                        {submitting ? 'SUBMITTING…' : 'SUBMIT ARTICLE →'}
+                    </button>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
@@ -210,7 +229,7 @@ export default function WriteForUs() {
 
     const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
     const [showHelpModal, setShowHelpModal] = useState(false);
-    const [previewOpen, setPreviewOpen] = useState(false);
+    const [panelOpen, setPanelOpen] = useState(false);
 
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
@@ -304,7 +323,7 @@ export default function WriteForUs() {
         setTouched(allTouched);
         const errs = validate();
         setErrors(errs);
-        if (Object.keys(errs).length) return;
+        if (Object.keys(errs).length) { setPanelOpen(true); return; }
         setSubmitting(true);
         try {
             const cleanHtml = DOMPurify.sanitize(editorHtml);
@@ -479,258 +498,131 @@ export default function WriteForUs() {
         <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             {!guidelinesAccepted && <GuidelinesGateModal onAgree={handleAgreeGuidelines} onDecline={handleDeclineGuidelines} />}
             {showHelpModal && guidelinesAccepted && <GuidelinesGateModal readOnly onClose={() => setShowHelpModal(false)} />}
-            {previewOpen && guidelinesAccepted && <FullPreviewModal form={form} editorHtml={editorHtml} readTime={readTime} onClose={() => setPreviewOpen(false)} />}
             <div style={{
                 filter: guidelinesAccepted ? 'none' : 'blur(6px)',
                 pointerEvents: guidelinesAccepted ? 'auto' : 'none',
                 userSelect: guidelinesAccepted ? 'auto' : 'none',
                 transition: 'filter 0.2s'
             }}>
-                <Navbar />
-                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-                        <BackButton />
-                        <button
-                            type="button"
-                            onClick={() => setShowHelpModal(true)}
-                            style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                        >
-                            ℹ️ Guidelines &amp; Help
-                        </button>
+                <form onSubmit={handleSubmit} noValidate style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    {panelOpen && (
+                        <SettingsDrawer
+                            form={form} set={set} inp={inp} selectInp={selectInp} baseInput={baseInput}
+                            touched={touched} errors={errors}
+                            wordCount={wordCount} readTime={readTime}
+                            submitting={submitting} handleSaveDraft={handleSaveDraft}
+                            onClose={() => setPanelOpen(false)}
+                        />
+                    )}
+                    {/* Sticky Top Bar */}
+                    <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#fff', borderBottom: '2px solid #000', padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <button type="button" onClick={() => navigate(-1)} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.7rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000', textTransform: 'uppercase' }}>
+                                ← Back
+                            </button>
+                            <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', color: '#0A192F', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                ByteBoard Editor
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                ℹ️ Guidelines
+                            </button>
+                            <button type="button" onClick={() => setPanelOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                ⚙ Settings
+                            </button>
+                            <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '2px 2px 0 #000' }}>
+                                {submitting ? 'SUBMITTING…' : 'SUBMIT →'}
+                            </button>
+                        </div>
                     </div>
-                    <AnimateOnScroll animationClass="animate-slide-up" delay={0.05} threshold={0.02}>
-                        <div style={{ marginBottom: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '1.25rem' }}>
-                            <div style={{ display: 'inline-block', background: '#f7d000', border: '2px solid #000', padding: '0.25rem 0.85rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '1rem' }}>
-                                Contributor Submission
+
+                    {/* Dark Navy Editor Area */}
+                    <div style={{ flex: 1, background: '#0A192F', padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {/* Metadata Header */}
+                        <div style={{ maxWidth: 860, width: '100%', marginBottom: '2rem' }}>
+                            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
+                                {form.category || 'CATEGORY'} · {readTime} MIN READ
                             </div>
-                            <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, marginBottom: '0.75rem' }}>
-                                Write for us<span style={{ color: '#f7d000' }}>.</span>
+                            <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, margin: '0 0 1rem 0' }}>
+                                {form.title || 'Untitled Article'}
                             </h1>
-                            <p style={{ fontFamily: 'Space Mono, monospace', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', maxWidth: 560 }}>
-                                Share your ideas, research, and insights with the CS community at CHRIST University.
-                            </p>
-                        </div>
-                    </AnimateOnScroll>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2.5rem', alignItems: 'start' }}>
-                        <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.02}>
-                            <div style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', top: 10, left: 10, width: '100%', height: '100%', border: '2px solid #f7d000', zIndex: 0, pointerEvents: 'none' }} />
-                                <form
-                                    onSubmit={handleSubmit}
-                                    noValidate
-                                    style={{ position: 'relative', zIndex: 1, background: '#fff', border: '2px solid #000', padding: '2.5rem' }}
-                                >
-                                    <SectionHead num="01" title="Author Information" />
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                                        <Field label="Full Name" required error={touched.name && errors.name}>
-                                            <input type="text" placeholder="e.g. Vishnu Sharma" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} maxLength={80} />
-                                        </  Field>
-                                        <Field label="Email Address" required error={touched.email && errors.email}>
-                                            <input type="email" placeholder="you@example.com" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
-                                        </Field>
-                                    </div>
-                                    <div style={{ marginBottom: '2.25rem' }}>
-                                        <Field label="Short Bio" hint="Appears under your published article (optional)">
-                                            <input type="text" placeholder="3rd year CSE · AI enthusiast" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} maxLength={120} />
-                                        </Field>
-                                    </div>
-                                    <div style={{ height: 2, background: '#f5f0e8', margin: '0 -2.5rem 2.25rem' }} />
-                                    <SectionHead num="02" title="Article Details" />
-                                    <div style={{ marginBottom: '1.25rem' }}>
-                                        <Field label="Article Title" required error={touched.title && errors.title}>
-                                            <input type="text" placeholder="e.g. Understanding Transformers from First Principles" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '1rem' }} maxLength={160} />
-                                        </Field>
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                                        <Field label="Category" required error={touched.category && errors.category}>
-                                            <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
-                                        </Field>
-                                        <Field label="Club" hint="Which club does this represent?">
-                                            <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
-                                                <option value="">Select club…</option>
-                                                {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
-                                            </select>
-                                        </Field>
-                                    </div>
-                                    <div style={{ marginBottom: '1.25rem' }}>
-                                        <Field label="Tags" hint="Comma-separated keywords, e.g.  Machine Learning, Python, NLP">
-                                            <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
-                                        </Field>
-                                    </div>
-                                    <Field
-                                        label="Article Summary / Excerpt"
-                                        required
-                                        error={touched.excerpt && errors.excerpt}
-                                        hint="This is displayed on the blog card. Keep it punchy."
-                                        counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}
-                                    >
-                                        <textarea
-                                            placeholder="A 1–3 sentence hook that makes readers want to read more…"
-                                            value={form.excerpt}
-                                            onChange={set('excerpt')}
-                                            rows={3}
-                                            maxLength={150}
-                                            style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }}
-                                        />
-                                    </Field>
-                                    <div style={{ height: 2, background: '#f5f0e8', margin: '2.25rem -2.5rem' }} />
-                                    <SectionHead num="03" title="Full Article Content" />
-                                    <Field
-                                        label="Article Body"
-                                        required
-                                        error={touched.content && errors.content}
-                                        hint={wordCount > 0 ? `${wordCount.toLocaleString()} words · ~${readTime} min read` : 'Maximum 1000 words. Use toolbar to format.'}
-                                    >
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            {editor && (
-                                                <div style={{ display: 'flex', gap: '0.4rem', padding: '0.4rem', borderTop: '2px solid #000', borderLeft: '2px solid #000', borderRight: '2px solid #000', background: '#e0e0e0', flexWrap: 'wrap' }}>
-                                                    <ToolbarBtn icon="B" label="Bold (Ctrl+B)" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} />
-                                                    <ToolbarBtn icon="I" label="Italic (Ctrl+I)" onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} />
-                                                    <ToolbarBtn icon="U" label="Underline (Ctrl+U)" onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} />
-                                                    <ToolbarBtn icon="S" label="Strike (Ctrl+Shift+X)" onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} />
-                                                    <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
-                                                    <ToolbarBtn icon="H1" label="Heading 1 (Ctrl+Alt+1)" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} />
-                                                    <ToolbarBtn icon="H2" label="Heading 2 (Ctrl+Alt+2)" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} />
-                                                    <ToolbarBtn icon="H3" label="Heading 3 (Ctrl+Alt+3)" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} />
-                                                    <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
-                                                    <ToolbarBtn icon="“" label="Blockquote (Ctrl+Shift+B)" onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} />
-                                                    <ToolbarBtn icon="<>" label="Code Block (Ctrl+Alt+C)" onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} />
-                                                    <ToolbarBtn icon="🔗" label="Link" onClick={() => {
-                                                        const previousUrl = editor.getAttributes('link').href;
-                                                        const url = window.prompt('URL', previousUrl);
-                                                        if (url === null) return;
-                                                        if (url === '') {
-                                                            editor.chain().focus().extendMarkRange('link').unsetLink().run();
-                                                        } else {
-                                                            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                                                        }
-                                                    }} active={editor.isActive('link')} />
-                                                    <ToolbarBtn icon="🖼️" label="Image" onClick={() => {
-                                                        const url = window.prompt('Image URL');
-                                                        if (url) {
-                                                            editor.chain().focus().setImage({ src: url }).run();
-                                                        }
-                                                    }} />
-                                                    <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
-                                                    <ToolbarBtn icon="•" label="Bullet List (Ctrl+Shift+8)" onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} />
-                                                    <ToolbarBtn icon="1." label="Ordered List (Ctrl+Shift+7)" onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} />
-                                                </div>
-                                            )}
-                                            <style>{`
-                                            .tiptap p { margin-bottom: 0.75em; }
-                                            .tiptap blockquote { border-left: 3px solid #f7d000; margin: 1rem 0; padding-left: 1rem; font-style: italic; color: #555; background: #f9f9f9; padding-top: 0.5rem; padding-bottom: 0.5rem; }
-                                            .tiptap pre { background: #0A192F; color: #fff; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: 'Space Mono', monospace; margin: 1rem 0; }
-                                            .tiptap pre code { color: inherit; padding: 0; background: none; font-size: 0.8rem; }
-                                            .tiptap ul, .tiptap ol { padding-left: 1.75rem; margin-bottom: 1rem; list-style-position: outside; }
-                                            .tiptap li { margin-bottom: 0.25rem; }
-                                            .tiptap img { max-width: 100%; height: auto; display: block; margin: 1rem auto; padding: 0.5rem; border: 1.5px solid #ccc; }
-                                            .tiptap a { color: #000; text-decoration: underline; text-decoration-color: #f7d000; text-decoration-thickness: 2px; }
-                                        `}</style>
-                                            <EditorContent editor={editor} />
-                                        </div>
-                                    </Field>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f9f9f9', borderLeft: '4px solid #f7d000', padding: '1.25rem', marginTop: '1.5rem', borderRight: '1.5px solid #e0e0e0', borderTop: '1.5px solid #e0e0e0', borderBottom: '1.5px solid #e0e0e0', gap: '1rem', flexWrap: 'wrap' }}>
-                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555' }}>Preview how your article will look when published.</span>
-                                        <button 
-                                            type="button"
-                                            disabled={!form.title && !editorHtml}
-                                            onClick={() => setPreviewOpen(true)}
-                                            style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: (!form.title && !editorHtml) ? 'not-allowed' : 'pointer', boxShadow: '3px 3px 0 #000', opacity: (!form.title && !editorHtml) ? 0.5 : 1 }}
-                                        >
-                                            👁 Full Preview →
-                                        </button>
-                                    </div>
-
-                                    <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderTop: '2px solid #000', paddingTop: '1.5rem' }}>
-                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', color: '#999' }}>
-                                            <span style={{ color: '#c53030' }}>*</span> Required fields
-                                            {Object.keys(validate()).length > 0 && Object.keys(touched).length > 0 && (
-                                                <span style={{ color: '#c53030', marginLeft: '0.75rem' }}>
-                                                    · {Object.keys(validate()).length} field{Object.keys(validate()).length > 1 ? 's' : ''} need attention
-                                                </span>
-                                            )}
+                            {form.tags && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                    {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
+                                        <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.2rem 0.6rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700 }}>
+                                            {t.trim()}
                                         </span>
-                                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                            <button
-                                                type="button"
-                                                onClick={handleSaveDraft}
-                                                disabled={submitting}
-                                                style={{
-                                                    background: '#fff',
-                                                    border: '2px solid #000', color: '#000',
-                                                    fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem',
-                                                    padding: '0.8rem 1.5rem', cursor: submitting ? 'wait' : 'pointer',
-                                                    boxShadow: '3px 3px 0 #ccc',
-                                                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                                }}
-                                                onMouseEnter={e => !submitting && (e.currentTarget.style.transform = 'translate(1px,1px)', e.currentTarget.style.boxShadow = '2px 2px 0 #ccc')}
-                                                onMouseLeave={e => !submitting && (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '3px 3px 0 #ccc')}
-                                            >
-                                                <ShuffleText text="SAVE DRAFT" />
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                disabled={submitting}
-                                                style={{
-                                                    background: submitting ? '#e0e0e0' : '#f7d000',
-                                                    border: '2px solid #000', color: '#000',
-                                                    fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem',
-                                                    padding: '0.8rem 2.5rem', cursor: submitting ? 'wait' : 'pointer',
-                                                    boxShadow: submitting ? 'none' : '5px 5px 0 #000',
-                                                    transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                                }}
-                                                onMouseEnter={e => !submitting && (e.currentTarget.style.transform = 'translate(2px,2px)', e.currentTarget.style.boxShadow = '3px 3px 0 #000')}
-                                                onMouseLeave={e => !submitting && (e.currentTarget.style.transform = '', e.currentTarget.style.boxShadow = '5px 5px 0 #000')}
-                                            >
-                                                {submitting
-                                                    ? <span>SUBMITTING…</span>
-                                                    : <ShuffleText text="SUBMIT ARTICLE →" />
-                                                }
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
+                                    ))}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2rem' }}>
+                                <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', color: '#000' }}>
+                                    {(form.name || 'A').charAt(0).toUpperCase()}
+                                </div>
+                                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>
+                                    {form.name || 'Author Name'}
+                                </span>
                             </div>
-                        </AnimateOnScroll>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '1.5rem', alignSelf: 'start' }}>
-                            <AnimateOnScroll animationClass="animate-slide-up" delay={0.2} threshold={0.02}>
-                                <div style={{ background: '#f9f9f9', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem' }}>
-                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '1.25rem' }}>⌨️ Keyboard Shortcuts</div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                        {[
-                                            { key: 'Ctrl + B', label: 'Bold' },
-                                            { key: 'Ctrl + I', label: 'Italic' },
-                                            { key: 'Ctrl + 1', label: 'Heading 1' },
-                                            { key: 'Ctrl + 2', label: 'Heading 2' },
-                                            { key: 'Ctrl + Q', label: 'Quote' },
-                                            { key: 'Ctrl + E', label: 'Code' },
-                                            { key: 'Ctrl + K', label: 'Link' },
-                                            { key: 'Ctrl + L', label: 'List' }
-                                        ].map((sc, i) => (
-                                            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', color: '#555' }}>{sc.label}</span>
-                                                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', fontWeight: 700, background: '#e0e0e0', padding: '0.15rem 0.4rem', borderRadius: 3, display: 'inline-block', width: 'fit-content', color: '#000' }}>{sc.key}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </AnimateOnScroll>
-                            <AnimateOnScroll animationClass="animate-slide-up" delay={0.22} threshold={0.02}>
-                                <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem' }}>
-                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '0.65rem' }}>Questions?</div>
-                                    <p style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.76rem', color: '#666', lineHeight: 1.65, marginBottom: '0.75rem' }}>
-                                        Reach out to the editorial team before submitting:
+                        </div>
+
+                        {/* White Card with Editor */}
+                        <div style={{ maxWidth: 860, width: '100%' }}>
+                            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
+                                {form.excerpt && (
+                                    <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
+                                        {form.excerpt}
                                     </p>
-                                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.82rem', fontWeight: 700, color: '#0A192F', borderBottom: '2px solid #f7d000', display: 'inline-block', paddingBottom: 1 }}>
-                                        byteboard@christuniversity.in
+                                )}
+                                {editor && (
+                                    <div style={{ display: 'flex', gap: '0.4rem', padding: '0.4rem', border: '2px solid #000', background: '#e0e0e0', flexWrap: 'wrap', marginBottom: 0 }}>
+                                        <ToolbarBtn icon="B" label="Bold (Ctrl+B)" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} />
+                                        <ToolbarBtn icon="I" label="Italic (Ctrl+I)" onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} />
+                                        <ToolbarBtn icon="U" label="Underline (Ctrl+U)" onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} />
+                                        <ToolbarBtn icon="S" label="Strike (Ctrl+Shift+X)" onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} />
+                                        <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
+                                        <ToolbarBtn icon="H1" label="Heading 1 (Ctrl+Alt+1)" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} />
+                                        <ToolbarBtn icon="H2" label="Heading 2 (Ctrl+Alt+2)" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} />
+                                        <ToolbarBtn icon="H3" label="Heading 3 (Ctrl+Alt+3)" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} />
+                                        <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
+                                        <ToolbarBtn icon={"\u201C"} label="Blockquote (Ctrl+Shift+B)" onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} />
+                                        <ToolbarBtn icon="<>" label="Code Block (Ctrl+Alt+C)" onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} />
+                                        <ToolbarBtn icon="🔗" label="Link" onClick={() => {
+                                            const previousUrl = editor.getAttributes('link').href;
+                                            const url = window.prompt('URL', previousUrl);
+                                            if (url === null) return;
+                                            if (url === '') {
+                                                editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                                            } else {
+                                                editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                                            }
+                                        }} active={editor.isActive('link')} />
+                                        <ToolbarBtn icon="🖼️" label="Image" onClick={() => {
+                                            const url = window.prompt('Image URL');
+                                            if (url) {
+                                                editor.chain().focus().setImage({ src: url }).run();
+                                            }
+                                        }} />
+                                        <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
+                                        <ToolbarBtn icon="•" label="Bullet List (Ctrl+Shift+8)" onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} />
+                                        <ToolbarBtn icon="1." label="Ordered List (Ctrl+Shift+7)" onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} />
                                     </div>
-                                </div>
-                            </AnimateOnScroll>
+                                )}
+                                <style>{`
+                                    .tiptap p { margin-bottom: 0.75em; }
+                                    .tiptap blockquote { border-left: 3px solid #f7d000; margin: 1rem 0; padding-left: 1rem; font-style: italic; color: #555; background: #f9f9f9; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+                                    .tiptap pre { background: #0A192F; color: #fff; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: 'Space Mono', monospace; margin: 1rem 0; }
+                                    .tiptap pre code { color: inherit; padding: 0; background: none; font-size: 0.8rem; }
+                                    .tiptap ul, .tiptap ol { padding-left: 1.75rem; margin-bottom: 1rem; list-style-position: outside; }
+                                    .tiptap li { margin-bottom: 0.25rem; }
+                                    .tiptap img { max-width: 100%; height: auto; display: block; margin: 1rem auto; padding: 0.5rem; border: 1.5px solid #ccc; }
+                                    .tiptap a { color: #000; text-decoration: underline; text-decoration-color: #f7d000; text-decoration-thickness: 2px; }
+                                `}</style>
+                                <EditorContent editor={editor} />
+                            </div>
                         </div>
                     </div>
-                </main>
-                <Footer />
+                </form>
             </div>
         </div>
     );
