@@ -557,7 +557,7 @@ export default function WriteForUs() {
                     {/* Dark Navy Editor Area */}
                     <div style={{ flex: 1, background: '#0A192F', padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {/* Metadata Header */}
-                        <div style={{ maxWidth: 860, width: '100%', marginBottom: '2rem' }}>
+                        <div style={{ maxWidth: 1100, width: '100%', marginBottom: '2rem' }}>
                             <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
                                 {form.category || 'CATEGORY'} · {readTime} MIN READ
                             </div>
@@ -584,7 +584,7 @@ export default function WriteForUs() {
                         </div>
 
                         {/* White Card with Editor */}
-                        <div style={{ maxWidth: 860, width: '100%' }}>
+                        <div style={{ maxWidth: 1100, width: '100%' }}>
                             <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
                                 {form.excerpt && (
                                     <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
@@ -640,7 +640,7 @@ export default function WriteForUs() {
                         </div>
                         
                         {/* Bottom Action Bar */}
-                        <div style={{ maxWidth: 860, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
+                        <div style={{ maxWidth: 1100, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button type="button" onClick={() => setShortcutsOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                     ⌨ Shortcuts
