@@ -529,8 +529,14 @@ export default function WriteForUs() {
                     )}
                     {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
                     {/* Sticky Top Bar */}
-                    <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#fff', borderBottom: '2px solid #000', padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--c-white, #Fdfbf7)', borderBottom: '2px solid #000', padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <img 
+                                src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" 
+                                alt="CHRIST University Logo" 
+                                onClick={() => navigate('/')}
+                                style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }} 
+                            />
                             <button type="button" onClick={() => navigate(-1)} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.7rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000', textTransform: 'uppercase' }}>
                                 ← Back
                             </button>
