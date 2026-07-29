@@ -142,57 +142,66 @@ function GuidelinesGateModal({ onAgree, onDecline, readOnly = false, onClose }) 
     );
 }
 
-function ArticlePreviewPanel({ form, editorHtml, readTime }) {
+function FullPreviewModal({ form, editorHtml, readTime, onClose }) {
     const cleanHtml = editorHtml ? DOMPurify.sanitize(editorHtml) : '';
     const hasContent = cleanHtml.replace(/<[^>]+>/g, '').trim().length > 0;
 
     return (
-        <div style={{ background: '#0A192F', border: '2px solid #000', boxShadow: '6px 6px 0 #f7d000', padding: '1.5rem', position: 'sticky', top: '1.5rem' }}>
-            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#f7d000', marginBottom: '1.1rem' }}>
-                👁 Live Preview
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: '#0A192F', overflowY: 'auto' }}>
+            <div style={{ position: 'sticky', top: 0, background: '#fff', borderBottom: '2px solid #000', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+                <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.9rem', color: '#0A192F', textTransform: 'uppercase' }}>Preview</span>
+                <button onClick={onClose} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.4rem 0.8rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000' }}>
+                    ✕ Close Preview
+                </button>
             </div>
-
-            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
-                {form.category || 'Category'} · {readTime} min read
-            </div>
-            <h3 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.3rem', color: '#fff', lineHeight: 1.25, margin: '0 0 0.75rem 0', wordBreak: 'break-word' }}>
-                {form.title || 'Untitled Article'}
-            </h3>
-            {form.tags && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
-                    {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
-                        <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.15rem 0.5rem', fontFamily: 'Space Mono, monospace', fontSize: '0.6rem', fontWeight: 700 }}>
-                            {t.trim()}
+            <div style={{ padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ maxWidth: 860, width: '100%', marginBottom: '2rem' }}>
+                    <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
+                        {form.category || 'CATEGORY'} · {readTime} MIN READ
+                    </div>
+                    <h1 style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', color: '#fff', lineHeight: 1.1, margin: '0 0 1rem 0' }}>
+                        {form.title || 'Untitled Article'}
+                    </h1>
+                    {form.tags && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                            {form.tags.split(',').filter(t => t.trim()).map((t, i) => (
+                                <span key={i} style={{ background: '#f7d000', color: '#000', border: '1.5px solid #000', padding: '0.2rem 0.6rem', fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700 }}>
+                                    {t.trim()}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '2rem' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1rem', color: '#000' }}>
+                            {(form.name || 'A').charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.85rem', color: '#fff', fontWeight: 700 }}>
+                            {form.name || 'Author Name'}
                         </span>
-                    ))}
+                    </div>
                 </div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#f7d000', border: '2px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', color: '#000', flexShrink: 0 }}>
-                    {(form.name || 'A').charAt(0).toUpperCase()}
+                <div style={{ maxWidth: 860, width: '100%' }}>
+                    <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
+                        {form.excerpt && (
+                            <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
+                                {form.excerpt}
+                            </p>
+                        )}
+                        {hasContent ? (
+                            <div className="tiptap" dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+                        ) : (
+                            <div style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.1rem', color: '#888', fontStyle: 'italic', textAlign: 'center', padding: '3rem 0' }}>
+                                No article content yet — keep writing!
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#fff', fontWeight: 700 }}>
-                    {form.name || 'Author Name'}
-                </span>
-            </div>
-
-            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '4px 4px 0 rgba(247,208,0,0.6)', padding: '1.1rem', maxHeight: 360, overflowY: 'auto' }}>
-                {form.excerpt && (
-                    <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '0.85rem', color: '#555', fontStyle: 'italic', lineHeight: 1.55, marginBottom: '0.9rem', paddingBottom: '0.9rem', borderBottom: '1.5px solid #eee' }}>
-                        {form.excerpt}
-                    </p>
-                )}
-                {hasContent ? (
-                    <div className="tiptap" style={{ fontSize: '0.8rem' }} dangerouslySetInnerHTML={{ __html: cleanHtml }} />
-                ) : (
-                    <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '0.85rem', color: '#999', fontStyle: 'italic', textAlign: 'center', margin: 0 }}>
-                        Nothing written yet — keep going!
-                    </p>
-                )}
             </div>
         </div>
     );
 }
+
+
 
 export default function WriteForUs() {
     const [searchParams] = useSearchParams();
@@ -201,6 +210,7 @@ export default function WriteForUs() {
 
     const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
     const [showHelpModal, setShowHelpModal] = useState(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
 
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
@@ -469,6 +479,7 @@ export default function WriteForUs() {
         <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             {!guidelinesAccepted && <GuidelinesGateModal onAgree={handleAgreeGuidelines} onDecline={handleDeclineGuidelines} />}
             {showHelpModal && guidelinesAccepted && <GuidelinesGateModal readOnly onClose={() => setShowHelpModal(false)} />}
+            {previewOpen && guidelinesAccepted && <FullPreviewModal form={form} editorHtml={editorHtml} readTime={readTime} onClose={() => setPreviewOpen(false)} />}
             <div style={{
                 filter: guidelinesAccepted ? 'none' : 'blur(6px)',
                 pointerEvents: guidelinesAccepted ? 'auto' : 'none',
@@ -609,7 +620,7 @@ export default function WriteForUs() {
                                             .tiptap p { margin-bottom: 0.75em; }
                                             .tiptap blockquote { border-left: 3px solid #f7d000; margin: 1rem 0; padding-left: 1rem; font-style: italic; color: #555; background: #f9f9f9; padding-top: 0.5rem; padding-bottom: 0.5rem; }
                                             .tiptap pre { background: #0A192F; color: #fff; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: 'Space Mono', monospace; margin: 1rem 0; }
-                                            .tiptap pre code { color: inherit; pading: 0; background: none; font-size: 0.8rem; }
+                                            .tiptap pre code { color: inherit; padding: 0; background: none; font-size: 0.8rem; }
                                             .tiptap ul, .tiptap ol { padding-left: 1.75rem; margin-bottom: 1rem; list-style-position: outside; }
                                             .tiptap li { margin-bottom: 0.25rem; }
                                             .tiptap img { max-width: 100%; height: auto; display: block; margin: 1rem auto; padding: 0.5rem; border: 1.5px solid #ccc; }
@@ -618,6 +629,19 @@ export default function WriteForUs() {
                                             <EditorContent editor={editor} />
                                         </div>
                                     </Field>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f9f9f9', borderLeft: '4px solid #f7d000', padding: '1.25rem', marginTop: '1.5rem', borderRight: '1.5px solid #e0e0e0', borderTop: '1.5px solid #e0e0e0', borderBottom: '1.5px solid #e0e0e0', gap: '1rem', flexWrap: 'wrap' }}>
+                                        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.8rem', color: '#555' }}>Preview how your article will look when published.</span>
+                                        <button 
+                                            type="button"
+                                            disabled={!form.title && !editorHtml}
+                                            onClick={() => setPreviewOpen(true)}
+                                            style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.5rem 1rem', cursor: (!form.title && !editorHtml) ? 'not-allowed' : 'pointer', boxShadow: '3px 3px 0 #000', opacity: (!form.title && !editorHtml) ? 0.5 : 1 }}
+                                        >
+                                            👁 Full Preview →
+                                        </button>
+                                    </div>
+
                                     <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderTop: '2px solid #000', paddingTop: '1.5rem' }}>
                                         <span style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.68rem', color: '#999' }}>
                                             <span style={{ color: '#c53030' }}>*</span> Required fields
@@ -669,12 +693,9 @@ export default function WriteForUs() {
                                 </form>
                             </div>
                         </AnimateOnScroll>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <AnimateOnScroll animationClass="animate-slide-up" delay={0.18} threshold={0.02}>
-                                <ArticlePreviewPanel form={form} editorHtml={editorHtml} readTime={readTime} />
-                            </AnimateOnScroll>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'sticky', top: '1.5rem', alignSelf: 'start' }}>
                             <AnimateOnScroll animationClass="animate-slide-up" delay={0.2} threshold={0.02}>
-                                <div style={{ background: '#f9f9f9', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem', position: 'sticky', top: '1.5rem' }}>
+                                <div style={{ background: '#f9f9f9', border: '2px solid #000', boxShadow: '4px 4px 0 #000', padding: '1.5rem' }}>
                                     <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#0A192F', marginBottom: '1.25rem' }}>⌨️ Keyboard Shortcuts</div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                         {[
