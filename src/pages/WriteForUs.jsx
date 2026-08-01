@@ -223,8 +223,8 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
                     <button type="button" onClick={handleSaveDraft} disabled={submitting} style={{ width: '100%', background: '#fff', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0 #ccc' }}>
                         SAVE DRAFT
                     </button>
-                    <button type="submit" disabled={submitting} style={{ width: '100%', background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '4px 4px 0 #000' }}>
-                        {submitting ? 'SUBMITTING…' : 'SUBMIT ARTICLE →'}
+                    <button type="button" onClick={onClose} style={{ width: '100%', background: '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}>
+                        EDIT LATER →
                     </button>
                 </div>
             </div>
@@ -243,6 +243,17 @@ export default function WriteForUs() {
     const [showHelpModal, setShowHelpModal] = useState(false);
     const [panelOpen, setPanelOpen] = useState(false);
     const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+    useEffect(() => {
+        if (panelOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [panelOpen]);
 
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
