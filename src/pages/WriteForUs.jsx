@@ -173,7 +173,7 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
     return (
         <>
             <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 899 }} />
-            <div style={{ position: 'fixed', top: 0, right: 0, width: 380, maxWidth: '100vw', height: '100vh', background: '#fff', zIndex: 900, display: 'flex', flexDirection: 'column', borderLeft: '2px solid #000', boxShadow: '-6px 0 0 #f7d000' }}>
+            <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 480, maxWidth: '90vw', maxHeight: '85vh', background: '#fff', zIndex: 900, display: 'flex', flexDirection: 'column', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000' }}>
                 <div style={{ background: '#0A192F', padding: '1rem 1.5rem', borderBottom: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                     <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f7d000' }}>Article Settings</span>
                     <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#f7d000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '1.1rem', cursor: 'pointer', padding: '0.25rem' }}>✕</button>
