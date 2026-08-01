@@ -10,6 +10,21 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Heart, Bookmark } from 'lucide-react';
 
+const blogImgStyleTag = (
+    <style>{`
+        .blog-html-content img {
+            max-width: 100% !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: 600px;
+            object-fit: contain;
+            display: block;
+            margin: 2rem auto;
+            border: 2px solid var(--c-black);
+        }
+    `}</style>
+);
+
 export default function BlogPost() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -218,6 +233,7 @@ export default function BlogPost() {
                         lineHeight: 1.8,
                         overflowX: 'hidden'
                     }}>
+                        {blogImgStyleTag}
                         {(() => {
                         const htmlContent = article.contentHTML || article.content || '';
                         const isHtml = /<[^>]+>/.test(htmlContent);
@@ -225,13 +241,14 @@ export default function BlogPost() {
                         if (isHtml && htmlContent.trim()) {
                             return (
                                 <div
+                                    className="blog-html-content"
                                     style={{
                                         lineHeight: 1.8,
                                         fontFamily: 'var(--font-serif, Georgia, serif)',
                                         color: '#1a1a1a',
                                         fontSize: '1.1rem'
                                     }}
-                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span'] }) }}
+                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title'] }) }}
                                 />
                             );
                         }
