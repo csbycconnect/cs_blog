@@ -240,6 +240,7 @@ export default function Blogs() {
                             textDecoration: 'none',
                             flexShrink: 0,
                             transition: 'transform 0.1s, box-shadow 0.1s',
+                            transform: 'translate(0px, 24px)',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.transform = 'translate(2px,2px)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--c-black)'; }}
                         onMouseLeave={e => { e.currentTarget.style.transform = 'translate(0,0)'; e.currentTarget.style.boxShadow = '6px 6px 0 var(--c-black)'; }}
