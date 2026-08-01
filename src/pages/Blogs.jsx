@@ -207,6 +207,30 @@ export default function Blogs() {
                         <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
                             {loadingPosts ? 'Loading dispatches...' : `${filteredPosts.length} of ${posts.length} dispatches`}
                         </p>
+                        <a
+                            href="/write-for-us"
+                            onClick={handleWriteForUs}
+                            style={{
+                                display: 'inline-block',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                fontSize: '0.95rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                color: 'var(--c-black)',
+                                backgroundColor: 'var(--c-yellow)',
+                                border: '2px solid var(--c-black)',
+                                boxShadow: '6px 6px 0 var(--c-black)',
+                                padding: '0.75rem 1.75rem',
+                                textDecoration: 'none',
+                                marginBottom: '2.5rem',
+                                transition: 'transform 0.1s, box-shadow 0.1s',
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translate(2px,2px)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--c-black)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translate(0,0)'; e.currentTarget.style.boxShadow = '6px 6px 0 var(--c-black)'; }}
+                        >
+                            <ShuffleText text="Write for Us →" />
+                        </a>
                     </div>
                     {error && (
                         <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255, 77, 77, 0.15)', border: '1px solid #ff4d4d', color: '#fff', borderRadius: '8px' }}>
