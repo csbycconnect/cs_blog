@@ -169,7 +169,7 @@ function ShortcutsModal({ onClose }) {
     );
 }
 
-function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime, submitting, handleSaveDraft, onClose }) {
+function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime, submitting, onClose }) {
     return (
         <>
             <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 899 }} />
@@ -220,9 +220,6 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
 
                 </div>
                 <div style={{ padding: '1rem 1.5rem', borderTop: '2px solid #000', background: '#f9f9f9', display: 'flex', flexDirection: 'column', gap: '0.75rem', flexShrink: 0 }}>
-                    <button type="button" onClick={handleSaveDraft} disabled={submitting} style={{ width: '100%', background: '#fff', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0 #ccc' }}>
-                        SAVE DRAFT
-                    </button>
                     <button type="button" onClick={onClose} style={{ width: '100%', background: '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', padding: '0.7rem', cursor: 'pointer', boxShadow: '4px 4px 0 #000' }}>
                         EDIT LATER →
                     </button>
@@ -535,7 +532,7 @@ export default function WriteForUs() {
                             form={form} set={set} inp={inp} selectInp={selectInp} baseInput={baseInput}
                             touched={touched} errors={errors}
                             wordCount={wordCount} readTime={readTime}
-                            submitting={submitting} handleSaveDraft={handleSaveDraft}
+                            submitting={submitting}
                             onClose={() => setPanelOpen(false)}
                         />
                     )}
