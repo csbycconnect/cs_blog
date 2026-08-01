@@ -169,90 +169,37 @@ function ShortcutsModal({ onClose }) {
     );
 }
 
-function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime, submitting, onClose, collapsed, onToggleCollapse }) {
+function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime }) {
     return (
-        <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto 2rem' }}>
-            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000' }}>
-                <button
-                    type="button"
-                    onClick={onToggleCollapse}
-                    style={{ width: '100%', background: '#0A192F', padding: '1rem 1.5rem', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                >
-                    <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#f7d000' }}>⚙️ Article Settings</span>
-                    <span style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.85rem', color: '#f7d000', transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>▾</span>
-                </button>
-                {!collapsed && (
-                    <>
-                        <div style={{ padding: '2rem 2.5rem' }}>
-                            <div className="settings-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 2px 1fr', gap: '2.5rem' }}>
-                                <div>
-                                    <SectionHead num="01" title="Author Information" />
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                                        <Field label="Full Name" required error={touched.name && errors.name}>
-                                            <input type="text" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} />
-                                        </Field>
-                                        <Field label="Email Address" required error={touched.email && errors.email}>
-                                            <input type="email" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
-                                        </Field>
-                                        <Field label="Short Bio" hint="Appears under your published article">
-                                            <input type="text" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} />
-                                        </Field>
-                                    </div>
-                                </div>
-
-                                <div className="settings-divider" style={{ background: '#e5e5e5', width: 2, height: '100%' }} />
-
-                                <div>
-                                    <SectionHead num="02" title="Article Details" />
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-                                        <Field label="Article Title" required error={touched.title && errors.title}>
-                                            <input type="text" placeholder="e.g. Understanding Transformers" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '0.85rem' }} maxLength={160} />
-                                        </Field>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem' }}>
-                                            <Field label="Category" required error={touched.category && errors.category}>
-                                                <input type="text" placeholder="e.g. Technical / CS" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
-                                            </Field>
-                                            <Field label="Club" hint="Which club?">
-                                                <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
-                                                    <option value="">Select club…</option>
-                                                    {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
-                                                </select>
-                                            </Field>
-                                        </div>
-                                        <Field label="Tags" hint="Comma-separated keywords">
-                                            <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
-                                        </Field>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div style={{ height: 2, background: '#f5f0e8', margin: '2rem 0 1.5rem' }} />
-
-                            <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
-                                <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }} />
-                            </Field>
-
-                            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555', marginTop: '1.25rem' }}>
-                                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read
-                            </div>
-                        </div>
-                        <div style={{ padding: '0.85rem 1.75rem', borderTop: '2px solid #000', background: '#f9f9f9' }}>
-                            <button type="button" onClick={onToggleCollapse} style={{ background: '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.55rem 1.2rem', cursor: 'pointer', boxShadow: '3px 3px 0 #000' }}>
-                                DONE — START WRITING ↓
-                            </button>
-                        </div>
-                        <style>{`
-                            @media (max-width: 700px) {
-                                .settings-columns { grid-template-columns: 1fr !important; }
-                                .settings-divider { display: none; }
-                            }
-                        `}</style>
-                    </>
-                )}
+        <>
+            <SectionHead num="01" title="Article Details" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem', marginBottom: '1.1rem' }}>
+                <Field label="Article Title" required error={touched.title && errors.title}>
+                    <input type="text" placeholder="e.g. Understanding Transformers" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '0.85rem' }} maxLength={160} />
+                </Field>
+                <Field label="Category" required error={touched.category && errors.category}>
+                    <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
+                </Field>
+                <Field label="Club" hint="Which club does this represent?">
+                    <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
+                        <option value="">Select club…</option>
+                        {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </Field>
+                <Field label="Tags" hint="Comma-separated keywords">
+                    <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
+                </Field>
             </div>
-        </div>
+            <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
+                <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65, width: '100%' }} />
+            </Field>
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555', marginTop: '0.75rem', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
+                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read
+            </div>
+        </>
     );
 }
+
 
 
 
@@ -263,19 +210,16 @@ export default function WriteForUs() {
 
     const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
     const [showHelpModal, setShowHelpModal] = useState(false);
-    const [panelOpen, setPanelOpen] = useState(true);
     const [shortcutsOpen, setShortcutsOpen] = useState(false);
     const settingsRef = useRef(null);
 
     const scrollToSettings = () => {
-        setPanelOpen(true);
-        setTimeout(() => settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+        settingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
         setGuidelinesAccepted(true);
-        setPanelOpen(true);
     };
 
     const handleDeclineGuidelines = () => {
@@ -615,26 +559,14 @@ export default function WriteForUs() {
                             </div>
                         </div>
 
-                        {/* Article Settings — inline panel above editor */}
-                        <div ref={settingsRef}>
-                            <SettingsDrawer
-                                form={form} set={set} inp={inp} selectInp={selectInp} baseInput={baseInput}
-                                touched={touched} errors={errors}
-                                wordCount={wordCount} readTime={readTime}
-                                submitting={submitting}
-                                collapsed={!panelOpen}
-                                onToggleCollapse={() => setPanelOpen(o => !o)}
-                            />
-                        </div>
-
-                        {/* White Card with Editor */}
-                        <div style={{ maxWidth: 1100, width: '100%' }}>
+                        {/* Article Details + Editor — single unified block */}
+                        <div ref={settingsRef} style={{ maxWidth: 1100, width: '100%' }}>
                             <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
-                                {form.excerpt && (
-                                    <p style={{ fontFamily: 'var(--font-serif, Georgia, serif)', fontSize: '1.25rem', color: '#444', fontStyle: 'italic', lineHeight: 1.6, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                                        {form.excerpt}
-                                    </p>
-                                )}
+                                <SettingsDrawer
+                                    form={form} set={set} inp={inp} selectInp={selectInp} baseInput={baseInput}
+                                    touched={touched} errors={errors}
+                                    wordCount={wordCount} readTime={readTime}
+                                />
                                 {editor && (
                                     <div style={{ display: 'flex', gap: '0.4rem', padding: '0.4rem', border: '2px solid #000', background: '#e0e0e0', flexWrap: 'wrap', marginBottom: 0 }}>
                                         <ToolbarBtn icon="B" label="Bold (Ctrl+B)" onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} />
