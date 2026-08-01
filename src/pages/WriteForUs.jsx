@@ -565,6 +565,9 @@ export default function WriteForUs() {
                                 <button type="button" onClick={() => setPanelOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
                                     ⚙ Settings
                                 </button>
+                                <button type="button" onClick={handleSaveDraft} disabled={submitting} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: '2px 2px 0 #f7d000' }}>
+                                    💾 Save Draft
+                                </button>
                                 <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.68rem', padding: '0.35rem 0.75rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '2px 2px 0 #000' }}>
                                     {submitting ? 'SUBMITTING…' : 'SUBMIT →'}
                                 </button>
@@ -670,9 +673,14 @@ export default function WriteForUs() {
                                     ⚙ Settings
                                 </button>
                             </div>
-                            <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1.5rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '4px 4px 0 #000' }}>
-                                {submitting ? 'SUBMITTING…' : 'SUBMIT ARTICLE →'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button type="button" onClick={handleSaveDraft} disabled={submitting} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    💾 Save Draft
+                                </button>
+                                <button type="submit" disabled={submitting} style={{ background: submitting ? '#e0e0e0' : '#f7d000', border: '2px solid #000', color: '#000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1.5rem', cursor: submitting ? 'wait' : 'pointer', boxShadow: submitting ? 'none' : '4px 4px 0 #000' }}>
+                                    {submitting ? 'SUBMITTING…' : 'SUBMIT ARTICLE →'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
