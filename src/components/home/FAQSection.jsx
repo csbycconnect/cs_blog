@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 export default function FAQSection() {
     const faqs = [
         { question: 'What is ByteBoard?', answer: 'It is the official editorial website for the CS Dept at CHRIST Yeshwanthpur Campus.' },
-        { question: 'Who can write for us?', answer: 'Any student from the department can submit their thoughts and articles to the board.' },
+        { question: 'Who can write for us?', answer: 'Any student from any department can submit their thoughts and articles to the board.' },
         { question: 'How often do we publish?', answer: 'Fresh content is pushed every week. Stay tuned.' }
     ];
 

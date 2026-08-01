@@ -247,6 +247,7 @@ export default function WriteForUs() {
     const handleAgreeGuidelines = () => {
         sessionStorage.setItem('bb_writeforus_accepted', 'true');
         setGuidelinesAccepted(true);
+        setPanelOpen(true);
     };
 
     const handleDeclineGuidelines = () => {
@@ -651,6 +652,9 @@ export default function WriteForUs() {
                         {/* Bottom Action Bar */}
                         <div style={{ maxWidth: 1100, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
                             <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    ℹ️ Guidelines
+                                </button>
                                 <button type="button" onClick={() => setShortcutsOpen(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                     ⌨ Shortcuts
                                 </button>
