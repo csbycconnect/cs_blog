@@ -172,7 +172,7 @@ function ShortcutsModal({ onClose }) {
 function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors, wordCount, readTime, submitting, onClose, collapsed, onToggleCollapse }) {
     return (
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto 2rem' }}>
-            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '8px 8px 0 #f7d000' }}>
+            <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000' }}>
                 <button
                     type="button"
                     onClick={onToggleCollapse}
@@ -183,42 +183,56 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
                 </button>
                 {!collapsed && (
                     <>
-                        <div style={{ padding: '1.75rem' }}>
-                            <SectionHead num="01" title="Author Information" />
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                                <Field label="Full Name" required error={touched.name && errors.name}>
-                                    <input type="text" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} />
-                                </Field>
-                                <Field label="Email Address" required error={touched.email && errors.email}>
-                                    <input type="email" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
-                                </Field>
-                                <Field label="Short Bio" hint="Appears under your published article">
-                                    <input type="text" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} />
-                                </Field>
+                        <div style={{ padding: '2rem 2.5rem' }}>
+                            <div className="settings-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 2px 1fr', gap: '2.5rem' }}>
+                                <div>
+                                    <SectionHead num="01" title="Author Information" />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+                                        <Field label="Full Name" required error={touched.name && errors.name}>
+                                            <input type="text" value={form.name} readOnly style={{ ...inp('name'), background: '#f0f0f0', color: '#555' }} />
+                                        </Field>
+                                        <Field label="Email Address" required error={touched.email && errors.email}>
+                                            <input type="email" value={form.email} readOnly style={{ ...inp('email'), background: '#f0f0f0', color: '#555' }} />
+                                        </Field>
+                                        <Field label="Short Bio" hint="Appears under your published article">
+                                            <input type="text" value={form.bio} readOnly style={{ ...baseInput, background: '#f0f0f0', color: '#555' }} />
+                                        </Field>
+                                    </div>
+                                </div>
+
+                                <div className="settings-divider" style={{ background: '#e5e5e5', width: 2, height: '100%' }} />
+
+                                <div>
+                                    <SectionHead num="02" title="Article Details" />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+                                        <Field label="Article Title" required error={touched.title && errors.title}>
+                                            <input type="text" placeholder="e.g. Understanding Transformers" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '0.85rem' }} maxLength={160} />
+                                        </Field>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem' }}>
+                                            <Field label="Category" required error={touched.category && errors.category}>
+                                                <input type="text" placeholder="e.g. Technical / CS" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
+                                            </Field>
+                                            <Field label="Club" hint="Which club?">
+                                                <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
+                                                    <option value="">Select club…</option>
+                                                    {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
+                                                </select>
+                                            </Field>
+                                        </div>
+                                        <Field label="Tags" hint="Comma-separated keywords">
+                                            <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
+                                        </Field>
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ height: 2, background: '#f5f0e8', margin: '0 -1.75rem 1.5rem' }} />
-                            <SectionHead num="02" title="Article Details" />
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                                <Field label="Article Title" required error={touched.title && errors.title}>
-                                    <input type="text" placeholder="e.g. Understanding Transformers" value={form.title} onChange={set('title')} style={{ ...inp('title'), fontSize: '0.85rem' }} maxLength={160} />
-                                </Field>
-                                <Field label="Category" required error={touched.category && errors.category}>
-                                    <input type="text" placeholder="e.g. Technical / CS Concepts" value={form.category} onChange={set('category')} style={inp('category')} maxLength={50} />
-                                </Field>
-                                <Field label="Club" hint="Which club does this represent?">
-                                    <select value={form.club} onChange={set('club')} style={{ ...baseInput, ...selectInp('club') }}>
-                                        <option value="">Select club…</option>
-                                        {CLUBS.map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </Field>
-                                <Field label="Tags" hint="Comma-separated keywords">
-                                    <input type="text" placeholder="AI, Web Dev, Career…" value={form.tags} onChange={set('tags')} style={{ ...baseInput, boxShadow: form.tags ? '3px 3px 0 #000' : 'none' }} maxLength={200} />
-                                </Field>
-                                <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }} full>
-                                    <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }} />
-                                </Field>
-                            </div>
-                            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555' }}>
+
+                            <div style={{ height: 2, background: '#f5f0e8', margin: '2rem 0 1.5rem' }} />
+
+                            <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
+                                <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65 }} />
+                            </Field>
+
+                            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555', marginTop: '1.25rem' }}>
                                 📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read
                             </div>
                         </div>
@@ -227,6 +241,12 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
                                 DONE — START WRITING ↓
                             </button>
                         </div>
+                        <style>{`
+                            @media (max-width: 700px) {
+                                .settings-columns { grid-template-columns: 1fr !important; }
+                                .settings-divider { display: none; }
+                            }
+                        `}</style>
                     </>
                 )}
             </div>
