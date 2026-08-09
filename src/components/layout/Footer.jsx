@@ -23,7 +23,7 @@ export default function Footer() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <img src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo.png" alt="CHRIST University Logo" style={{ height: '60px', objectFit: 'contain', backgroundColor: '#000000ff', padding: '5px', borderRadius: '4px' }} />
                         <span style={{ color: 'var(--c-yellow)', fontSize: '1.5rem', opacity: 0.5 }}>|</span>
-                        <img title="Logo designed by Anjali Warriar"src="https://github.com/csbycconnect/blog_assests_cs_byc_connect_anjk/blob/a239cefcc91812306099fad55ce5d9717d30afbe/banners/cropped_circle_image%20(2).png" alt="Logo designed by Anjali Warriar" style={{ height: '60px', objectFit: 'contain', borderRadius: '4px' }} />
+                        <img title="Logo designed by Anjali Warriar"src="https://github.com/csbycconnect/blog_assests_cs_byc_connect_anjk/blob/2da974624e75a3fbe9a3b65c460e6603f70d5af3/logo/cropped_logo.png" alt="Logo designed by Anjali Warriar" style={{ height: '60px', objectFit: 'contain', borderRadius: '4px' }} />
                     </div>
                     <p style={{ opacity: 0.7, fontSize: '0.9rem', lineHeight: 1.5 }}>
                         Department of Computer Science<br />
