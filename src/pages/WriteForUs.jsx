@@ -1,3 +1,4 @@
+﻿//WriteForUs.jsx
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -434,7 +435,7 @@ export default function WriteForUs() {
         return (
             <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
                 <Navbar />
-                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 5% 6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', width: '100%' }}>
+                <main style={{ maxWidth: 1400, margin: '0 auto', padding: '3rem 5% 6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', width: '100%' }}>
                     <BackButton />
                     <div style={{ maxWidth: 580, width: '100%' }}>
                         <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '12px 12px 0 #f7d000', overflow: 'hidden' }}>
@@ -497,11 +498,11 @@ export default function WriteForUs() {
                         <div className="nav-shadow"></div>
                         <nav className="brutal-navbar" style={{ padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <img 
-                                    src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" 
-                                    alt="CHRIST University Logo" 
+                                <img
+                                    src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png"
+                                    alt="CHRIST University Logo"
                                     onClick={() => navigate('/')}
-                                    style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }} 
+                                    style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }}
                                 />
                                 <button type="button" onClick={() => navigate(-1)} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.7rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000', textTransform: 'uppercase' }}>
                                     ← Back
@@ -533,7 +534,7 @@ export default function WriteForUs() {
                     {/* Dark Navy Editor Area */}
                     <div style={{ flex: 1, background: '#0A192F', padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {/* Metadata Header */}
-                        <div style={{ maxWidth: 1100, width: '100%', marginBottom: '2rem' }}>
+                        <div style={{ maxWidth: 1400, width: '100%', marginBottom: '2rem' }}>
                             <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
                                 {form.category || 'CATEGORY'} · {readTime} MIN READ
                             </div>
@@ -560,7 +561,7 @@ export default function WriteForUs() {
                         </div>
 
                         {/* Article Details + Editor — single unified block */}
-                        <div ref={settingsRef} style={{ maxWidth: 1100, width: '100%' }}>
+                        <div ref={settingsRef} style={{ maxWidth: 1400, width: '100%' }}>
                             <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
                                 <SettingsDrawer
                                     form={form} set={set} inp={inp} selectInp={selectInp} baseInput={baseInput}
@@ -614,9 +615,9 @@ export default function WriteForUs() {
                                 <EditorContent editor={editor} />
                             </div>
                         </div>
-                        
+
                         {/* Bottom Action Bar */}
-                        <div style={{ maxWidth: 1100, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
+                        <div style={{ maxWidth: 1400, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                     ℹ️ Guidelines

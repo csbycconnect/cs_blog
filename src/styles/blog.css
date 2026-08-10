@@ -1,8 +1,8 @@
 /* Blog Page Specific Styles */
-
+/*blog.css*/
 .blog-page-container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
     min-height: 80vh;

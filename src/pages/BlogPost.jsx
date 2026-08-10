@@ -1,3 +1,4 @@
+//BlogPost.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import DOMPurify from 'dompurify';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -153,7 +154,7 @@ export default function BlogPost() {
         return (
             <div style={{ position: 'relative', minHeight: '100vh' }}>
                 <Navbar />
-                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '4rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                <main style={{ maxWidth: 1400, margin: '0 auto', padding: '4rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                     <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)' }}>Loading transmission...</p>
                 </main>
                 <Footer />
@@ -166,7 +167,7 @@ export default function BlogPost() {
     return (
         <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
             <Navbar />
-            <main style={{ maxWidth: 1100, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
+            <main style={{ maxWidth: 1400, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
                 <div style={{ marginTop: '2rem' }}>
                     <BackButton />
                 </div>
@@ -221,7 +222,7 @@ export default function BlogPost() {
                     </div>
                 </header>
 
-                <div style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+                <div style={{ maxWidth: 1400, margin: '0 auto', width: '100%' }}>
                     <article className="blog-post-article" style={{
                         background: 'var(--c-white)',
                         border: '2px solid var(--c-black)',
@@ -235,55 +236,55 @@ export default function BlogPost() {
                     }}>
                         {blogImgStyleTag}
                         {(() => {
-                        const htmlContent = article.contentHTML || article.content || '';
-                        const isHtml = /<[^>]+>/.test(htmlContent);
+                            const htmlContent = article.contentHTML || article.content || '';
+                            const isHtml = /<[^>]+>/.test(htmlContent);
 
-                        if (isHtml && htmlContent.trim()) {
+                            if (isHtml && htmlContent.trim()) {
+                                return (
+                                    <div
+                                        className="blog-html-content"
+                                        style={{
+                                            lineHeight: 1.8,
+                                            fontFamily: 'var(--font-serif, Georgia, serif)',
+                                            color: '#1a1a1a',
+                                            fontSize: '1.1rem'
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title'] }) }}
+                                    />
+                                );
+                            }
+
+                            if (!htmlContent.trim()) {
+                                return <p style={{ color: '#999', fontStyle: 'italic' }}>No article content available.</p>;
+                            }
+
                             return (
-                                <div
-                                    className="blog-html-content"
-                                    style={{
-                                        lineHeight: 1.8,
-                                        fontFamily: 'var(--font-serif, Georgia, serif)',
-                                        color: '#1a1a1a',
-                                        fontSize: '1.1rem'
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        h1: ({ node, ...props }) => <h1 className="serif-heading" style={{ fontSize: '2.2rem', marginTop: '2.5rem', marginBottom: '1rem', lineHeight: 1.2, color: 'var(--c-black)' }} {...props} />,
+                                        h2: ({ node, ...props }) => <h2 className="serif-heading" style={{ fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem', lineHeight: 1.3, color: 'var(--c-black)' }} {...props} />,
+                                        h3: ({ node, ...props }) => <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3rem', marginTop: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }} {...props} />,
+                                        p: ({ node, ...props }) => <p style={{ marginBottom: '1.5rem', wordWrap: 'break-word', wordBreak: 'break-word' }} {...props} />,
+                                        a: ({ node, ...props }) => <a style={{ color: '#0d2142', textDecoration: 'underline', textDecorationColor: 'var(--c-yellow)', textDecorationThickness: '2px', fontWeight: 700 }} {...props} />,
+                                        ul: ({ node, ...props }) => <ul style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                        ol: ({ node, ...props }) => <ol style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                        li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
+                                        blockquote: ({ node, ...props }) => <blockquote style={{ borderLeft: '4px solid var(--c-black)', margin: '1.5rem 0', padding: '1rem 1.5rem', background: '#f5f0e8', fontStyle: 'italic' }} {...props} />,
+                                        code: ({ node, inline, ...props }) =>
+                                            inline ?
+                                                <code style={{ fontFamily: 'var(--font-mono)', background: '#f0f0f0', padding: '0.2rem 0.4rem', fontSize: '0.9em', border: '1px solid #ccc' }} {...props} /> :
+                                                <pre style={{ background: '#0A192F', color: '#fff', padding: '1.5rem', overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', border: '2px solid var(--c-black)', marginBottom: '1.5rem' }}>
+                                                    <code {...props} />
+                                                </pre>,
+                                        img: ({ node, ...props }) => <img style={{ maxWidth: '100%', height: 'auto', border: '2px solid var(--c-black)', display: 'block', margin: '2rem auto' }} {...props} />,
+                                        hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
                                     }}
-                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title'] }) }}
-                                />
+                                >
+                                    {htmlContent}
+                                </ReactMarkdown>
                             );
-                        }
-
-                        if (!htmlContent.trim()) {
-                            return <p style={{ color: '#999', fontStyle: 'italic' }}>No article content available.</p>;
-                        }
-
-                        return (
-                            <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                    h1: ({ node, ...props }) => <h1 className="serif-heading" style={{ fontSize: '2.2rem', marginTop: '2.5rem', marginBottom: '1rem', lineHeight: 1.2, color: 'var(--c-black)' }} {...props} />,
-                                    h2: ({ node, ...props }) => <h2 className="serif-heading" style={{ fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem', lineHeight: 1.3, color: 'var(--c-black)' }} {...props} />,
-                                    h3: ({ node, ...props }) => <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3rem', marginTop: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }} {...props} />,
-                                    p: ({ node, ...props }) => <p style={{ marginBottom: '1.5rem', wordWrap: 'break-word', wordBreak: 'break-word' }} {...props} />,
-                                    a: ({ node, ...props }) => <a style={{ color: '#0d2142', textDecoration: 'underline', textDecorationColor: 'var(--c-yellow)', textDecorationThickness: '2px', fontWeight: 700 }} {...props} />,
-                                    ul: ({ node, ...props }) => <ul style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
-                                    ol: ({ node, ...props }) => <ol style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
-                                    li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
-                                    blockquote: ({ node, ...props }) => <blockquote style={{ borderLeft: '4px solid var(--c-black)', margin: '1.5rem 0', padding: '1rem 1.5rem', background: '#f5f0e8', fontStyle: 'italic' }} {...props} />,
-                                    code: ({ node, inline, ...props }) =>
-                                        inline ?
-                                            <code style={{ fontFamily: 'var(--font-mono)', background: '#f0f0f0', padding: '0.2rem 0.4rem', fontSize: '0.9em', border: '1px solid #ccc' }} {...props} /> :
-                                            <pre style={{ background: '#0A192F', color: '#fff', padding: '1.5rem', overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', border: '2px solid var(--c-black)', marginBottom: '1.5rem' }}>
-                                                <code {...props} />
-                                            </pre>,
-                                    img: ({ node, ...props }) => <img style={{ maxWidth: '100%', height: 'auto', border: '2px solid var(--c-black)', display: 'block', margin: '2rem auto' }} {...props} />,
-                                    hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
-                                }}
-                            >
-                                {htmlContent}
-                            </ReactMarkdown>
-                        );
-                    })()}
+                        })()}
 
                         {/* Author Bio Section */}
                         {article.bio && (

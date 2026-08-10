@@ -1,3 +1,4 @@
+//EditorialReview.jsx
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../../../services/articles';
@@ -80,6 +81,14 @@ export default function EditorialReview({ canReview }) {
 
     return (
         <>
+            <style>{`
+                .admin-review-content img {
+                    max-width: 100% !important;
+                    height: auto !important;
+                    display: block;
+                    margin: 1rem auto;
+                }
+            `}</style>
             {/* Rejection Modal */}
             {showModal && modalArticle && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
@@ -134,7 +143,7 @@ export default function EditorialReview({ canReview }) {
                         <summary style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', color: 'var(--c-black)' }}>
                             View Full Content
                         </summary>
-                        <div style={{ marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#000', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1.5rem', border: '1px solid #ddd' }}>
+                        <div className="admin-review-content" style={{ marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#000', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1.5rem', border: '1px solid #ddd', overflow: 'hidden', wordBreak: 'break-word' }}>
                             {article.contentHTML?.trim() ? (
                                 <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
                             ) : (
