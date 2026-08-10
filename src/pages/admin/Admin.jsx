@@ -1,3 +1,4 @@
+//Admin.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/layout/Navbar';
@@ -13,11 +14,11 @@ import UserManagement from './users/UserManagement';
 import InterviewMail from './interviews/Interviewmail';
 
 const TABS = [
-    { id: 'review',       label: 'Editorial Review' },
-    { id: 'rejected',     label: 'Rejected' },
+    { id: 'review', label: 'Editorial Review' },
+    { id: 'rejected', label: 'Rejected' },
     { id: 'manage_blogs', label: 'Manage Blogs' },
-    { id: 'events',       label: 'Record / Event Entry' },
-    { id: 'users',        label: 'User Directory' },
+    { id: 'events', label: 'Record / Event Entry' },
+    { id: 'users', label: 'User Directory' },
     { id: 'interview_mail', label: 'Interview Mail' },
 ];
 
@@ -39,7 +40,7 @@ export default function Admin() {
     return (
         <div style={{ position: 'relative', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
-            <main style={{ flex: 1, maxWidth: '1000px', margin: '0 auto', padding: '4rem 2.5rem', width: '100%' }}>
+            <main style={{ flex: 1, maxWidth: '1400px', margin: '0 auto', padding: '4rem 2.5rem', width: '100%' }}>
                 <AnimateOnScroll animationClass="animate-slide-up" delay={0.1} threshold={0.05}>
 
                     {/* Header */}
@@ -89,11 +90,11 @@ export default function Admin() {
 
                     {/* Tab Content */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                        {activeTab === 'review'       && <EditorialReview canReview={canReviewBlogs} />}
-                        {activeTab === 'rejected'     && <RejectedArticles />}
+                        {activeTab === 'review' && <EditorialReview canReview={canReviewBlogs} />}
+                        {activeTab === 'rejected' && <RejectedArticles />}
                         {activeTab === 'manage_blogs' && <ManageBlogs isAL0={isAL0} />}
-                        {activeTab === 'events'       && <EventsDashboard />}
-                        {activeTab === 'users'        && <UserManagement isAL0={isAL0} />}
+                        {activeTab === 'events' && <EventsDashboard />}
+                        {activeTab === 'users' && <UserManagement isAL0={isAL0} />}
                         {activeTab === 'interview_mail' && <InterviewMail />}
                     </div>
 
