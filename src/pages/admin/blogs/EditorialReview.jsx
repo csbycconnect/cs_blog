@@ -1,4 +1,3 @@
-//EditorialReview.jsx
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../../../services/articles';
