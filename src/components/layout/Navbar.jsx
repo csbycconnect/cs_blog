@@ -95,12 +95,10 @@ export default function Navbar() {
                                             alt={user.name}
                                             style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid #f7d000', flexShrink: 0 }}
                                         />
-                                        <div>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
                                             <div style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.82rem', color: '#f7d000', lineHeight: 1.2 }}>
                                                 {user.name}
                                             </div>
-                                            <div style={{ fontWeight: 700, color: '#fff' /* ...existing name styles */ }}>{user.name}</div>
-
                                             <div
                                                 title={user.email}
                                                 style={{
@@ -116,7 +114,6 @@ export default function Navbar() {
                                             >
                                                 {user.email}
                                             </div>
-
                                             {user.role && user.role !== 'student' && (
                                                 <div style={{
                                                     display: 'inline-block',
