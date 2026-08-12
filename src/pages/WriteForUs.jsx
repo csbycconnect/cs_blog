@@ -1,5 +1,4 @@
-﻿//WriteForUs.jsx
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -207,7 +206,7 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
 export default function WriteForUs() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const draftIndex = searchParams.get('draft');
+    const [draftId, setDraftId] = useState(searchParams.get('draft'));
 
     const [guidelinesAccepted, setGuidelinesAccepted] = useState(() => sessionStorage.getItem('bb_writeforus_accepted') === 'true');
     const [showHelpModal, setShowHelpModal] = useState(false);
@@ -238,31 +237,19 @@ export default function WriteForUs() {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        if (draftIndex !== null) {
-            const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-            if (drafts[Number(draftIndex)]) {
-                const saved = drafts[Number(draftIndex)];
-                setForm(saved);
-                setEditorHtml(saved.editorHtml || saved.content || '');
+        if (!draftId) return;
+        (async () => {
+            try {
+                const res = await fetch(`/api/articles?id=${encodeURIComponent(draftId)}`);
+                if (!res.ok) return;
+                const saved = await res.json();
+                setForm(f => ({ ...f, ...saved }));
+                setEditorHtml(saved.contentHTML || saved.content || '');
+            } catch (err) {
+                console.error('Failed to load draft:', err);
             }
-        } else {
-            const autosave = JSON.parse(localStorage.getItem('bb_autosave'));
-            if (autosave) {
-                const { editorHtml: savedHtml, ...savedForm } = autosave;
-                setForm(savedForm);
-                setEditorHtml(savedHtml || '');
-            }
-        }
-    }, [draftIndex]);
-
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            if (form.title || editorHtml) {
-                localStorage.setItem('bb_autosave', JSON.stringify({ ...form, editorHtml }));
-            }
-        }, 1500);
-        return () => clearTimeout(handler);
-    }, [form, editorHtml]);
+        })();
+    }, [draftId]);
 
     const { user, loading: authLoading } = useAuth();
     useEffect(() => {
@@ -317,6 +304,7 @@ export default function WriteForUs() {
             const minutes = Math.max(1, Math.round(wordCount / 238));
             const readTimeLabel = `${minutes} min read`;
             const payload = {
+                id: draftId || undefined,
                 title: form.title.trim(),
                 excerpt: form.excerpt.trim(),
                 content: cleanHtml,
@@ -341,12 +329,6 @@ export default function WriteForUs() {
             } catch (emailError) {
                 console.error('Email notification failed to dispatch:', emailError);
             }
-            if (draftIndex !== null) {
-                const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-                drafts.splice(Number(draftIndex), 1);
-                localStorage.setItem('bb_drafts', JSON.stringify(drafts));
-            }
-            localStorage.removeItem('bb_autosave');
             setSubmitted(true);
         } catch (error) {
             console.error("Submission error:", error);
@@ -356,17 +338,37 @@ export default function WriteForUs() {
         }
     };
 
-    const handleSaveDraft = () => {
-        const drafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-        const draftObj = { ...form, editorHtml, date: new Date().toISOString() };
-        if (draftIndex !== null) {
-            drafts[Number(draftIndex)] = draftObj;
-        } else {
-            drafts.push(draftObj);
+    const handleSaveDraft = async () => {
+        try {
+            const cleanHtml = DOMPurify.sanitize(editorHtml);
+            const res = await fetch('/api/articles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'draft',
+                    id: draftId || undefined,
+                    title: form.title,
+                    excerpt: form.excerpt,
+                    subtitle: form.excerpt,
+                    content: cleanHtml,
+                    contentHTML: cleanHtml,
+                    category: form.category,
+                    club: form.club || 'General',
+                    tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+                    name: user?.name || form.name || 'Anonymous',
+                    authorId: user?.sub || 'GUEST',
+                    authorSub: user?.sub || 'GUEST',
+                    email: user?.email || form.email || null
+                })
+            });
+            const saved = await res.json();
+            setDraftId(saved.id);
+            alert('Draft saved successfully! You can find it in Your Blogs.');
+            navigate('/your-blogs');
+        } catch (err) {
+            console.error('Failed to save draft:', err);
+            alert('Failed to save draft. Please try again.');
         }
-        localStorage.setItem('bb_drafts', JSON.stringify(drafts));
-        alert('Draft saved successfully! You can find it in Your Blogs.');
-        navigate('/your-blogs');
     };
 
     const inp = (k) => ({ ...baseInput, ...statusStyle(touched[k], !!errors[k]) });
@@ -435,7 +437,7 @@ export default function WriteForUs() {
         return (
             <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
                 <Navbar />
-                <main style={{ maxWidth: 1400, margin: '0 auto', padding: '3rem 5% 6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', width: '100%' }}>
+                <main style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 5% 6rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', width: '100%' }}>
                     <BackButton />
                     <div style={{ maxWidth: 580, width: '100%' }}>
                         <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '12px 12px 0 #f7d000', overflow: 'hidden' }}>
@@ -498,11 +500,11 @@ export default function WriteForUs() {
                         <div className="nav-shadow"></div>
                         <nav className="brutal-navbar" style={{ padding: '0.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <img
-                                    src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png"
-                                    alt="CHRIST University Logo"
+                                <img 
+                                    src="https://raw.githubusercontent.com/csbycconnect/blog_assests_cs_byc_connect_anjk/8cf58d9c3054eaf6df116959b0b8ce4411fe1fa7/logo/christ-logo-black.png" 
+                                    alt="CHRIST University Logo" 
                                     onClick={() => navigate('/')}
-                                    style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }}
+                                    style={{ height: '35px', objectFit: 'contain', cursor: 'pointer', marginRight: '0.5rem' }} 
                                 />
                                 <button type="button" onClick={() => navigate(-1)} style={{ background: '#0A192F', color: '#f7d000', border: '2px solid #000', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.7rem', padding: '0.35rem 0.75rem', cursor: 'pointer', boxShadow: '2px 2px 0 #000', textTransform: 'uppercase' }}>
                                     ← Back
@@ -534,7 +536,7 @@ export default function WriteForUs() {
                     {/* Dark Navy Editor Area */}
                     <div style={{ flex: 1, background: '#0A192F', padding: '3rem 5%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         {/* Metadata Header */}
-                        <div style={{ maxWidth: 1400, width: '100%', marginBottom: '2rem' }}>
+                        <div style={{ maxWidth: 1100, width: '100%', marginBottom: '2rem' }}>
                             <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#f7d000', marginBottom: '1rem', letterSpacing: '0.1em' }}>
                                 {form.category || 'CATEGORY'} · {readTime} MIN READ
                             </div>
@@ -561,7 +563,7 @@ export default function WriteForUs() {
                         </div>
 
                         {/* Article Details + Editor — single unified block */}
-                        <div ref={settingsRef} style={{ maxWidth: 1400, width: '100%' }}>
+                        <div ref={settingsRef} style={{ maxWidth: 1100, width: '100%' }}>
                             <div style={{ background: '#fff', border: '2px solid #000', boxShadow: '10px 10px 0 #f7d000', padding: '3rem', position: 'relative' }}>
                                 <SettingsDrawer
                                     form={form} set={set} inp={inp} selectInp={selectInp} baseInput={baseInput}
@@ -615,9 +617,9 @@ export default function WriteForUs() {
                                 <EditorContent editor={editor} />
                             </div>
                         </div>
-
+                        
                         {/* Bottom Action Bar */}
-                        <div style={{ maxWidth: 1400, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
+                        <div style={{ maxWidth: 1100, width: '100%', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: 'transparent' }}>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button type="button" onClick={() => setShowHelpModal(true)} style={{ background: '#fff', border: '2px solid #000', color: '#0A192F', fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.75rem', padding: '0.5rem 1rem', cursor: 'pointer', boxShadow: '3px 3px 0 #f7d000', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                     ℹ️ Guidelines
