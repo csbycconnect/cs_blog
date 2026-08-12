@@ -115,14 +115,6 @@ export default function Settings() {
                                     checked={prefs.emailNewsletter}
                                     onChange={() => handleToggle('emailNewsletter')}
                                 />
-                                <div className="relative group cursor-not-allowed">
-                                <ToggleRow
-                                    title="Dispatch Alerts"
-                                    description="Get notified immediately when new articles are published in CS-Connect."
-                                    checked={prefs.dispatchAlerts}
-                                    onChange={() => handleToggle('dispatchAlerts')}
-                                />
-                                </div>
                             </div>
                         </div>
                     </AnimateOnScroll>
@@ -138,7 +130,7 @@ export default function Settings() {
                             <Shield color="#aaa" size={32} style={{ margin: '0 auto 1rem' }} />
                             <h2 className="serif-heading" style={{ fontSize: '1.25rem', color: '#666' }}>Security & Privacy</h2>
                             <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#888', marginTop: '0.5rem' }}>
-                                Password changes and active sessions are managed via your central Amazon Cognito identity provider.
+                                Your account security is managed through our secure identity and authentication system. Passwords, sign-in activity, and active sessions are protected using industry-standard security practices. <br /> For your protection, always keep your login credentials private and sign out of your account when using shared or public devices.
                             </p>
                         </div>
                     </AnimateOnScroll>
