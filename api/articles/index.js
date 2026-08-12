@@ -50,7 +50,8 @@ export default async function handler(req, res) {
             // Submit Draft Dispatches (Write For Us workflow)
             if (action === "create") {
                 const uniqueShortId = Math.random().toString(36).substring(2, 11).toUpperCase();
-                const articleId = `ART_${uniqueShortId}`;
+                // reuse existing id when converting a saved draft into a real submission
+                const articleId = body.id || `ART_${uniqueShortId}`;
                 const timestamp = new Date().toISOString();
 
                 // Compute read time (minutes) based on 238 words/min and save as "X min read"
@@ -92,13 +93,64 @@ export default async function handler(req, res) {
                     GSI2SK: `DATE#${timestamp}`
                 };
 
-                await dynamoDb.send(new PutCommand({
+                const putParams = {
                     TableName: TABLES.ARTICLES || "bb_articles",
-                    Item: itemPayload,
-                    ConditionExpression: "attribute_not_exists(PK)"
-                }));
+                    Item: itemPayload
+                };
+                if (!body.id) putParams.ConditionExpression = "attribute_not_exists(PK)";
+
+                await dynamoDb.send(new PutCommand(putParams));
 
                 return res.status(201).json(itemPayload);
+            }
+
+            // Save Draft (Write For Us workflow) — persists to bb_articles with status "draft"
+            if (action === "draft") {
+                const articleId = body.id || `ART_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+                const timestamp = new Date().toISOString();
+                const rawContent = body.content || body.contentHTML || '';
+                const wordCount = String(rawContent).trim().split(/\s+/).filter(Boolean).length;
+                const minutes = Math.max(1, Math.round(wordCount / 238));
+
+                const itemPayload = {
+                    PK: `ARTICLE#${articleId}`,
+                    SK: "METADATA",
+                    id: articleId,
+
+                    title: body.title ? String(body.title).trim() : "Untitled Draft",
+                    subtitle: body.subtitle ? String(body.subtitle).trim() : (body.excerpt ? String(body.excerpt).trim() : ""),
+                    content: body.content || body.contentHTML || "",
+                    contentHTML: body.contentHTML || body.content || "",
+                    authorName: body.authorName || body.name || "Anonymous",
+                    authorEmail: body.authorEmail || body.email || null,
+                    club: body.club || "General",
+                    category: body.category || "",
+                    tags: Array.isArray(body.tags) ? body.tags : (body.tags ? [body.tags] : []),
+                    authorId: body.authorId || body.authorSub || "GUEST",
+                    authorSub: body.authorSub || body.authorId || "GUEST",
+                    readTime: `${minutes} min read`,
+
+                    status: "draft",
+                    createdAt: body.createdAt || timestamp,
+                    updatedAt: timestamp,
+                    views: 0,
+                    likes: 0,
+
+                    GSI1PK: `STATUS#draft#CLUB#${body.club || "General"}`,
+                    GSI1SK: timestamp,
+                    GSI2PK: `USER#${body.authorSub || body.authorId || "GUEST"}`,
+                    GSI2SK: `DATE#${timestamp}`,
+                    GSI3PK: "STATUS#draft",
+                    GSI3SK: `DATE#${timestamp}`
+                };
+
+                // no ConditionExpression: upsert so re-saving the same draft overwrites it
+                await dynamoDb.send(new PutCommand({
+                    TableName: TABLES.ARTICLES || "bb_articles",
+                    Item: itemPayload
+                }));
+
+                return res.status(200).json(itemPayload);
             }
 
             // ─── ACTION 1: QUICK STATUS CHANGE WITH COGNITO BROADCASTS ───
@@ -318,6 +370,9 @@ export default async function handler(req, res) {
 
             if (author) {
                 const articles = await getArticlesByAuthor(author);
+                if (status) {
+                    return res.status(200).json(articles.filter(a => a.status === status));
+                }
                 return res.status(200).json(articles);
             }
 

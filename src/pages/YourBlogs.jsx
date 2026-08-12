@@ -14,17 +14,10 @@ export default function YourBlogs() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [posts, setPosts] = useState([]);
-    const [drafts, setDrafts] = useState([]);
     const [activeTab, setActiveTab] = useState('published'); // 'published', 'pending', 'drafts'
 
     const [bio, setBio] = useState(user?.bio || '');
     const [editingBio, setEditingBio] = useState(false);
-
-    // Load Drafts from localStorage
-    useEffect(() => {
-        const localDrafts = JSON.parse(localStorage.getItem('bb_drafts') || '[]');
-        setDrafts(localDrafts);
-    }, []);
 
     // Load Author's Posts from DB properly matching DynamoDB CSV scheme fields
     useEffect(() => {
@@ -90,20 +83,28 @@ export default function YourBlogs() {
         }
     };
 
-    // Cleanly delete browser drafts without triggering unintended item container navigation clicks
-    const handleDeleteDraft = (e, draftIndex) => {
+    // Delete a draft from the DB
+    const handleDeleteDraft = async (e, draftItemId) => {
         e.preventDefault();
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this draft?')) {
-            const updatedDrafts = drafts.filter((_, idx) => idx !== draftIndex);
-            setDrafts(updatedDrafts);
-            localStorage.setItem('bb_drafts', JSON.stringify(updatedDrafts));
+        if (!window.confirm('Are you sure you want to delete this draft?')) return;
+        try {
+            await fetch('/api/articles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', id: draftItemId })
+            });
+            setPosts(prev => prev.filter(p => p.id !== draftItemId));
+        } catch (err) {
+            console.error('Failed to delete draft:', err);
+            alert('Failed to delete draft.');
         }
     };
 
     // Distribute records to tabs dynamically based on status properties
     const published = useMemo(() => posts.filter(p => p.status === 'accepted' || p.GSI3PK === 'STATUS#accepted'), [posts]);
     const pending = useMemo(() => posts.filter(p => p.status === 'pending' || p.status === 'hidden' || p.GSI3PK === 'STATUS#pending'), [posts]);
+    const drafts = useMemo(() => posts.filter(p => p.status === 'draft' || p.GSI3PK === 'STATUS#draft'), [posts]);
 
     const getItemsForTab = () => {
         if (activeTab === 'published') return published;
@@ -217,7 +218,7 @@ export default function YourBlogs() {
                                 if (activeTab === 'published') {
                                     navigate(`/blog/${item.id}`);
                                 } else if (activeTab === 'drafts') {
-                                    navigate(`/write-for-us?draft=${i}`);
+                                    navigate(`/write-for-us?draft=${item.id}`);
                                 }
                             }}
                             className="article-card"
@@ -280,12 +281,12 @@ export default function YourBlogs() {
                                         backgroundColor: item.status === 'hidden' ? '#000' : activeTab === 'pending' ? 'var(--c-yellow)' : '#eee',
                                         color: item.status === 'hidden' ? 'var(--c-yellow)' : 'var(--c-black)'
                                     }}>
-                                        {item.status === 'hidden' ? 'HIDDEN' : activeTab === 'pending' ? 'REVIEW' : 'LOCAL'}
+                                        {item.status === 'hidden' ? 'HIDDEN' : activeTab === 'pending' ? 'REVIEW' : 'DRAFT'}
                                     </span>
 
                                     {activeTab === 'drafts' && (
                                         <button
-                                            onClick={(e) => handleDeleteDraft(e, i)}
+                                            onClick={(e) => handleDeleteDraft(e, item.id)}
                                             style={{
                                                 padding: '0.3rem 0.6rem',
                                                 background: '#fff',
