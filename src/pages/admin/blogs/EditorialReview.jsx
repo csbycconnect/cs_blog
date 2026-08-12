@@ -1,5 +1,6 @@
 //EditorialReview.jsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../../../services/articles';
 
@@ -16,6 +17,15 @@ export default function EditorialReview({ canReview }) {
     useEffect(() => {
         if (canReview) fetchPending();
     }, [canReview]);
+
+    // Prevent background scroll while the rejection modal is open
+    useEffect(() => {
+        if (showModal) {
+            const prevOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            return () => { document.body.style.overflow = prevOverflow; };
+        }
+    }, [showModal]);
 
     const fetchPending = async () => {
         setLoading(true);
@@ -89,10 +99,20 @@ export default function EditorialReview({ canReview }) {
                     margin: 1rem auto;
                 }
             `}</style>
-            {/* Rejection Modal */}
-            {showModal && modalArticle && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}>
-                    <div style={{ width: 'min(720px, 95%)', background: '#fff', padding: '1.25rem', borderRadius: '6px', boxShadow: '0 6px 30px rgba(0,0,0,0.4)', color: '#000' }}>
+            {/* Rejection Modal — rendered via portal directly into document.body.
+                This guarantees it centers on the viewport regardless of scroll
+                position, and can't be broken by any ancestor with a CSS
+                transform/filter/perspective (which would otherwise turn
+                "position: fixed" into something relative to that ancestor). */}
+            {showModal && modalArticle && createPortal(
+                <div
+                    onClick={() => { setShowModal(false); setModalArticle(null); }}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: 'min(720px, 95%)', maxHeight: '85vh', overflowY: 'auto', background: '#fff', padding: '1.25rem', borderRadius: '6px', boxShadow: '0 6px 30px rgba(0,0,0,0.4)', color: '#000' }}
+                    >
                         <h3 style={{ marginTop: 0, fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>Reject: {modalArticle.title}</h3>
                         <p style={{ fontFamily: 'var(--font-mono)', color: '#444', marginBottom: '0.5rem' }}>Reason (optional — sent to author):</p>
                         <textarea
@@ -110,7 +130,8 @@ export default function EditorialReview({ canReview }) {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Articles */}
