@@ -92,7 +92,10 @@ export default function Account() {
                                         </div>
                                         <div>
                                             <h2 className="serif-heading" style={{ fontSize: '2rem', color: 'var(--c-black)', lineHeight: 1.1 }}>{user.name}</h2>
-                                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', color: '#555', marginTop: '0.25rem' }}>{user.email}</p>
+                                            <p style={{
+                                                fontFamily: 'var(--font-mono)', fontSize: '0.95rem', color: '#555', marginTop: '0.25rem',
+                                                wordBreak: 'break-word', overflowWrap: 'break-word'
+                                            }}>{user.email}</p>
 
                                             {/* Role Badge */}
                                             <div style={{
