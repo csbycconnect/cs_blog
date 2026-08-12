@@ -96,6 +96,7 @@ export default function Admin() {
                         {activeTab === 'events'       && <EventsDashboard />}
                         {activeTab === 'users'        && <UserManagement isAL0={isAL0} />}
                         {activeTab === 'interview_mail' && <InterviewMail />}
+                        {activeTab == 'SubmissionCallMail' && <SubmissionCallMail isAL0={isAL0} />}
                     </div>
 
                 </AnimateOnScroll>
