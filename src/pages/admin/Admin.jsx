@@ -20,6 +20,7 @@ const TABS = [
     { id: 'events',       label: 'Record / Event Entry' },
     { id: 'users',        label: 'User Directory' },
     { id: 'interview_mail', label: 'Interview Mail' },
+    { id: 'SubmissionCallMail', label: 'Submission Call Mail'},
 ];
 
 export default function Admin() {
