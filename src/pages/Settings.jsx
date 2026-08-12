@@ -115,60 +115,18 @@ export default function Settings() {
                                     checked={prefs.emailNewsletter}
                                     onChange={() => handleToggle('emailNewsletter')}
                                 />
+                                <div className="relative group cursor-not-allowed">
                                 <ToggleRow
                                     title="Dispatch Alerts"
                                     description="Get notified immediately when new articles are published in CS-Connect."
                                     checked={prefs.dispatchAlerts}
                                     onChange={() => handleToggle('dispatchAlerts')}
                                 />
-                            </div>
-                        </div>
-                    </AnimateOnScroll>
-
-                    {/* Appearance Section */}
-                    <AnimateOnScroll animationClass="animate-pop" delay={0.3}>
-                        <div style={{
-                            backgroundColor: 'var(--c-white)',
-                            border: '2px solid var(--c-black)',
-                            boxShadow: '6px 6px 0 var(--c-black)',
-                            padding: '2rem'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '2px solid #eee', paddingBottom: '1rem' }}>
-                                <Monitor color="var(--c-black)" />
-                                <h2 className="serif-heading" style={{ fontSize: '1.5rem', color: 'var(--c-black)' }}>Appearance</h2>
-                            </div>
-
-                            <div>
-                                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', color: '#555', marginBottom: '1rem' }}>
-                                    Choose your preferred theme for the ByteBoard interface.
-                                </p>
-                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                    <SelectButton
-                                        active={prefs.darkModeOption === 'light'}
-                                        onClick={() => handleSelect('darkModeOption', 'light')}
-                                    >
-                                        Light Mode
-                                    </SelectButton>
-                                    <SelectButton
-                                        active={prefs.darkModeOption === 'dark'}
-                                        onClick={() => handleSelect('darkModeOption', 'dark')}
-                                    >
-                                        Dark Mode
-                                    </SelectButton>
-                                    <SelectButton
-                                        active={prefs.darkModeOption === 'system'}
-                                        onClick={() => handleSelect('darkModeOption', 'system')}
-                                    >
-                                        System Default
-                                    </SelectButton>
                                 </div>
-                                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#888', marginTop: '1rem', fontStyle: 'italic' }}>
-                                    * Theme overrides are currently disabled while we enforce the Brutalist aesthetic globally.
-                                </p>
                             </div>
                         </div>
                     </AnimateOnScroll>
-
+                    
                     {/* Security Section Placeholder */}
                     <AnimateOnScroll animationClass="animate-pop" delay={0.4}>
                         <div style={{
