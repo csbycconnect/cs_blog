@@ -11,6 +11,7 @@ import ManageBlogs from './blogs/ManageBlogs';
 import EventsDashboard from './events/EventsDashboard';
 import UserManagement from './users/UserManagement';
 import InterviewMail from './interviews/Interviewmail';
+import SubmissionCallMail from './mail/SubmissionCallMail'
 
 const TABS = [
     { id: 'review',       label: 'Editorial Review' },
