@@ -254,31 +254,84 @@ export default function EditorialReview({ canReview }) {
                 document.body
             )}
 
-            {/* Search + count + page size */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="Search by title or author..."
-                    style={{ flex: 1, minWidth: '220px', padding: '0.6rem 0.75rem', fontFamily: 'var(--font-mono)', border: '2px solid var(--c-black)', background: 'var(--c-white)' }}
-                />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
-                    {totalFiltered} of {totalCount} pending
-                </span>
-                <select
-                    value={pageSize}
-                    onChange={e => setPageSize(Number(e.target.value))}
-                    style={{ padding: '0.5rem', fontFamily: 'var(--font-mono)', border: '2px solid var(--c-black)', background: 'var(--c-white)' }}
-                >
-                    {PAGE_SIZE_OPTIONS.map(size => (
-                        <option key={size} value={size}>{size} per page</option>
-                    ))}
-                </select>
+            {/* Search + count + page size toolbar */}
+            <div style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '6px 6px 0 var(--c-yellow)', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
+                    <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '0.95rem', opacity: 0.5 }}>
+                        🔍
+                    </span>
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="Search by title or author…"
+                        style={{
+                            width: '100%',
+                            padding: '0.7rem 0.9rem 0.7rem 2.3rem',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.85rem',
+                            border: '2px solid var(--c-black)',
+                            background: '#fafafa',
+                            color: 'var(--c-black)',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                        }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'baseline',
+                        gap: '0.35rem',
+                        padding: '0.55rem 0.9rem',
+                        border: '2px solid var(--c-black)',
+                        background: 'var(--c-yellow)',
+                        color: 'var(--c-black)',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        whiteSpace: 'nowrap',
+                    }}>
+                        <span style={{ fontSize: '1rem' }}>{totalFiltered}</span>
+                        <span style={{ opacity: 0.7, fontWeight: 500 }}>/ {totalCount} pending</span>
+                    </span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto', fontFamily: 'var(--font-mono)' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#555', whiteSpace: 'nowrap' }}>
+                        Show
+                    </label>
+                    <select
+                        value={pageSize}
+                        onChange={e => setPageSize(Number(e.target.value))}
+                        style={{
+                            padding: '0.55rem 2rem 0.55rem 0.75rem',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            border: '2px solid var(--c-black)',
+                            background: 'var(--c-white)',
+                            color: 'var(--c-black)',
+                            cursor: 'pointer',
+                            appearance: 'none',
+                            WebkitAppearance: 'none',
+                            backgroundImage: 'linear-gradient(45deg, transparent 50%, var(--c-black) 50%), linear-gradient(135deg, var(--c-black) 50%, transparent 50%)',
+                            backgroundPosition: 'calc(100% - 14px) calc(50% - 3px), calc(100% - 9px) calc(50% - 3px)',
+                            backgroundSize: '5px 5px, 5px 5px',
+                            backgroundRepeat: 'no-repeat',
+                        }}
+                    >
+                        {PAGE_SIZE_OPTIONS.map(size => (
+                            <option key={size} value={size}>{size} per page</option>
+                        ))}
+                    </select>
+                </div>
             </div>
 
             {totalFiltered === 0 ? (
-                <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No submissions match your search.</p>
+                <div style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '6px 6px 0 var(--c-yellow)', padding: '2rem', textAlign: 'center' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', color: '#555', margin: 0 }}>No submissions match your search.</p>
+                </div>
             ) : (
                 <>
                     {/* Articles */}
@@ -326,23 +379,68 @@ export default function EditorialReview({ canReview }) {
                     ))}
 
                     {/* Pagination controls */}
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'center', marginTop: '1rem' }}>
+                    <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginTop: '0.5rem',
+                        background: 'var(--c-white)',
+                        border: '2px solid var(--c-black)',
+                        boxShadow: '6px 6px 0 var(--c-yellow)',
+                        padding: '0.9rem 1.25rem',
+                    }}>
                         <button
                             onClick={() => setPage(p => Math.max(1, p - 1))}
                             disabled={currentPage <= 1}
-                            style={{ padding: '0.5rem 0.9rem', fontFamily: 'var(--font-mono)', border: '2px solid var(--c-black)', background: 'var(--c-white)', cursor: currentPage <= 1 ? 'not-allowed' : 'pointer', opacity: currentPage <= 1 ? 0.5 : 1 }}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                padding: '0.55rem 1rem',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                fontSize: '0.8rem',
+                                border: '2px solid var(--c-black)',
+                                background: currentPage <= 1 ? '#eee' : 'var(--c-white)',
+                                color: 'var(--c-black)',
+                                cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
+                                opacity: currentPage <= 1 ? 0.4 : 1,
+                            }}
                         >
-                            Prev
+                            ← Prev
                         </button>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)' }}>
+                        <span style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            color: 'var(--c-black)',
+                            background: 'var(--c-yellow)',
+                            border: '2px solid var(--c-black)',
+                            padding: '0.5rem 0.9rem',
+                            whiteSpace: 'nowrap',
+                        }}>
                             Page {currentPage} of {totalPages}
                         </span>
                         <button
                             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage >= totalPages}
-                            style={{ padding: '0.5rem 0.9rem', fontFamily: 'var(--font-mono)', border: '2px solid var(--c-black)', background: 'var(--c-white)', cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer', opacity: currentPage >= totalPages ? 0.5 : 1 }}
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                padding: '0.55rem 1rem',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                fontSize: '0.8rem',
+                                border: '2px solid var(--c-black)',
+                                background: currentPage >= totalPages ? '#eee' : 'var(--c-white)',
+                                color: 'var(--c-black)',
+                                cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                                opacity: currentPage >= totalPages ? 0.4 : 1,
+                            }}
                         >
-                            Next
+                            Next →
                         </button>
                     </div>
                 </>
