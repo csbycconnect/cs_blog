@@ -1124,6 +1124,321 @@ Please do not reply directly to this email.
 </html>`;
     }
 
+    else if (templateType === 'author_review_required') {
+      subject = `📝 Author Review Required: "${postTitle || 'Your Article'}"`;
+
+      htmlBody = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: "Courier New", monospace;
+      color: #111827;
+    }
+
+    table {
+      border-spacing: 0;
+    }
+
+    .wrapper {
+      width: 100%;
+      padding: 40px 15px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 40px;
+    }
+
+    .brand {
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #6b7280;
+      text-transform: uppercase;
+      padding-bottom: 20px;
+    }
+
+    .status {
+      font-size: 16px;
+      font-weight: bold;
+      color: #d97706;
+      padding-bottom: 25px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+      padding-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #374151;
+    }
+
+    .article {
+      color: #111827;
+      font-weight: bold;
+    }
+
+    .review-box {
+      margin-top: 25px;
+      padding: 18px;
+      border-left: 4px solid #d97706;
+      background-color: #fffbeb;
+      color: #374151;
+    }
+
+    .review-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #92400e;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .review-message {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #451a03;
+    }
+
+    .action-box {
+      margin-top: 25px;
+      padding: 18px;
+      background-color: #f9fafb;
+      border: 1px dashed #d1d5db;
+    }
+
+    .action-title {
+      font-weight: bold;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      margin-top: 35px;
+      padding-top: 20px;
+      border-top: 1px dashed #d1d5db;
+      font-size: 11px;
+      line-height: 1.7;
+      color: #6b7280;
+    }
+
+    .link {
+      color: #d97706;
+      text-decoration: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+
+      body {
+        background-color: #0b0f14;
+        color: #d1d5db;
+      }
+
+      .container {
+        background-color: #111827;
+        border: 1px solid #1f2937;
+      }
+
+      .brand {
+        color: #9ca3af;
+      }
+
+      .status {
+        color: #fbbf24;
+      }
+
+      .title,
+      .article {
+        color: #ffffff;
+      }
+
+      .content {
+        color: #d1d5db;
+      }
+
+      .review-box {
+        background-color: #29200a;
+        border-left-color: #f59e0b;
+      }
+
+      .review-title {
+        color: #fbbf24;
+      }
+
+      .review-message {
+        color: #fde68a;
+      }
+
+      .action-box {
+        background-color: #1f2937;
+        border-color: #374151;
+      }
+
+      .action-title {
+        color: #ffffff;
+      }
+
+      .footer {
+        color: #9ca3af;
+        border-top-color: #374151;
+      }
+
+      .link {
+        color: #fbbf24;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <table width="100%" class="wrapper">
+    <tr>
+      <td align="center">
+
+        <table class="container" cellpadding="0" cellspacing="0">
+
+          <tr>
+            <td class="brand">
+              THEBYTEBOARD
+            </td>
+          </tr>
+
+          <tr>
+            <td class="status">
+              📝 AUTHOR REVIEW REQUIRED
+            </td>
+          </tr>
+
+          <tr>
+            <td class="title">
+              Your article requires some changes before publication.
+            </td>
+          </tr>
+
+          <tr>
+            <td class="content">
+
+              Hello ${authorName},
+              <br><br>
+
+              Thank you for submitting your article titled
+              <span class="article">"${postTitle}"</span>
+              to TheByteBoard.
+              <br><br>
+
+              Our editorial team has reviewed your submission and has requested
+              some changes before it can proceed to publication.
+              <br><br>
+
+              Your article has now been moved back to your
+              <strong>Drafts</strong>. Please review the feedback provided below,
+              make the necessary changes, and submit the article again for
+              editorial review.
+
+              <br><br>
+
+              ${templateData && templateData.reviewMessage ? `
+                <div class="review-box">
+                  <div class="review-title">
+                    Reviewer Feedback
+                  </div>
+
+                  <div class="review-message">
+                    ${templateData.reviewMessage}
+                  </div>
+                </div>
+              ` : `
+                <div class="review-box">
+                  <div class="review-title">
+                    Reviewer Feedback
+                  </div>
+
+                  <div class="review-message">
+                    Please review your article and make the necessary changes
+                    based on the editorial guidelines before submitting it again.
+                  </div>
+                </div>
+              `}
+
+              <div class="action-box">
+                <div class="action-title">
+                  What you need to do
+                </div>
+
+                Open your article from your drafts, review the feedback,
+                make the requested changes, and submit the article again
+                once you are satisfied with the revisions.
+              </div>
+
+              <br>
+
+              Please note that moving your article to Draft does not mean that
+              your submission has been permanently rejected. You are welcome
+              to revise your article and resubmit it for another editorial review.
+
+              <br><br>
+
+              If you have any questions regarding the feedback or the review
+              process, you may contact our editorial team at
+              <a
+                href="mailto:csbyc.connect@christuniversity.in?subject=Regarding%20Author%20Review"
+                style="color:#d97706; text-decoration:none;"
+              >
+                csbyc.connect@christuniversity.in
+              </a>.
+
+            </td>
+          </tr>
+
+          <tr>
+            <td class="footer">
+
+              This is an automated notification from TheByteBoard Blog System.
+              <br>
+              Please do not reply directly to this email.
+
+              <br><br>
+
+              Visit:
+              <a
+                href="https://www.thebyteboard-csbyc.blog/"
+                class="link"
+              >
+                www.thebyteboard-csbyc.blog
+              </a>
+
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+    }
+
     else {
       return res.status(400).json({ error: "Invalid templateType provided" });
     }

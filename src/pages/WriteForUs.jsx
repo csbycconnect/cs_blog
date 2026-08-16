@@ -243,7 +243,13 @@ export default function WriteForUs() {
                 const res = await fetch(`/api/articles?id=${encodeURIComponent(draftId)}`);
                 if (!res.ok) return;
                 const saved = await res.json();
-                setForm(f => ({ ...f, ...saved }));
+                setForm(f => ({
+                    ...f,
+                    ...saved,
+                    // tags is stored as an array in the DB but the form input expects
+                    // a comma-separated string — normalize on load or .split() below crashes
+                    tags: Array.isArray(saved.tags) ? saved.tags.join(', ') : (saved.tags || ''),
+                }));
                 setEditorHtml(saved.contentHTML || saved.content || '');
             } catch (err) {
                 console.error('Failed to load draft:', err);
