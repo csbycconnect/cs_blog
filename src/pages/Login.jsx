@@ -7,6 +7,7 @@ import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import ShuffleText from '../components/shared/ShuffleText';
 import BackButton from '../components/shared/BackButton';
 import NotificationModal from '../components/shared/NotificationModal';
+import VideoGuideLink from '../components/home/help';
 
 // Cognito user pool policy: min 8 chars, 1 number, 1 lowercase, 1 uppercase, 1 symbol
 const getPasswordChecks = (password) => ({
@@ -373,11 +374,11 @@ export default function Login() {
                                     {!showVerification && (
                                         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#555', textAlign: 'center' }}>
                                             {isRegisterMode ? (
-                                                <>Already have an account? <button type="button" onClick={() => setIsRegisterMode(false)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-black)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Login here</button></>
+                                                <>Already have an account? <button type="button" onClick={() => setIsRegisterMode(false)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-black)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Login here</button> · <VideoGuideLink /></>
                                             ) : (
-                                                <>No account? <button type="button" onClick={() => setIsRegisterMode(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-black)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Register here</button></>
+                                                <>No account? <button type="button" onClick={() => setIsRegisterMode(true)} style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-black)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>Register here</button> · <VideoGuideLink /></>
                                             )}
-                                        </p>
+                                        </p> 
                                     )}
                                 </form>
                             )}
