@@ -91,57 +91,59 @@ export default function FacultyProfile() {
                                 </p>
 
                                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                    {faculty.email && (
-                                        <a href={`mailto:${faculty.email}`} style={{
-                                            padding: '0.75rem 1.5rem',
-                                            backgroundColor: 'transparent',
-                                            color: 'var(--c-white)',
-                                            border: '2px solid var(--c-white)',
-                                            fontFamily: 'var(--font-mono)',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            textTransform: 'uppercase',
-                                            textDecoration: 'none',
-                                            display: 'inline-block'
+                                    <a href={faculty.email ? `mailto:${faculty.email}` : undefined} style={{
+                                        padding: '0.75rem 1.5rem',
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--c-white)',
+                                        border: '2px solid var(--c-white)',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 'bold',
+                                        cursor: faculty.email ? 'pointer' : 'not-allowed',
+                                        opacity: faculty.email ? 1 : 0.4,
+                                        transition: 'all 0.2s',
+                                        textTransform: 'uppercase',
+                                        textDecoration: 'none',
+                                        display: 'inline-block'
+                                    }}
+                                        onMouseEnter={e => {
+                                            if (!faculty.email) return;
+                                            e.target.style.backgroundColor = 'var(--c-white)';
+                                            e.target.style.color = 'var(--c-black)';
                                         }}
-                                            onMouseEnter={e => {
-                                                e.target.style.backgroundColor = 'var(--c-white)';
-                                                e.target.style.color = 'var(--c-black)';
-                                            }}
-                                            onMouseLeave={e => {
-                                                e.target.style.backgroundColor = 'transparent';
-                                                e.target.style.color = 'var(--c-white)';
-                                            }}>
-                                            ✉ Contact
-                                        </a>
-                                    )}
+                                        onMouseLeave={e => {
+                                            if (!faculty.email) return;
+                                            e.target.style.backgroundColor = 'transparent';
+                                            e.target.style.color = 'var(--c-white)';
+                                        }}>
+                                        ✉ Contact
+                                    </a>
 
-                                    {faculty.linkedin && (
-                                        <a href={faculty.linkedin} target="_blank" rel="noopener noreferrer" style={{
-                                            padding: '0.75rem 1.5rem',
-                                            backgroundColor: 'transparent',
-                                            color: 'var(--c-white)',
-                                            border: '2px solid var(--c-yellow)',
-                                            fontFamily: 'var(--font-mono)',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            textTransform: 'uppercase',
-                                            textDecoration: 'none',
-                                            display: 'inline-block'
+                                    <a href={faculty.linkedin ? faculty.linkedin : undefined} target="_blank" rel="noopener noreferrer" style={{
+                                        padding: '0.75rem 1.5rem',
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--c-white)',
+                                        border: '2px solid var(--c-yellow)',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 'bold',
+                                        cursor: faculty.linkedin ? 'pointer' : 'not-allowed',
+                                        opacity: faculty.linkedin ? 1 : 0.4,
+                                        transition: 'all 0.2s',
+                                        textTransform: 'uppercase',
+                                        textDecoration: 'none',
+                                        display: 'inline-block'
+                                    }}
+                                        onMouseEnter={e => {
+                                            if (!faculty.linkedin) return;
+                                            e.target.style.backgroundColor = 'var(--c-yellow)';
+                                            e.target.style.color = 'var(--c-black)';
                                         }}
-                                            onMouseEnter={e => {
-                                                e.target.style.backgroundColor = 'var(--c-yellow)';
-                                                e.target.style.color = 'var(--c-black)';
-                                            }}
-                                            onMouseLeave={e => {
-                                                e.target.style.backgroundColor = 'transparent';
-                                                e.target.style.color = 'var(--c-white)';
-                                            }}>
-                                            LinkedIn ↗
-                                        </a>
-                                    )}
+                                        onMouseLeave={e => {
+                                            if (!faculty.linkedin) return;
+                                            e.target.style.backgroundColor = 'transparent';
+                                            e.target.style.color = 'var(--c-white)';
+                                        }}>
+                                        LinkedIn ↗
+                                    </a>
                                 </div>
                             </div>
                         </div>
