@@ -47,7 +47,7 @@ const BrutalistMarquee = () => {
     );
 };
 
-import facultyDataRaw from '../data/faculty.json';
+import facultyDataRaw from '../data/faculty_updated.json';
 
 // Department-level contact used by the CTA section.
 // Update this if the department has a dedicated admin inbox.
