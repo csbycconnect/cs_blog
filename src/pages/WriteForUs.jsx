@@ -194,12 +194,12 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
             <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
                 <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65, width: '100%' }} />
             </Field>
-            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: wordCount > 1000 ? '#c53030' : '#555', fontWeight: wordCount > 1000 ? 700 : 400, marginTop: '0.75rem', marginBottom: wordCount > 1000 ? '0.35rem' : '2rem', paddingBottom: wordCount > 1000 ? 0 : '2rem', borderBottom: wordCount > 1000 ? 'none' : '2px solid #eee' }}>
-                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read{wordCount > 1000 ? ' — exceeds 1000 word maximum' : ''}
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: wordCount > 3000 ? '#c53030' : '#555', fontWeight: wordCount > 1000 ? 700 : 400, marginTop: '0.75rem', marginBottom: wordCount > 3000 ? '0.35rem' : '2rem', paddingBottom: wordCount > 3000 ? 0 : '2rem', borderBottom: wordCount > 3000 ? 'none' : '2px solid #eee' }}>
+                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read{wordCount > 3000 ? ' — exceeds 800-3000 word maximum' : ''}
             </div>
-            {wordCount > 1000 && (
+            {wordCount > 3000 && (
                 <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: '#c53030', fontWeight: 700, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                    ⚠ Trim {wordCount - 1000} word{wordCount - 3000 === 1 ? '' : 's'} from the article body before submitting.
+                    ⚠ Trim {wordCount - 3000} word{wordCount - 3000 === 1 ? '' : 's'} from the article body before submitting.
                 </div>
             )}
         </>
