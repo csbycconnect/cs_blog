@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authHeaders } from '../../../lib/authToken';
 
 const ROLES = [
     { value: 'dev', label: 'Dev Team',                       display: 'Development Team' },
@@ -38,7 +39,7 @@ export default function InterviewMail() {
         try {
             const res = await fetch('/api/send-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
                     templateType: 'interview_selection',
                     toEmail: form.email.trim(),

@@ -1,6 +1,7 @@
 // api/users/profile.js
 import { dynamoDb } from "../lib/aws/dynamodb.js"; // ✅ Corrected path to climb out of api/users/
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { requireAuth, isSelfOrAdmin } from "../lib/auth/verifyAuth.js";
 
 export default async function handler(req, res) {
     const tableName = process.env.DYNAMODB_USERS_TABLE_NAME || "bb_users";
@@ -38,6 +39,12 @@ export default async function handler(req, res) {
         const { sub, bio } = req.body;
         if (!sub) {
             return res.status(400).json({ error: "Missing user sub ID" });
+        }
+
+        const caller = await requireAuth(req, res);
+        if (!caller) return;
+        if (!isSelfOrAdmin(caller, sub)) {
+            return res.status(403).json({ error: "You can only edit your own profile" });
         }
 
         try {

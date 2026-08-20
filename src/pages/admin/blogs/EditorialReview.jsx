@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../../../services/articles';
+import { authHeaders } from '../../../lib/authToken';
 
 const PAGE_SIZE_OPTIONS = [5, 10];
 
@@ -107,7 +108,7 @@ export default function EditorialReview({ canReview }) {
             // Notify the author by email
             const res = await fetch('/api/send-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
                     templateType: 'author_review_required',
                     toEmail,

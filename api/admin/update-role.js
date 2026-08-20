@@ -1,14 +1,19 @@
 // api/admin/update-role.js
 import { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { requireAuth, isAdmin } from "../lib/auth/verifyAuth.js";
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", true);
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Origin", process.env.APP_ORIGIN || "*");
     res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+    const caller = await requireAuth(req, res);
+    if (!caller) return;
+    if (!isAdmin(caller)) return res.status(403).json({ error: "Admin access required" });
 
     try {
         const { username, targetRole } = req.body;

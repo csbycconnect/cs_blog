@@ -11,10 +11,11 @@ import {
     incrementViews
 } from "../lib/db/articles.js";
 import { TABLES } from "../lib/constants/tables.js";
+import { requireAuth, isAdmin, isSelfOrAdmin } from "../lib/auth/verifyAuth.js";
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", true);
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Origin", process.env.APP_ORIGIN || "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.setHeader(
         "Access-Control-Allow-Headers",
@@ -49,6 +50,9 @@ export default async function handler(req, res) {
 
             // Submit Draft Dispatches (Write For Us workflow)
             if (action === "create") {
+                const caller = await requireAuth(req, res);
+                if (!caller) return;
+
                 const uniqueShortId = Math.random().toString(36).substring(2, 11).toUpperCase();
                 // reuse existing id when converting a saved draft into a real submission
                 const articleId = body.id || `ART_${uniqueShortId}`;
@@ -106,6 +110,9 @@ export default async function handler(req, res) {
 
             // Save Draft (Write For Us workflow) — persists to bb_articles with status "draft"
             if (action === "draft") {
+                const caller = await requireAuth(req, res);
+                if (!caller) return;
+
                 const articleId = body.id || `ART_${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
                 const timestamp = new Date().toISOString();
                 const rawContent = body.content || body.contentHTML || '';
@@ -155,6 +162,10 @@ export default async function handler(req, res) {
 
             // ─── ACTION 1: QUICK STATUS CHANGE WITH COGNITO BROADCASTS ───
             if (action === "status") {
+                const caller = await requireAuth(req, res);
+                if (!caller) return;
+                if (!isAdmin(caller)) return res.status(403).json({ error: "Admin access required" });
+
                 if (!body.id || !body.status) return res.status(400).json({ error: "Missing required parameters id or status" });
 
                 const partitionKey = body.id.startsWith("ARTICLE#") ? body.id : (body.id.startsWith("ART#") ? body.id.replace("ART#", "ARTICLE#") : `ARTICLE#${body.id}`);
@@ -194,7 +205,10 @@ export default async function handler(req, res) {
                         try {
                             await fetch(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}/api/send-email`, {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-internal-api-key': process.env.INTERNAL_API_SECRET || ''
+                                },
                                 body: JSON.stringify({
                                     templateType: authorTemplate,
                                     toEmail: recipientEmail,
@@ -216,6 +230,19 @@ export default async function handler(req, res) {
             // ─── ACTION 2: ARTICLE REMOVAL ENGINE ───
             if (action === "delete") {
                 if (!body.id) return res.status(400).json({ error: "Missing required parameter id" });
+
+                const caller = await requireAuth(req, res);
+                if (!caller) return;
+
+                if (!isAdmin(caller)) {
+                    // Non-admins may only delete their own article/draft.
+                    const existing = await getArticleById(body.id).catch(() => null);
+                    const ownerSub = existing?.authorSub || existing?.authorId;
+                    if (!existing || !isSelfOrAdmin(caller, ownerSub)) {
+                        return res.status(403).json({ error: "You can only delete your own submissions" });
+                    }
+                }
+
                 const partitionKey = body.id.startsWith("ARTICLE#") ? body.id : (body.id.startsWith("ART#") ? body.id.replace("ART#", "ARTICLE#") : `ARTICLE#${body.id}`);
 
                 await dynamoDb.send(new DeleteCommand({
@@ -231,6 +258,10 @@ export default async function handler(req, res) {
 
             // ─── ACTION 3: ADMINISTRATIVE STATUS SELECTION FOR MANAGEMENT PANEL ───
             if (action === "updateStatus") {
+                const caller = await requireAuth(req, res);
+                if (!caller) return;
+                if (!isAdmin(caller)) return res.status(403).json({ error: "Admin access required" });
+
                 const { id, status, rejectionReason } = body;
                 if (!id || !status) return res.status(400).json({ error: "Missing parameter elements" });
 
@@ -325,7 +356,10 @@ export default async function handler(req, res) {
                     try {
                         const emailRes = await fetch(emailServiceUrl, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-internal-api-key': process.env.INTERNAL_API_SECRET || ''
+                            },
                             body: JSON.stringify({
                                 templateType: targetTemplate,
                                 toEmail: recipientEmail,

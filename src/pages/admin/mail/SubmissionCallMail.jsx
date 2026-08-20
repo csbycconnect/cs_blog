@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { authHeaders } from '../../../lib/authToken';
 
 const inputStyle = {
     padding: '0.75rem', border: '2px solid var(--c-black)',
@@ -71,7 +72,7 @@ export default function SubmissionCallMail() {
         try {
             const res = await fetch('/api/send-email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
                     templateType: 'submission_call',
                     toEmail: emailList.length === 1 ? emailList[0] : emailList,

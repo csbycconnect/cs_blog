@@ -9,6 +9,7 @@ import Underline from '@tiptap/extension-underline';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../services/articles';
 import { EmailService } from '../services/email';
+import { authHeaders } from '../lib/authToken';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import ShuffleText from '../components/shared/ShuffleText';
@@ -363,7 +364,7 @@ export default function WriteForUs() {
             const cleanHtml = DOMPurify.sanitize(editorHtml);
             const res = await fetch('/api/articles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({
                     action: 'draft',
                     id: draftId || undefined,

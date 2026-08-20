@@ -1,5 +1,6 @@
 // api/send-email/index.js
 import nodemailer from 'nodemailer';
+import { requireAuth, isInternalRequest } from '../lib/auth/verifyAuth.js';
 
 // Increase body size limit so base64-encoded poster images can be sent in the JSON body
 export const config = {
@@ -13,9 +14,9 @@ export const config = {
 export default async function handler(req, res) {
   // Enable CORS for frontend communication
   res.setHeader("Access-Control-Allow-Credentials", true);
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", process.env.APP_ORIGIN || "*");
   res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -23,6 +24,15 @@ export default async function handler(req, res) {
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // Allow trusted server-to-server calls (e.g. api/articles/index.js
+  // notifying an author after a status change) via a shared secret;
+  // everything else must be a signed-in user, to stop this from being
+  // used as an open mail relay.
+  if (!isInternalRequest(req)) {
+    const caller = await requireAuth(req, res);
+    if (!caller) return;
   }
 
   try {

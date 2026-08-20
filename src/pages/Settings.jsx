@@ -6,6 +6,7 @@ import AnimateOnScroll from '../components/shared/AnimateOnScroll';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
 import { Settings as SettingsIcon, Bell, Mail, Monitor, Shield } from 'lucide-react';
+import { authHeaders } from '../lib/authToken';
 
 export default function Settings() {
     const { user, updatePreferences } = useAuth();
@@ -46,14 +47,16 @@ export default function Settings() {
             // 2. If ByteBoard Newsletter was flipped to TRUE, fire the instant Welcome Wire!
             if (settingKey === 'emailNewsletter' && nextPrefs.emailNewsletter === true) {
                 // Fire-and-forget background fetch so the UI stays snappy
-                fetch('/api/send-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        templateType: 'newsletter_welcome',
-                        toEmail: user.email
+                authHeaders({ 'Content-Type': 'application/json' }).then(headers =>
+                    fetch('/api/send-email', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            templateType: 'newsletter_welcome',
+                            toEmail: user.email
+                        })
                     })
-                }).catch(err => console.error("Background mail engine lag:", err));
+                ).catch(err => console.error("Background mail engine lag:", err));
             }
         } catch (error) {
             alert("Failed to sync system preferences to your profile cloud.");

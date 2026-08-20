@@ -1,4 +1,6 @@
 // src/services/articles.jsx
+import { authHeaders } from '../lib/authToken';
+
 const API_BASE = "/api/articles";
 
 export const ArticlesService = {
@@ -84,7 +86,7 @@ export const ArticlesService = {
 
         const res = await fetch(API_BASE, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: await authHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify(body)
         });
 
@@ -100,7 +102,7 @@ export const ArticlesService = {
 
         const res = await fetch(API_BASE, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: await authHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify(body)
         });
         if (!res.ok) throw new Error("Failed to update execution status metadata");
@@ -111,7 +113,7 @@ export const ArticlesService = {
     async deleteArticle(id) {
         const res = await fetch(API_BASE, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: await authHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({ action: "delete", id })
         });
         if (!res.ok) throw new Error("Database deletion script tracking failed.");

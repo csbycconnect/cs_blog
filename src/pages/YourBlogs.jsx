@@ -5,6 +5,7 @@ import { ArticlesService } from '../services/articles';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
+import { authHeaders } from '../lib/authToken';
 
 // helper to remove HTML tags when generating previews
 const stripHtml = (html = '') => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -91,7 +92,7 @@ export default function YourBlogs() {
         try {
             await fetch('/api/articles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: await authHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ action: 'delete', id: draftItemId })
             });
             setPosts(prev => prev.filter(p => p.id !== draftItemId));

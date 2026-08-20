@@ -20,6 +20,7 @@
         "@tiptap/starter-kit": "^3.20.1",
         "amazon-cognito-identity-js": "^6.3.16",
         "animejs": "^3.2.2",
+        "aws-jwt-verify": "^5.2.1",
         "dompurify": "^3.3.2",
         "gsap": "^3.14.2",
         "lucide-react": "^0.576.0",

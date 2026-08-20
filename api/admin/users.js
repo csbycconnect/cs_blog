@@ -1,14 +1,19 @@
 // api/admin/users.js
 import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { requireAuth, isAdmin } from "../lib/auth/verifyAuth.js";
 
 export default async function handler(req, res) {
     res.setHeader("Access-Control-Allow-Credentials", true);
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Origin", process.env.APP_ORIGIN || "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+
+    const caller = await requireAuth(req, res);
+    if (!caller) return;
+    if (!isAdmin(caller)) return res.status(403).json({ error: "Admin access required" });
 
     try {
         const cognitoClient = new CognitoIdentityProviderClient({ 
@@ -38,8 +43,9 @@ export default async function handler(req, res) {
             };
         });
 
-        // Cache the response on Vercel's Edge CDN network for extra safety
-        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
+        // Never let a shared/CDN cache serve one admin's directory response to
+        // a different caller — this now varies per bearer token.
+        res.setHeader('Cache-Control', 'private, no-store');
         return res.status(200).json(formattedUsers);
 
     } catch (error) {

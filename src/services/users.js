@@ -1,4 +1,6 @@
 // src/services/user.jsx
+import { authHeaders } from '../lib/authToken';
+
 const API_BASE = "/api/users/profile"; // ✅ Exact match for your folder route layout
 
 export const UserService = {
@@ -13,7 +15,7 @@ export const UserService = {
         if (!sub) return null;
         const res = await fetch(API_BASE, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: await authHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({ sub, bio }),
         });
         if (!res.ok) throw new Error("Failed to update profile bio string");
@@ -33,7 +35,7 @@ export const UserService = {
     getAllUsers: async () => {
         const response = await fetch('/api/admin/users', {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: await authHeaders({ 'Content-Type': 'application/json' })
         });
         if (!response.ok) throw new Error('Failed to load user records from the network.');
         return response.json();
@@ -53,7 +55,7 @@ export const UserService = {
     updateUserRole: async (username, targetRole) => {
         const response = await fetch('/api/admin/update-role', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await authHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({ username, targetRole })
         });
         if (!response.ok) throw new Error('Security clearance override authorization denied.');
