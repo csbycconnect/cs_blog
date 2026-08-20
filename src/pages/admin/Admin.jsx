@@ -12,6 +12,7 @@ import ManageBlogs from './blogs/ManageBlogs';
 import EventsDashboard from './events/EventsDashboard';
 import UserManagement from './users/UserManagement';
 import InterviewMail from './interviews/Interviewmail';
+import SubmissionCallMail from './mail/SubmissionCallMail'
 
 const TABS = [
     { id: 'review', label: 'Editorial Review' },
@@ -20,6 +21,7 @@ const TABS = [
     { id: 'events', label: 'Record / Event Entry' },
     { id: 'users', label: 'User Directory' },
     { id: 'interview_mail', label: 'Interview Mail' },
+    { id: 'SubmissionCallMail', label: 'Submission Call Mail'},
 ];
 
 export default function Admin() {
@@ -96,6 +98,7 @@ export default function Admin() {
                         {activeTab === 'events' && <EventsDashboard />}
                         {activeTab === 'users' && <UserManagement isAL0={isAL0} />}
                         {activeTab === 'interview_mail' && <InterviewMail />}
+                        {activeTab == 'SubmissionCallMail' && <SubmissionCallMail isAL0={isAL0} />}
                     </div>
 
                 </AnimateOnScroll>

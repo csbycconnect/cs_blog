@@ -90,9 +90,24 @@ export default function Account() {
                                         }}>
                                             <img src={user.avatar} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                         </div>
-                                        <div>
+
+                                        {/* minWidth: 0 lets this flex child actually shrink instead of forcing overflow */}
+                                        <div style={{ minWidth: 0, flex: 1 }}>
                                             <h2 className="serif-heading" style={{ fontSize: '2rem', color: 'var(--c-black)', lineHeight: 1.1 }}>{user.name}</h2>
-                                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.95rem', color: '#555', marginTop: '0.25rem' }}>{user.email}</p>
+                                            <p
+                                                title={user.email}
+                                                style={{
+                                                    fontFamily: 'var(--font-mono)',
+                                                    fontSize: '0.95rem',
+                                                    color: '#555',
+                                                    marginTop: '0.25rem',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                {user.email}
+                                            </p>
 
                                             {/* Role Badge */}
                                             <div style={{

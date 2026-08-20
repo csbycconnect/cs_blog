@@ -22,8 +22,8 @@ export default function Navbar() {
     }, []);
 
     // Close on navigation
-    useEffect(() => { 
-        setDropdownOpen(false); 
+    useEffect(() => {
+        setDropdownOpen(false);
         setMobileMenuOpen(false);
     }, [location.pathname]);
 
@@ -95,11 +95,23 @@ export default function Navbar() {
                                             alt={user.name}
                                             style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid #f7d000', flexShrink: 0 }}
                                         />
-                                        <div>
+                                        <div style={{ minWidth: 0, flex: 1 }}>
                                             <div style={{ fontFamily: 'Space Mono, monospace', fontWeight: 700, fontSize: '0.82rem', color: '#f7d000', lineHeight: 1.2 }}>
                                                 {user.name}
                                             </div>
-                                            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.3, marginTop: 2 }}>
+                                            <div
+                                                title={user.email}
+                                                style={{
+                                                    fontFamily: 'Space Mono, monospace',
+                                                    fontSize: '0.62rem',
+                                                    color: 'rgba(255,255,255,0.5)',
+                                                    lineHeight: 1.3,
+                                                    marginTop: 2,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
                                                 {user.email}
                                             </div>
                                             {user.role && user.role !== 'student' && (
@@ -215,7 +227,7 @@ export default function Navbar() {
                     )}
 
                     {/* Mobile Hamburger Toggle */}
-                    <button 
+                    <button
                         className="mobile-menu-btn"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         style={{
@@ -245,7 +257,7 @@ export default function Navbar() {
                     position: 'absolute', top: '100%', left: 0, width: '100%',
                     background: 'var(--c-white)', borderBottom: '2px solid var(--c-black)',
                     borderLeft: '2px solid var(--c-black)', borderRight: '2px solid var(--c-black)',
-                    display: 'flex', flexDirection: 'column', 
+                    display: 'flex', flexDirection: 'column',
                     zIndex: 9998,
                     animation: 'fadeSlideDown 0.15s ease'
                 }}>

@@ -1,6 +1,15 @@
 // api/send-email/index.js
 import nodemailer from 'nodemailer';
 
+// Increase body size limit so base64-encoded poster images can be sent in the JSON body
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
 export default async function handler(req, res) {
   // Enable CORS for frontend communication
   res.setHeader("Access-Control-Allow-Credentials", true);
@@ -17,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { templateType, toEmail, templateData } = req.body;
+    const { templateType, toEmail, templateData, attachment } = req.body;
 
     if (!toEmail || !templateType) {
       return res.status(400).json({ error: "Missing required parameters: toEmail or templateType" });
@@ -603,6 +612,833 @@ Please do not reply directly to this email.
 </html>`;
     }
 
+    // ==========================================
+    // TEMPLATE 5: Call for Blog Submissions
+    // ==========================================
+    else if (templateType === 'submission_call') {
+
+      const className = templateData?.className || 'Your Class';
+      const endDate = templateData?.endDate || 'the submission deadline';
+
+      subject = `TheByteBoard | Call for Submissions — ${className}`;
+
+      htmlBody = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: "Courier New", monospace;
+      color: #111827;
+    }
+
+    table {
+      border-spacing: 0;
+    }
+
+    .wrapper {
+      width: 100%;
+      padding: 35px 15px;
+    }
+
+    .container {
+      max-width: 620px;
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+
+    .header {
+      padding: 32px 38px 20px;
+    }
+
+    .brand {
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      color: #080e3f;
+      text-transform: uppercase;
+    }
+
+    .department {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #6b7280;
+      letter-spacing: 0.5px;
+    }
+
+    .hero {
+      padding: 25px 38px 35px;
+      background-color: #f5f1e7;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 2.5px;
+      color: #6b7280;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      margin: 12px 0 0;
+      font-family: Arial, sans-serif;
+      font-size: 34px;
+      line-height: 1.05;
+      font-weight: 900;
+      color: #080e3f;
+    }
+
+    .hero-title span {
+      display: block;
+    }
+
+    .class-tag {
+      display: inline-block;
+      margin-top: 18px;
+      padding: 8px 12px;
+      background-color: #080e3f;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .content {
+      padding: 35px 38px;
+      font-size: 14px;
+      line-height: 1.75;
+      color: #374151;
+    }
+
+    .content p {
+      margin: 0 0 18px;
+    }
+
+    .highlight {
+      padding: 18px 20px;
+      margin: 25px 0;
+      background-color: #f5f1e7;
+      border-left: 4px solid #080e3f;
+      color: #111827;
+    }
+
+    .highlight strong {
+      color: #080e3f;
+    }
+
+    .cta-wrapper {
+      margin: 25px 0 30px;
+      text-align: center;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 15px 24px;
+      background-color: #080e3f;
+      color: #ffffff !important;
+      text-decoration: none;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      border: 1px solid #080e3f;
+    }
+
+    .cta-button:hover {
+      background-color: #11184d !important;
+    }
+
+    .cta-button span {
+      margin-left: 10px;
+      font-size: 16px;
+    }
+
+    .section-title {
+      margin: 30px 0 12px;
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #080e3f;
+    }
+
+    .rules {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rules li {
+      padding: 10px 0 10px 22px;
+      border-bottom: 1px solid #e5e7eb;
+      position: relative;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .rules li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: #080e3f;
+      font-weight: bold;
+    }
+
+    .deadline {
+      margin: 28px 0;
+      padding: 20px;
+      background-color: #080e3f;
+      color: #ffffff;
+    }
+
+    .deadline-label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.65;
+      margin-bottom: 6px;
+    }
+
+    .deadline-date {
+      font-family: Arial, sans-serif;
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .process {
+      margin-top: 10px;
+      padding: 18px 20px;
+      background-color: #f8f8f8;
+      border: 1px solid #e5e7eb;
+    }
+
+    .process-step {
+      padding: 7px 0;
+      font-size: 13px;
+    }
+
+    .step-number {
+      display: inline-block;
+      width: 25px;
+      font-weight: bold;
+      color: #080e3f;
+    }
+
+    .attachment-note {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #f3f4f6;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #4b5563;
+    }
+
+    .footer {
+      padding: 25px 38px;
+      border-top: 1px dashed #d1d5db;
+      font-size: 11px;
+      line-height: 1.7;
+      color: #6b7280;
+    }
+
+    .footer strong {
+      color: #374151;
+    }
+
+    .footer a {
+      color: #080e3f;
+      text-decoration: none;
+    }
+
+    @media only screen and (max-width: 600px) {
+
+      .header,
+      .hero,
+      .content,
+      .footer {
+        padding-left: 22px;
+        padding-right: 22px;
+      }
+
+      .hero-title {
+        font-size: 29px;
+      }
+
+      .deadline-date {
+        font-size: 22px;
+      }
+
+      .cta-button {
+        display: block;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<table width="100%" class="wrapper">
+  <tr>
+    <td align="center">
+
+      <table class="container" cellpadding="0" cellspacing="0">
+
+        <tr>
+          <td class="header">
+
+            <div class="brand">
+              THEBYTEBOARD
+            </div>
+
+            <div class="department">
+              Department of Computer Science · CHRIST (Deemed to be University)
+            </div>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td class="hero">
+
+            <div class="eyebrow">
+              CALL FOR SUBMISSIONS
+            </div>
+
+            <div class="hero-title">
+              Your ideas
+              <span>deserve to be read.</span>
+            </div>
+
+            <div class="class-tag">
+              ${className}
+            </div>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td class="content">
+
+            <p>
+              Hello,
+            </p>
+
+            <p>
+              TheByteBoard is inviting students from
+              <strong>${className}</strong>
+              to submit original articles for consideration and publication
+              on the official Department of Computer Science blog.
+            </p>
+
+            <p>
+              If you have something interesting to say, something you've
+              learned, something you've built, or an idea worth sharing —
+              this is your opportunity to put it into words.
+            </p>
+
+            <div class="cta-wrapper">
+
+              <a
+                href="https://www.thebyteboard-csbyc.blog/write-for-us"
+                class="cta-button"
+                target="_blank"
+              >
+                WRITE FOR US
+                <span>→</span>
+              </a>
+
+            </div>
+
+            <div class="deadline">
+
+              <span class="deadline-label">
+                Submission Deadline
+              </span>
+
+              <div class="deadline-date">
+                ${endDate}
+              </div>
+
+            </div>
+
+            <div class="section-title">
+              Submission Guidelines
+            </div>
+
+            <ul class="rules">
+
+              <li>
+                Articles should be between
+                <strong>800–3000 words</strong>.
+              </li>
+
+              <li>
+                Submit
+                <strong>original, unpublished content only</strong>.
+              </li>
+
+              <li>
+                Technical articles must include relevant
+                <strong>code or practical examples</strong>.
+              </li>
+
+              <li>
+                Images must be
+                <strong>copyright-free or your own</strong>.
+              </li>
+
+              <li>
+                Images must be hosted safely using a suitable hosting
+                service and provided through a direct URL.
+                Do not embed images as Base64 data.
+              </li>
+
+              <li>
+                Links promoting illegal websites or
+                <strong>malicious content are strictly prohibited</strong>.
+              </li>
+
+              <li>
+                Include a
+                <strong>compelling headline and meta description</strong>.
+              </li>
+
+              <li>
+                Follow the
+                <strong>TheByteBoard style guide</strong>
+                for consistent formatting.
+              </li>
+
+            </ul>
+
+            <div class="section-title">
+              What Happens After You Submit?
+            </div>
+
+            <div class="process">
+
+              <div class="process-step">
+                <span class="step-number">01</span>
+                Submit your article through the submission form.
+              </div>
+
+              <div class="process-step">
+                <span class="step-number">02</span>
+                Editorial review takes approximately
+                <strong>3–5 business days</strong>.
+              </div>
+
+              <div class="process-step">
+                <span class="step-number">03</span>
+                Receive a feedback or approval email.
+              </div>
+
+              <div class="process-step">
+                <span class="step-number">04</span>
+                Make revisions if requested by the editorial team.
+              </div>
+
+              <div class="process-step">
+                <span class="step-number">05</span>
+                Approved articles are published on TheByteBoard.
+              </div>
+
+            </div>
+
+            <div class="section-title">
+              Before You Submit
+            </div>
+
+            <p>
+              Your information under <strong>Author Information</strong>
+              is automatically taken from your profile. If you need to
+              update your details, please do so through your
+              <strong>Account Settings</strong> before submitting.
+            </p>
+
+            <div class="attachment-note">
+
+              <strong>Attached to this email:</strong><br>
+
+              Please refer to the attached poster for the submission
+              announcement and additional visual information.
+
+            </div>
+
+            <p style="margin-top:28px;">
+
+              We look forward to reading your ideas and seeing your work
+              become part of TheByteBoard.
+
+            </p>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td class="footer">
+
+            <strong>THEBYTEBOARD</strong><br>
+
+            The official editorial board of the Department of Computer Science,
+            CHRIST (Deemed to be University).
+
+            <br><br>
+
+            <a href="https://www.thebyteboard-csbyc.blog/">
+              www.thebyteboard-csbyc.blog
+            </a>
+
+            <br>
+
+            <a href="mailto:csbyc.connect@christuniversity.in">
+              csbyc.connect@christuniversity.in
+            </a>
+
+            <br><br>
+
+            This is an official communication from TheByteBoard.
+            Please do not reply directly to this email.
+
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>`;
+    }
+
+    else if (templateType === 'author_review_required') {
+      subject = `📝 Author Review Required: "${postTitle || 'Your Article'}"`;
+
+      htmlBody = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f4f6;
+      font-family: "Courier New", monospace;
+      color: #111827;
+    }
+
+    table {
+      border-spacing: 0;
+    }
+
+    .wrapper {
+      width: 100%;
+      padding: 40px 15px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 40px;
+    }
+
+    .brand {
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #6b7280;
+      text-transform: uppercase;
+      padding-bottom: 20px;
+    }
+
+    .status {
+      font-size: 16px;
+      font-weight: bold;
+      color: #d97706;
+      padding-bottom: 25px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+      padding-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #374151;
+    }
+
+    .article {
+      color: #111827;
+      font-weight: bold;
+    }
+
+    .review-box {
+      margin-top: 25px;
+      padding: 18px;
+      border-left: 4px solid #d97706;
+      background-color: #fffbeb;
+      color: #374151;
+    }
+
+    .review-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #92400e;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .review-message {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #451a03;
+    }
+
+    .action-box {
+      margin-top: 25px;
+      padding: 18px;
+      background-color: #f9fafb;
+      border: 1px dashed #d1d5db;
+    }
+
+    .action-title {
+      font-weight: bold;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      margin-top: 35px;
+      padding-top: 20px;
+      border-top: 1px dashed #d1d5db;
+      font-size: 11px;
+      line-height: 1.7;
+      color: #6b7280;
+    }
+
+    .link {
+      color: #d97706;
+      text-decoration: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+
+      body {
+        background-color: #0b0f14;
+        color: #d1d5db;
+      }
+
+      .container {
+        background-color: #111827;
+        border: 1px solid #1f2937;
+      }
+
+      .brand {
+        color: #9ca3af;
+      }
+
+      .status {
+        color: #fbbf24;
+      }
+
+      .title,
+      .article {
+        color: #ffffff;
+      }
+
+      .content {
+        color: #d1d5db;
+      }
+
+      .review-box {
+        background-color: #29200a;
+        border-left-color: #f59e0b;
+      }
+
+      .review-title {
+        color: #fbbf24;
+      }
+
+      .review-message {
+        color: #fde68a;
+      }
+
+      .action-box {
+        background-color: #1f2937;
+        border-color: #374151;
+      }
+
+      .action-title {
+        color: #ffffff;
+      }
+
+      .footer {
+        color: #9ca3af;
+        border-top-color: #374151;
+      }
+
+      .link {
+        color: #fbbf24;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <table width="100%" class="wrapper">
+    <tr>
+      <td align="center">
+
+        <table class="container" cellpadding="0" cellspacing="0">
+
+          <tr>
+            <td class="brand">
+              THEBYTEBOARD
+            </td>
+          </tr>
+
+          <tr>
+            <td class="status">
+              📝 AUTHOR REVIEW REQUIRED
+            </td>
+          </tr>
+
+          <tr>
+            <td class="title">
+              Your article requires some changes before publication.
+            </td>
+          </tr>
+
+          <tr>
+            <td class="content">
+
+              Hello ${authorName},
+              <br><br>
+
+              Thank you for submitting your article titled
+              <span class="article">"${postTitle}"</span>
+              to TheByteBoard.
+              <br><br>
+
+              Our editorial team has reviewed your submission and has requested
+              some changes before it can proceed to publication.
+              <br><br>
+
+              Your article has now been moved back to your
+              <strong>Drafts</strong>. Please review the feedback provided below,
+              make the necessary changes, and submit the article again for
+              editorial review.
+
+              <br><br>
+
+              ${templateData && templateData.reviewMessage ? `
+                <div class="review-box">
+                  <div class="review-title">
+                    Reviewer Feedback
+                  </div>
+
+                  <div class="review-message">
+                    ${templateData.reviewMessage}
+                  </div>
+                </div>
+              ` : `
+                <div class="review-box">
+                  <div class="review-title">
+                    Reviewer Feedback
+                  </div>
+
+                  <div class="review-message">
+                    Please review your article and make the necessary changes
+                    based on the editorial guidelines before submitting it again.
+                  </div>
+                </div>
+              `}
+
+              <div class="action-box">
+                <div class="action-title">
+                  What you need to do
+                </div>
+
+                Open your article from your drafts, review the feedback,
+                make the requested changes, and submit the article again
+                once you are satisfied with the revisions.
+              </div>
+
+              <br>
+
+              Please note that moving your article to Draft does not mean that
+              your submission has been permanently rejected. You are welcome
+              to revise your article and resubmit it for another editorial review.
+
+              <br><br>
+
+              If you have any questions regarding the feedback or the review
+              process, you may contact our editorial team at
+              <a
+                href="mailto:csbyc.connect@christuniversity.in?subject=Regarding%20Author%20Review"
+                style="color:#d97706; text-decoration:none;"
+              >
+                csbyc.connect@christuniversity.in
+              </a>.
+
+            </td>
+          </tr>
+
+          <tr>
+            <td class="footer">
+
+              This is an automated notification from TheByteBoard Blog System.
+              <br>
+              Please do not reply directly to this email.
+
+              <br><br>
+
+              Visit:
+              <a
+                href="https://www.thebyteboard-csbyc.blog/"
+                class="link"
+              >
+                www.thebyteboard-csbyc.blog
+              </a>
+
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+    }
+
     else {
       return res.status(400).json({ error: "Invalid templateType provided" });
     }
@@ -613,6 +1449,22 @@ Please do not reply directly to this email.
       subject: subject,
       html: htmlBody
     };
+
+    // Optional poster/file attachment sent from the frontend as base64
+    // attachment: { filename: string, contentBase64: string (may include data: prefix), contentType?: string }
+    if (attachment?.contentBase64 && attachment?.filename) {
+      const rawBase64 = attachment.contentBase64.includes(',')
+        ? attachment.contentBase64.split(',').pop()
+        : attachment.contentBase64;
+
+      mailOptions.attachments = [
+        {
+          filename: attachment.filename,
+          content: Buffer.from(rawBase64, 'base64'),
+          contentType: attachment.contentType || undefined,
+        },
+      ];
+    }
 
     if (Array.isArray(toEmail)) {
       mailOptions.to = smtpUser || process.env.NODE_SERVER_EMAIL_USER || 'no-reply@example.com';
