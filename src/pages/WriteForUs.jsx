@@ -251,6 +251,8 @@ export default function WriteForUs() {
                 setForm(f => ({
                     ...f,
                     ...saved,
+                    // the backend persists the excerpt under "subtitle", not "excerpt" — map it back
+                    excerpt: saved.excerpt || saved.subtitle || '',
                     // tags is stored as an array in the DB but the form input expects
                     // a comma-separated string — normalize on load or .split() below crashes
                     tags: Array.isArray(saved.tags) ? saved.tags.join(', ') : (saved.tags || ''),
