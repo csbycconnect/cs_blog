@@ -47,7 +47,10 @@ const BrutalistMarquee = () => {
     );
 };
 
-import facultyDataRaw from '../data/faculty.json';
+import facultyDataRaw from '../data/faculty_updated.json';
+
+const DEPT_EMAIL = 'csbyc.connect@christuniversity.in';
+const DEPT_LINKEDIN = 'www.linkedin.com/in/computer-science-yeshwanthpur-cs-byc-christ-university-75b423371';
 
 export default function CSConnect() {
     const brutalistColors = ['var(--c-yellow)', 'var(--c-black)'];
@@ -65,7 +68,10 @@ export default function CSConnect() {
             handle: "@christ.cs",
             borderColor: brutalistColors[index % brutalistColors.length],
             gradient: "linear-gradient(145deg, var(--c-white), #eee)",
-            url: `/cs-connect/${slug}`
+            url: `/cs-connect/${slug}`,
+            bio: faculty.bio,
+            email: faculty.email,
+            linkedin: faculty.linkedin
         };
     });
 
@@ -173,20 +179,24 @@ export default function CSConnect() {
                                 <ExpandableText mobileThreshold={90}>Are you an external professor, researcher, or industry professional looking to collaborate with the CHRIST CS Department? Reach out to our administrative office to explore partnership opportunities.</ExpandableText>
                             </p>
 
-                            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                                <button style={{
-                                    padding: '1rem 2rem',
-                                    backgroundColor: 'var(--c-yellow)',
-                                    color: 'var(--c-black)',
-                                    border: '2px solid var(--c-white)',
-                                    fontWeight: 'bold',
-                                    fontSize: '1rem',
-                                    textTransform: 'uppercase',
-                                    cursor: 'pointer',
-                                    boxShadow: activeHoverIndex === 1 ? '8px 8px 0 var(--c-white)' : '4px 4px 0 var(--c-white)',
-                                    transform: activeHoverIndex === 1 ? 'translate(-4px, -4px)' : 'translate(0, 0)',
-                                    transition: 'transform 0.1s, box-shadow 0.1s'
-                                }}
+                            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <a
+                                    href={`mailto:${DEPT_EMAIL}`}
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        backgroundColor: 'var(--c-yellow)',
+                                        color: 'var(--c-black)',
+                                        border: '2px solid var(--c-white)',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
+                                        textDecoration: 'none',
+                                        display: 'inline-block',
+                                        boxShadow: activeHoverIndex === 1 ? '8px 8px 0 var(--c-white)' : '4px 4px 0 var(--c-white)',
+                                        transform: activeHoverIndex === 1 ? 'translate(-4px, -4px)' : 'translate(0, 0)',
+                                        transition: 'transform 0.1s, box-shadow 0.1s'
+                                    }}
                                     onMouseEnter={e => {
                                         if (activeHoverIndex !== null) return;
                                         e.target.style.transform = 'translate(-4px, -4px)';
@@ -198,21 +208,25 @@ export default function CSConnect() {
                                         e.target.style.boxShadow = '4px 4px 0 var(--c-white)';
                                     }}>
                                     Contact Administration →
-                                </button>
+                                </a>
 
-                                <button style={{
-                                    padding: '1rem 2rem',
-                                    backgroundColor: activeHoverIndex === 2 ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                    color: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
-                                    borderColor: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
-                                    borderStyle: 'dashed',
-                                    borderWidth: '2px',
-                                    fontWeight: 'bold',
-                                    fontSize: '1rem',
-                                    textTransform: 'uppercase',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
+                                <a
+                                    href={`mailto:${DEPT_EMAIL}`}
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        backgroundColor: activeHoverIndex === 2 ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        color: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderColor: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderStyle: 'dashed',
+                                        borderWidth: '2px',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
+                                        textDecoration: 'none',
+                                        display: 'inline-block',
+                                        transition: 'all 0.2s'
+                                    }}
                                     onMouseEnter={e => {
                                         if (activeHoverIndex !== null) return;
                                         e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
@@ -226,7 +240,27 @@ export default function CSConnect() {
                                         e.target.style.color = 'var(--c-white)';
                                     }}>
                                     ✉ Request Info Pack
-                                </button>
+                                </a>
+
+                                <a
+                                    href={DEPT_LINKEDIN}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        color: 'var(--c-white)',
+                                        fontSize: '1.5rem',
+                                        textDecoration: 'none',
+                                        lineHeight: 1,
+                                        opacity: 0.85,
+                                        transition: 'opacity 0.2s, color 0.2s'
+                                    }}
+                                    onMouseEnter={e => { e.target.style.opacity = 1; e.target.style.color = 'var(--c-yellow)'; }}
+                                    onMouseLeave={e => { e.target.style.opacity = 0.85; e.target.style.color = 'var(--c-white)'; }}
+                                    aria-label="CHRIST CS Department on LinkedIn"
+                                    title="LinkedIn"
+                                >
+                                    in
+                                </a>
                             </div>
                         </div>
                     </div>

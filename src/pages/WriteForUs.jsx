@@ -199,7 +199,7 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
             </div>
             {wordCount > 1000 && (
                 <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: '#c53030', fontWeight: 700, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                    ⚠ Trim {wordCount - 1000} word{wordCount - 1000 === 1 ? '' : 's'} from the article body before submitting.
+                    ⚠ Trim {wordCount - 1000} word{wordCount - 3000 === 1 ? '' : 's'} from the article body before submitting.
                 </div>
             )}
         </>
