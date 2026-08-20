@@ -4,7 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
-import facultyDataRaw from '../data/faculty.json';
+import facultyDataRaw from '../data/faculty_updated.json';
 
 export default function FacultyProfile() {
     const { id } = useParams();
