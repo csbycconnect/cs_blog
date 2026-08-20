@@ -47,15 +47,17 @@ const BrutalistMarquee = () => {
     );
 };
 
-import facultyDataRaw from '../data/faculty_updated.json';
+import facultyDataRaw from '../data/faculty.json';
 
+// Department-level contact used by the CTA section.
+// Update this if the department has a dedicated admin inbox.
 const DEPT_EMAIL = 'csbyc.connect@christuniversity.in';
-const DEPT_LINKEDIN = 'www.linkedin.com/in/computer-science-yeshwanthpur-cs-byc-christ-university-75b423371';
+const DEPT_LINKEDIN = 'https://www.linkedin.com/in/computer-science-yeshwanthpur-cs-byc-christ-university-75b423371';
 
 export default function CSConnect() {
     const brutalistColors = ['var(--c-yellow)', 'var(--c-black)'];
     // We have 3 interactive elements in the CTA area: the container itself, and 2 buttons.
-    const activeHoverIndex = useAutoHover(3, 2000);
+    const activeHoverIndex = useAutoHover(4, 2000);
 
     const facultyData = facultyDataRaw.map((faculty, index) => {
         // Format the name into a URL-friendly slug (e.g., lowercase alphanumeric with dashes)
@@ -247,19 +249,33 @@ export default function CSConnect() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
-                                        color: 'var(--c-white)',
-                                        fontSize: '1.5rem',
+                                        padding: '1rem 2rem',
+                                        backgroundColor: activeHoverIndex === 3 ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        color: activeHoverIndex === 3 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderColor: activeHoverIndex === 3 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderStyle: 'dashed',
+                                        borderWidth: '2px',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
                                         textDecoration: 'none',
-                                        lineHeight: 1,
-                                        opacity: 0.85,
-                                        transition: 'opacity 0.2s, color 0.2s'
+                                        display: 'inline-block',
+                                        transition: 'all 0.2s'
                                     }}
-                                    onMouseEnter={e => { e.target.style.opacity = 1; e.target.style.color = 'var(--c-yellow)'; }}
-                                    onMouseLeave={e => { e.target.style.opacity = 0.85; e.target.style.color = 'var(--c-white)'; }}
-                                    aria-label="CHRIST CS Department on LinkedIn"
-                                    title="LinkedIn"
-                                >
-                                    in
+                                    onMouseEnter={e => {
+                                        if (activeHoverIndex !== null) return;
+                                        e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                                        e.target.style.borderColor = 'var(--c-yellow)';
+                                        e.target.style.color = 'var(--c-yellow)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        if (activeHoverIndex !== null) return;
+                                        e.target.style.backgroundColor = 'transparent';
+                                        e.target.style.borderColor = 'var(--c-white)';
+                                        e.target.style.color = 'var(--c-white)';
+                                    }}>
+                                    LinkedIn ↗
                                 </a>
                             </div>
                         </div>
