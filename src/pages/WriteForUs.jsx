@@ -193,9 +193,14 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
             <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
                 <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65, width: '100%' }} />
             </Field>
-            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: '#555', marginTop: '0.75rem', marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: wordCount > 1000 ? '#c53030' : '#555', fontWeight: wordCount > 1000 ? 700 : 400, marginTop: '0.75rem', marginBottom: wordCount > 1000 ? '0.35rem' : '2rem', paddingBottom: wordCount > 1000 ? 0 : '2rem', borderBottom: wordCount > 1000 ? 'none' : '2px solid #eee' }}>
+                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read{wordCount > 1000 ? ' — exceeds 1000 word maximum' : ''}
             </div>
+            {wordCount > 1000 && (
+                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: '#c53030', fontWeight: 700, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
+                    ⚠ Trim {wordCount - 1000} word{wordCount - 1000 === 1 ? '' : 's'} from the article body before submitting.
+                </div>
+            )}
         </>
     );
 }
@@ -300,10 +305,17 @@ export default function WriteForUs() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const allTouched = Object.fromEntries(Object.keys(form).map(k => [k, true]));
+        allTouched.content = true;
         setTouched(allTouched);
         const errs = validate();
         setErrors(errs);
-        if (Object.keys(errs).length) { scrollToSettings(); return; }
+        if (Object.keys(errs).length) {
+            scrollToSettings();
+            if (errs.content && !errs.title && !errs.category && !errs.excerpt && !errs.name && !errs.email) {
+                alert(errs.content);
+            }
+            return;
+        }
         setSubmitting(true);
         try {
             const cleanHtml = DOMPurify.sanitize(editorHtml);

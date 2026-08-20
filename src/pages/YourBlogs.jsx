@@ -215,7 +215,7 @@ export default function YourBlogs() {
                         <div 
                             key={item.id || i}
                             onClick={() => {
-                                if (activeTab === 'published') {
+                                if (activeTab === 'published' || activeTab === 'pending') {
                                     navigate(`/blog/${item.id}`);
                                 } else if (activeTab === 'drafts') {
                                     navigate(`/write-for-us?draft=${item.id}`);
@@ -232,7 +232,7 @@ export default function YourBlogs() {
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 gap: '1.5rem',
-                                cursor: activeTab === 'pending' ? 'default' : 'pointer',
+                                cursor: 'pointer',
                                 transition: 'transform 0.2s, boxShadow 0.2s'
                             }}
                         >
