@@ -1,468 +1,386 @@
-//EditorialReview.jsx
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+//BlogPost.jsx
+//BlogPost.jsx
+import React, { useState, useEffect, useRef } from 'react';
 import DOMPurify from 'dompurify';
-import { ArticlesService } from '../../../services/articles';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ArticlesService } from '../services/articles';
+import Navbar from '../components/layout/Navbar';
+import Footer from '../components/layout/Footer';
+import BackButton from '../components/shared/BackButton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Heart, Bookmark } from 'lucide-react';
 
-const PAGE_SIZE_OPTIONS = [5, 10];
+const blogImgStyleTag = (
+    <style>{`
+        .blog-html-content img {
+            max-width: 100% !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: 600px;
+            object-fit: contain;
+            display: block;
+            margin: 2rem auto;
+            border: 2px solid var(--c-black);
+        }
+        .blog-html-content table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+            margin: 2rem 0;
+        }
+        .blog-html-content table td,
+        .blog-html-content table th {
+            border: 1.5px solid var(--c-black);
+            padding: 0.6rem 0.85rem;
+            vertical-align: top;
+            word-break: break-word;
+        }
+        .blog-html-content table th {
+            background: var(--c-yellow);
+            font-weight: 700;
+            text-align: left;
+        }
+    `}</style>
+);
 
-export default function EditorialReview({ canReview }) {
-    const [pendingArticles, setPendingArticles] = useState([]);
+export default function BlogPost() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Search + pagination
-    const [searchTerm, setSearchTerm] = useState('');
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
-
-    // Rejection modal
-    const [showModal, setShowModal] = useState(false);
-    const [modalArticle, setModalArticle] = useState(null);
-    const [rejectionReason, setRejectionReason] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-
-    // Author review required modal
-    const [showReviewModal, setShowReviewModal] = useState(false);
-    const [reviewModalArticle, setReviewModalArticle] = useState(null);
-    const [reviewMessage, setReviewMessage] = useState('');
-    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const viewCounted = useRef(false);
 
     useEffect(() => {
-        if (canReview) fetchPending();
-    }, [canReview]);
+        const loadArticle = async () => {
+            try {
+                setLoading(true);
+                if (!id) return;
 
-    // Prevent background scroll while any modal is open
+                // 1. Strip down parameter prefixes if present
+                let cleanId = id.replace('id=', '');
+
+                // 2. ✅ FIXED: Encode the ID to safely pass characters like '#' over the API route
+                const encodedId = encodeURIComponent(cleanId);
+
+                const data = await ArticlesService.getById(encodedId);
+                if (!data) {
+                    alert('Article transmission not found.');
+                    navigate('/blogs');
+                    return;
+                }
+                setArticle(data);
+
+                // Track view on every load, protected by ref
+                if (!viewCounted.current) {
+                    viewCounted.current = true;
+                    await ArticlesService.incrementViews(cleanId).catch(console.error);
+                }
+            } catch (error) {
+                console.error("Error loading article:", error);
+                alert('Failed to load article.');
+                navigate('/blogs');
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadArticle();
+    }, [id, navigate]);
+
+    const { user } = useAuth();
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [hasLiked, setHasLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
+
     useEffect(() => {
-        if (showModal || showReviewModal) {
-            const prevOverflow = document.body.style.overflow;
-            document.body.style.overflow = 'hidden';
-            return () => { document.body.style.overflow = prevOverflow; };
+        if (article) {
+            const cleanId = article.id;
+            const favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            setIsFavorite(favs.some(f => f.id === cleanId));
+
+            // Simple boolean check for demo purposes, extending localStorage:
+            const localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            setHasLiked(localLikes.includes(cleanId));
+
+            setLikesCount(article.likes || 0);
         }
-    }, [showModal, showReviewModal]);
+    }, [article]);
 
-    // Reset to page 1 whenever the search term or page size changes
-    useEffect(() => {
-        setPage(1);
-    }, [searchTerm, pageSize]);
-
-    const filteredArticles = pendingArticles.filter(article => {
-        if (!searchTerm.trim()) return true;
-        const q = searchTerm.trim().toLowerCase();
-        const title = (article.title || '').toLowerCase();
-        const author = (article.name || article.authorName || '').toLowerCase();
-        return title.includes(q) || author.includes(q);
-    });
-
-    const totalCount = pendingArticles.length;
-    const totalFiltered = filteredArticles.length;
-    const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
-    const currentPage = Math.min(page, totalPages);
-    const pageStart = (currentPage - 1) * pageSize;
-    const visibleArticles = filteredArticles.slice(pageStart, pageStart + pageSize);
-
-    const fetchPending = async () => {
-        setLoading(true);
-        try {
-            const items = await ArticlesService.fetchByStatus('pending');
-            setPendingArticles(items);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAccept = async (article) => {
-        const id = article.id || article.PK;
-        if (!id) return alert('Missing article ID.');
-        try {
-            await ArticlesService.updateStatus(id, 'accepted');
-            setPendingArticles(prev => prev.filter(a => (a.id || a.PK) !== id));
-            alert('Article accepted and published.');
-        } catch (err) {
-            console.error(err);
-            alert('Failed to accept article.');
-        }
-    };
-
-    const openReviewModal = (article) => {
-        setReviewModalArticle(article);
-        setReviewMessage('');
-        setShowReviewModal(true);
-    };
-
-    const confirmAuthorReview = async () => {
-        if (!reviewModalArticle) return;
-        const article = reviewModalArticle;
-        const id = article.id || article.PK;
-        const toEmail = article.email || article.authorEmail;
-        if (!toEmail) {
-            alert('This article has no author email on file — cannot send notification.');
+    const handleLikeClick = async () => {
+        if (!user) {
+            alert('Please log in to like articles.');
             return;
         }
-        setReviewSubmitting(true);
-        try {
-            // Move the article back to drafts so the author can revise it
-            await ArticlesService.updateStatus(id, 'draft', reviewMessage || null);
 
-            // Notify the author by email
-            const res = await fetch('/api/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    templateType: 'author_review_required',
-                    toEmail,
-                    templateData: {
-                        postTitle: article.title,
-                        authorName: article.name || article.authorName || 'Contributor',
-                        reviewMessage: reviewMessage || null,
-                    },
-                }),
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || 'Email send failed');
+        const cleanId = article.id;
+        const newLiked = !hasLiked;
+        setHasLiked(newLiked);
+        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
+
+        try {
+            await ArticlesService.toggleLike(cleanId, newLiked);
+
+            // Update local likes state
+            let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
+            if (newLiked) {
+                if (!localLikes.includes(cleanId)) localLikes.push(cleanId);
+            } else {
+                localLikes = localLikes.filter(lId => lId !== cleanId);
+            }
+            localStorage.setItem('bb_likes', JSON.stringify(localLikes));
+
+            // Sync with favorites array if it's currently in there so counts stay fresh
+            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            const favIndex = favs.findIndex(f => f.id === cleanId);
+            if (favIndex > -1) {
+                favs[favIndex].likes = newLiked ? (favs[favIndex].likes || 0) + 1 : (favs[favIndex].likes || 0) - 1;
+                localStorage.setItem('bb_favorites', JSON.stringify(favs));
             }
 
-            setPendingArticles(prev => prev.filter(a => (a.id || a.PK) !== id));
-            setShowReviewModal(false);
-            setReviewModalArticle(null);
-            setReviewMessage('');
-            alert('Article moved to drafts and author notified.');
-        } catch (err) {
-            console.error(err);
-            alert('Failed to complete author review request.');
-        } finally {
-            setReviewSubmitting(false);
+        } catch (error) {
+            console.error("Failed to toggle like:", error);
+            // Revert on failure cleanly
+            setHasLiked(!newLiked);
+            setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
         }
     };
 
-    const openRejectModal = (article) => {
-        setModalArticle(article);
-        setRejectionReason('');
-        setShowModal(true);
-    };
-
-    const confirmReject = async () => {
-        if (!modalArticle) return;
-        const id = modalArticle.id || modalArticle.PK;
-        setSubmitting(true);
-        try {
-            await ArticlesService.updateStatus(id, 'rejected', rejectionReason || null);
-            setPendingArticles(prev => prev.filter(a => (a.id || a.PK) !== id));
-            setShowModal(false);
-            setModalArticle(null);
-            setRejectionReason('');
-            alert('Submission rejected.');
-        } catch (err) {
-            console.error(err);
-            alert('Failed to reject submission.');
-        } finally {
-            setSubmitting(false);
+    const handleFavoriteClick = () => {
+        if (!user) {
+            alert('Please log in to favorite articles.');
+            return;
         }
+
+        const cleanId = article.id;
+        let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+        const newIsFavorite = !isFavorite;
+
+        if (newIsFavorite) {
+            if (!favs.some(f => f.id === cleanId)) {
+                favs.push({ ...article, likes: likesCount });
+            }
+        } else {
+            favs = favs.filter(f => f.id !== cleanId);
+        }
+
+        localStorage.setItem('bb_favorites', JSON.stringify(favs));
+        setIsFavorite(newIsFavorite);
     };
 
-    if (!canReview) {
+    if (loading) {
         return (
-            <div style={{ padding: '2rem', background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)' }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--c-black)', marginBottom: '1rem' }}>Access Restricted</p>
-                <p style={{ fontFamily: 'var(--font-mono)', color: '#555' }}>You do not have permission to review pending articles.</p>
+            <div style={{ position: 'relative', minHeight: '100vh' }}>
+                <Navbar />
+                <main style={{ maxWidth: 1400, margin: '0 auto', padding: '4rem 2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)' }}>Loading transmission...</p>
+                </main>
+                <Footer />
             </div>
         );
     }
 
-    if (loading) return <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-yellow)' }}>Loading submissions...</p>;
-    if (pendingArticles.length === 0) return <p style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.6)' }}>No pending submissions.</p>;
+    if (!article) return null;
 
     return (
-        <>
-            <style>{`
-                .admin-review-content img {
-                    max-width: 100% !important;
-                    height: auto !important;
-                    display: block;
-                    margin: 1rem auto;
-                }
-                .admin-review-content table {
-                    border-collapse: collapse;
-                    table-layout: fixed;
-                    width: 100%;
-                    margin: 1rem 0;
-                }
-                .admin-review-content table td,
-                .admin-review-content table th {
-                    border: 1.5px solid #000;
-                    padding: 0.5rem 0.75rem;
-                    vertical-align: top;
-                    word-break: break-word;
-                }
-                .admin-review-content table th {
-                    background: var(--c-yellow);
-                    font-weight: 700;
-                    text-align: left;
-                }
-            `}</style>
-            {/* Rejection Modal — rendered via portal directly into document.body.
-                This guarantees it centers on the viewport regardless of scroll
-                position, and can't be broken by any ancestor with a CSS
-                transform/filter/perspective (which would otherwise turn
-                "position: fixed" into something relative to that ancestor). */}
-            {showModal && modalArticle && createPortal(
-                <div
-                    onClick={() => { setShowModal(false); setModalArticle(null); }}
-                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}
-                >
-                    <div
-                        onClick={e => e.stopPropagation()}
-                        style={{ width: 'min(720px, 95%)', maxHeight: '85vh', overflowY: 'auto', background: '#fff', padding: '1.25rem', borderRadius: '6px', boxShadow: '0 6px 30px rgba(0,0,0,0.4)', color: '#000' }}
-                    >
-                        <h3 style={{ marginTop: 0, fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>Reject: {modalArticle.title}</h3>
-                        <p style={{ fontFamily: 'var(--font-mono)', color: '#444', marginBottom: '0.5rem' }}>Reason (optional — sent to author):</p>
-                        <textarea
-                            value={rejectionReason}
-                            onChange={e => setRejectionReason(e.target.value)}
-                            rows={6}
-                            style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', marginBottom: '0.75rem', fontFamily: 'var(--font-mono)' }}
-                        />
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setShowModal(false); setModalArticle(null); }} style={{ padding: '0.5rem 0.8rem', background: '#eee', border: '1px solid #ccc', cursor: 'pointer' }}>
-                                Cancel
-                            </button>
-                            <button onClick={confirmReject} style={{ padding: '0.6rem 0.9rem', background: 'var(--c-black)', color: 'var(--c-yellow)', border: '2px solid var(--c-black)', cursor: 'pointer' }}>
-                                {submitting ? 'Rejecting...' : 'Confirm Reject'}
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* Author Review Required Modal — rendered via portal for the same
-                reasons as the rejection modal above. */}
-            {showReviewModal && reviewModalArticle && createPortal(
-                <div
-                    onClick={() => { setShowReviewModal(false); setReviewModalArticle(null); }}
-                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}
-                >
-                    <div
-                        onClick={e => e.stopPropagation()}
-                        style={{ width: 'min(720px, 95%)', maxHeight: '85vh', overflowY: 'auto', background: '#fff', padding: '1.25rem', borderRadius: '6px', boxShadow: '0 6px 30px rgba(0,0,0,0.4)', color: '#000' }}
-                    >
-                        <h3 style={{ marginTop: 0, fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>Author Review Required: {reviewModalArticle.title}</h3>
-                        <p style={{ fontFamily: 'var(--font-mono)', color: '#444', marginBottom: '0.5rem' }}>
-                            This moves the article back to the author's Drafts and emails them the feedback below.
-                        </p>
-                        <textarea
-                            value={reviewMessage}
-                            onChange={e => setReviewMessage(e.target.value)}
-                            rows={6}
-                            placeholder="Describe the changes the author needs to make..."
-                            style={{ width: '100%', padding: '0.75rem', border: '1px solid #ccc', marginBottom: '0.75rem', fontFamily: 'var(--font-mono)' }}
-                        />
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button onClick={() => { setShowReviewModal(false); setReviewModalArticle(null); }} style={{ padding: '0.5rem 0.8rem', background: '#eee', border: '1px solid #ccc', cursor: 'pointer' }}>
-                                Cancel
-                            </button>
-                            <button onClick={confirmAuthorReview} style={{ padding: '0.6rem 0.9rem', background: '#d97706', color: '#fff', border: '2px solid #d97706', cursor: 'pointer' }}>
-                                {reviewSubmitting ? 'Sending...' : 'Send for Author Review'}
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* Search + count + page size toolbar */}
-            <div style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '6px 6px 0 var(--c-yellow)', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center' }}>
-                <div style={{ position: 'relative', flex: '1 1 260px', minWidth: '220px' }}>
-                    <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', fontSize: '0.95rem', opacity: 0.5 }}>
-                        🔍
-                    </span>
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="Search by title or author…"
-                        style={{
-                            width: '100%',
-                            padding: '0.7rem 0.9rem 0.7rem 2.3rem',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.85rem',
-                            border: '2px solid var(--c-black)',
-                            background: '#fafafa',
-                            color: 'var(--c-black)',
-                            outline: 'none',
-                            boxSizing: 'border-box',
-                        }}
-                    />
+        <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflowX: 'hidden' }}>
+            <Navbar />
+            <main style={{ maxWidth: 1400, margin: '0 auto', padding: '0 5% 6rem', position: 'relative', zIndex: 10, width: '100%' }}>
+                <div style={{ marginTop: '2rem' }}>
+                    <BackButton />
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-mono)' }}>
-                    <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'baseline',
-                        gap: '0.35rem',
-                        padding: '0.55rem 0.9rem',
-                        border: '2px solid var(--c-black)',
-                        background: 'var(--c-yellow)',
-                        color: 'var(--c-black)',
-                        fontWeight: 700,
-                        fontSize: '0.8rem',
-                        whiteSpace: 'nowrap',
-                    }}>
-                        <span style={{ fontSize: '1rem' }}>{totalFiltered}</span>
-                        <span style={{ opacity: 0.7, fontWeight: 500 }}>/ {totalCount} pending</span>
-                    </span>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: 'auto', fontFamily: 'var(--font-mono)' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#555', whiteSpace: 'nowrap' }}>
-                        Show
-                    </label>
-                    <select
-                        value={pageSize}
-                        onChange={e => setPageSize(Number(e.target.value))}
-                        style={{
-                            padding: '0.55rem 2rem 0.55rem 0.75rem',
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            border: '2px solid var(--c-black)',
-                            background: 'var(--c-white)',
-                            color: 'var(--c-black)',
-                            cursor: 'pointer',
-                            appearance: 'none',
-                            WebkitAppearance: 'none',
-                            backgroundImage: 'linear-gradient(45deg, transparent 50%, var(--c-black) 50%), linear-gradient(135deg, var(--c-black) 50%, transparent 50%)',
-                            backgroundPosition: 'calc(100% - 14px) calc(50% - 3px), calc(100% - 9px) calc(50% - 3px)',
-                            backgroundSize: '5px 5px, 5px 5px',
-                            backgroundRepeat: 'no-repeat',
-                        }}
-                    >
-                        {PAGE_SIZE_OPTIONS.map(size => (
-                            <option key={size} value={size}>{size} per page</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {totalFiltered === 0 ? (
-                <div style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '6px 6px 0 var(--c-yellow)', padding: '2rem', textAlign: 'center' }}>
-                    <p style={{ fontFamily: 'var(--font-mono)', color: '#555', margin: 0 }}>No submissions match your search.</p>
-                </div>
-            ) : (
-                <>
-                    {/* Articles */}
-                    {visibleArticles.map(article => (
-                <div key={article.id} style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem', marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div style={{ flex: 1, minWidth: '280px' }}>
-                            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#000', marginBottom: '0.5rem' }}>
-                                {article.category || 'Article'} • By {article.name || article.authorName || 'Anonymous'} • {article.createdAt ? new Date(article.createdAt).toLocaleDateString() : 'Recent'}
-                            </div>
-                            <h2 className="serif-heading" style={{ fontSize: '1.8rem', color: 'var(--c-black)', marginBottom: '1rem', lineHeight: 1.2 }}>
-                                {article.title}
-                            </h2>
-                            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#333', marginBottom: '1.5rem', lineHeight: 1.6, wordBreak: 'break-word' }}>
-                                {article.excerpt || article.subtitle || 'No subtitle provided.'}
-                            </p>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '1rem', flexDirection: 'column', minWidth: '120px' }}>
-                            <button onClick={() => handleAccept(article)} style={{ background: 'var(--c-black)', border: '2px solid var(--c-black)', color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', padding: '0.75rem', cursor: 'pointer' }}>
-                                ACCEPT
-                            </button>
-                            <button onClick={() => openReviewModal(article)} style={{ background: '#d97706', border: '2px solid #d97706', color: '#fff', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', padding: '0.75rem', cursor: 'pointer' }}>
-                                AUTHOR REVIEW REQUIRED
-                            </button>
-                            <button onClick={() => openRejectModal(article)} style={{ background: 'transparent', border: '2px solid var(--c-black)', color: 'var(--c-black)', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', padding: '0.75rem', cursor: 'pointer' }}>
-                                REJECT
-                            </button>
-                        </div>
-                    </div>
-
-                    <details style={{ marginTop: '1.5rem', borderTop: '2px dashed #ccc', paddingTop: '1rem' }}>
-                        <summary style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', color: 'var(--c-black)' }}>
-                            View Full Content
-                        </summary>
-                        <div className="admin-review-content" style={{ marginTop: '1rem', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#000', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f9f9f9', padding: '1.5rem', border: '1px solid #ddd', overflow: 'hidden', wordBreak: 'break-word' }}>
-                            {article.contentHTML?.trim() ? (
-                                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.contentHTML) }} />
-                            ) : (
-                                <div>{article.content || 'No content available.'}</div>
-                            )}
-                        </div>
-                    </details>
-                </div>
-                    ))}
-
-                    {/* Pagination controls */}
+                {/* Article Header */}
+                <header style={{ marginBottom: '3rem', borderBottom: '2px solid rgba(255,255,255,0.2)', paddingBottom: '2rem' }}>
                     <div style={{
-                        display: 'flex',
-                        gap: '1rem',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginTop: '0.5rem',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        color: 'var(--c-yellow)',
+                        marginBottom: '1rem',
+                        letterSpacing: '0.05em'
+                    }}>
+                        {article.category || 'Article'} • {article.readTime || '5 min read'}
+                    </div>
+                    <h1 className="serif-heading" style={{ color: 'var(--c-white)', fontSize: 'clamp(2.5rem, 5vw, 4rem)', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+                        {article.title}
+                    </h1>
+
+                    {Array.isArray(article.tags) && article.tags.length > 0 && (
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                            {article.tags.map((tag, i) => (
+                                <span key={i} style={{
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    backgroundColor: 'var(--c-yellow)',
+                                    color: '#0A192F',
+                                    padding: '0.3rem 0.6rem',
+                                    border: '1px solid #000',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+                        <img
+                            src={article.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${article.name || 'A'}&backgroundColor=0d2142&textColor=f7d000`}
+                            alt={article.name}
+                            style={{ width: '45px', height: '45px', border: '2px solid var(--c-yellow)' }}
+                        />
+                        <div>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--c-white)', fontWeight: 700, fontSize: '0.9rem' }}>
+                                {article.name || 'Anonymous'}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div style={{ maxWidth: 1400, margin: '0 auto', width: '100%' }}>
+                    <article className="blog-post-article" style={{
                         background: 'var(--c-white)',
                         border: '2px solid var(--c-black)',
-                        boxShadow: '6px 6px 0 var(--c-yellow)',
-                        padding: '0.9rem 1.25rem',
+                        boxShadow: '10px 10px 0 var(--c-yellow)',
+                        padding: 'min(2.5rem, 5vw) min(3rem, 6vw)',
+                        color: '#1a1a1a',
+                        fontFamily: 'var(--font-serif, Georgia, serif)',
+                        fontSize: '1.1rem',
+                        lineHeight: 1.8,
+                        overflowX: 'hidden'
                     }}>
-                        <button
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={currentPage <= 1}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.55rem 1rem',
-                                fontFamily: 'var(--font-mono)',
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                border: '2px solid var(--c-black)',
-                                background: currentPage <= 1 ? '#eee' : 'var(--c-white)',
-                                color: 'var(--c-black)',
-                                cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
-                                opacity: currentPage <= 1 ? 0.4 : 1,
-                            }}
-                        >
-                            ← Prev
-                        </button>
-                        <span style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.8rem',
-                            fontWeight: 700,
-                            color: 'var(--c-black)',
-                            background: 'var(--c-yellow)',
-                            border: '2px solid var(--c-black)',
-                            padding: '0.5rem 0.9rem',
-                            whiteSpace: 'nowrap',
-                        }}>
-                            Page {currentPage} of {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            disabled={currentPage >= totalPages}
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.35rem',
-                                padding: '0.55rem 1rem',
-                                fontFamily: 'var(--font-mono)',
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                border: '2px solid var(--c-black)',
-                                background: currentPage >= totalPages ? '#eee' : 'var(--c-white)',
-                                color: 'var(--c-black)',
-                                cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
-                                opacity: currentPage >= totalPages ? 0.4 : 1,
-                            }}
-                        >
-                            Next →
-                        </button>
-                    </div>
-                </>
-            )}
-        </>
+                        {blogImgStyleTag}
+                        {(() => {
+                            const htmlContent = article.contentHTML || article.content || '';
+                            const isHtml = /<[^>]+>/.test(htmlContent);
+
+                            if (isHtml && htmlContent.trim()) {
+                                return (
+                                    <div
+                                        className="blog-html-content"
+                                        style={{
+                                            lineHeight: 1.8,
+                                            fontFamily: 'var(--font-serif, Georgia, serif)',
+                                            color: '#1a1a1a',
+                                            fontSize: '1.1rem'
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span', 'table', 'thead', 'tbody', 'tr', 'th', 'td'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'colspan', 'rowspan'] }) }}
+                                    />
+                                );
+                            }
+
+                            if (!htmlContent.trim()) {
+                                return <p style={{ color: '#999', fontStyle: 'italic' }}>No article content available.</p>;
+                            }
+
+                            return (
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        h1: ({ node, ...props }) => <h1 className="serif-heading" style={{ fontSize: '2.2rem', marginTop: '2.5rem', marginBottom: '1rem', lineHeight: 1.2, color: 'var(--c-black)' }} {...props} />,
+                                        h2: ({ node, ...props }) => <h2 className="serif-heading" style={{ fontSize: '1.8rem', marginTop: '2rem', marginBottom: '1rem', lineHeight: 1.3, color: 'var(--c-black)' }} {...props} />,
+                                        h3: ({ node, ...props }) => <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3rem', marginTop: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }} {...props} />,
+                                        p: ({ node, ...props }) => <p style={{ marginBottom: '1.5rem', wordWrap: 'break-word', wordBreak: 'break-word' }} {...props} />,
+                                        a: ({ node, ...props }) => <a style={{ color: '#0d2142', textDecoration: 'underline', textDecorationColor: 'var(--c-yellow)', textDecorationThickness: '2px', fontWeight: 700 }} {...props} />,
+                                        ul: ({ node, ...props }) => <ul style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                        ol: ({ node, ...props }) => <ol style={{ marginBottom: '1.5rem', paddingLeft: '2rem' }} {...props} />,
+                                        li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
+                                        blockquote: ({ node, ...props }) => <blockquote style={{ borderLeft: '4px solid var(--c-black)', margin: '1.5rem 0', padding: '1rem 1.5rem', background: '#f5f0e8', fontStyle: 'italic' }} {...props} />,
+                                        code: ({ node, inline, ...props }) =>
+                                            inline ?
+                                                <code style={{ fontFamily: 'var(--font-mono)', background: '#f0f0f0', padding: '0.2rem 0.4rem', fontSize: '0.9em', border: '1px solid #ccc' }} {...props} /> :
+                                                <pre style={{ background: '#0A192F', color: '#fff', padding: '1.5rem', overflowX: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.9rem', border: '2px solid var(--c-black)', marginBottom: '1.5rem' }}>
+                                                    <code {...props} />
+                                                </pre>,
+                                        img: ({ node, ...props }) => <img style={{ maxWidth: '100%', height: 'auto', border: '2px solid var(--c-black)', display: 'block', margin: '2rem auto' }} {...props} />,
+                                        hr: ({ node, ...props }) => <hr style={{ border: 'none', borderTop: '2px dashed #ccc', margin: '2.5rem 0' }} {...props} />
+                                    }}
+                                >
+                                    {htmlContent}
+                                </ReactMarkdown>
+                            );
+                        })()}
+
+                        {/* Author Bio Section */}
+                        {article.bio && (
+                            <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '2px solid var(--c-black)' }}>
+                                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                                    About the Author
+                                </div>
+                                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                                    <img
+                                        src={article.avatarUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${article.name || 'A'}&backgroundColor=0d2142&textColor=f7d000`}
+                                        alt={article.name}
+                                        style={{ width: '60px', height: '60px', border: '2px solid var(--c-black)', boxShadow: '4px 4px 0 var(--c-yellow)' }}
+                                    />
+                                    <div>
+                                        <h4 className="serif-heading" style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0' }}>{article.name}</h4>
+                                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#555', margin: 0, lineHeight: 1.6 }}>{article.bio}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Article Footer Actions */}
+                        <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '2px solid var(--c-black)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 700, color: 'var(--c-black)' }}>
+                                    👁 {article.views || 0} views
+                                </span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button
+                                    onClick={handleLikeClick}
+                                    style={{
+                                        background: hasLiked ? '#ff4d4d' : 'transparent',
+                                        border: hasLiked ? '2px solid #000' : '2px solid transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 1rem',
+                                        cursor: 'pointer',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 700,
+                                        fontSize: '0.9rem',
+                                        transition: 'all 0.2s',
+                                        boxShadow: hasLiked ? '4px 4px 0 #000' : 'none'
+                                    }}
+                                >
+                                    <Heart size={20} color={hasLiked ? "#000" : "#ff4d4d"} fill={hasLiked ? "#000" : "none"} />
+                                    <span>{likesCount} {likesCount === 1 ? 'like' : 'likes'}</span>
+                                </button>
+
+                                <button
+                                    onClick={handleFavoriteClick}
+                                    style={{
+                                        background: isFavorite ? '#f7d000' : 'transparent',
+                                        border: isFavorite ? '2px solid #000' : '2px solid transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 1rem',
+                                        cursor: 'pointer',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 700,
+                                        fontSize: '0.9rem',
+                                        transition: 'all 0.2s',
+                                        boxShadow: isFavorite ? '4px 4px 0 #000' : 'none',
+                                        color: '#000'
+                                    }}
+                                >
+                                    <Bookmark size={20} color="#000" fill={isFavorite ? "#000" : "none"} />
+                                    <span>{isFavorite ? 'Saved' : 'Save'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </main>
+            <Footer />
+        </div>
     );
 }
