@@ -47,12 +47,17 @@ const BrutalistMarquee = () => {
     );
 };
 
-import facultyDataRaw from '../data/faculty.json';
+import facultyDataRaw from '../data/faculty_updated.json';
+
+// Department-level contact used by the CTA section.
+// Update this if the department has a dedicated admin inbox.
+const DEPT_EMAIL = 'csbyc.connect@christuniversity.in';
+const DEPT_LINKEDIN = 'https://www.linkedin.com/in/computer-science-yeshwanthpur-cs-byc-christ-university-75b423371';
 
 export default function CSConnect() {
     const brutalistColors = ['var(--c-yellow)', 'var(--c-black)'];
     // We have 3 interactive elements in the CTA area: the container itself, and 2 buttons.
-    const activeHoverIndex = useAutoHover(3, 2000);
+    const activeHoverIndex = useAutoHover(4, 2000);
 
     const facultyData = facultyDataRaw.map((faculty, index) => {
         // Format the name into a URL-friendly slug (e.g., lowercase alphanumeric with dashes)
@@ -65,7 +70,10 @@ export default function CSConnect() {
             handle: "@christ.cs",
             borderColor: brutalistColors[index % brutalistColors.length],
             gradient: "linear-gradient(145deg, var(--c-white), #eee)",
-            url: `/cs-connect/${slug}`
+            url: `/cs-connect/${slug}`,
+            bio: faculty.bio,
+            email: faculty.email,
+            linkedin: faculty.linkedin
         };
     });
 
@@ -173,20 +181,24 @@ export default function CSConnect() {
                                 <ExpandableText mobileThreshold={90}>Are you an external professor, researcher, or industry professional looking to collaborate with the CHRIST CS Department? Reach out to our administrative office to explore partnership opportunities.</ExpandableText>
                             </p>
 
-                            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-                                <button style={{
-                                    padding: '1rem 2rem',
-                                    backgroundColor: 'var(--c-yellow)',
-                                    color: 'var(--c-black)',
-                                    border: '2px solid var(--c-white)',
-                                    fontWeight: 'bold',
-                                    fontSize: '1rem',
-                                    textTransform: 'uppercase',
-                                    cursor: 'pointer',
-                                    boxShadow: activeHoverIndex === 1 ? '8px 8px 0 var(--c-white)' : '4px 4px 0 var(--c-white)',
-                                    transform: activeHoverIndex === 1 ? 'translate(-4px, -4px)' : 'translate(0, 0)',
-                                    transition: 'transform 0.1s, box-shadow 0.1s'
-                                }}
+                            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                <a
+                                    href={`mailto:${DEPT_EMAIL}`}
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        backgroundColor: 'var(--c-yellow)',
+                                        color: 'var(--c-black)',
+                                        border: '2px solid var(--c-white)',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
+                                        textDecoration: 'none',
+                                        display: 'inline-block',
+                                        boxShadow: activeHoverIndex === 1 ? '8px 8px 0 var(--c-white)' : '4px 4px 0 var(--c-white)',
+                                        transform: activeHoverIndex === 1 ? 'translate(-4px, -4px)' : 'translate(0, 0)',
+                                        transition: 'transform 0.1s, box-shadow 0.1s'
+                                    }}
                                     onMouseEnter={e => {
                                         if (activeHoverIndex !== null) return;
                                         e.target.style.transform = 'translate(-4px, -4px)';
@@ -198,21 +210,25 @@ export default function CSConnect() {
                                         e.target.style.boxShadow = '4px 4px 0 var(--c-white)';
                                     }}>
                                     Contact Administration →
-                                </button>
+                                </a>
 
-                                <button style={{
-                                    padding: '1rem 2rem',
-                                    backgroundColor: activeHoverIndex === 2 ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                    color: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
-                                    borderColor: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
-                                    borderStyle: 'dashed',
-                                    borderWidth: '2px',
-                                    fontWeight: 'bold',
-                                    fontSize: '1rem',
-                                    textTransform: 'uppercase',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
+                                <a
+                                    href={`mailto:${DEPT_EMAIL}`}
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        backgroundColor: activeHoverIndex === 2 ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        color: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderColor: activeHoverIndex === 2 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderStyle: 'dashed',
+                                        borderWidth: '2px',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
+                                        textDecoration: 'none',
+                                        display: 'inline-block',
+                                        transition: 'all 0.2s'
+                                    }}
                                     onMouseEnter={e => {
                                         if (activeHoverIndex !== null) return;
                                         e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
@@ -226,7 +242,41 @@ export default function CSConnect() {
                                         e.target.style.color = 'var(--c-white)';
                                     }}>
                                     ✉ Request Info Pack
-                                </button>
+                                </a>
+
+                                <a
+                                    href={DEPT_LINKEDIN}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        backgroundColor: activeHoverIndex === 3 ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        color: activeHoverIndex === 3 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderColor: activeHoverIndex === 3 ? 'var(--c-yellow)' : 'var(--c-white)',
+                                        borderStyle: 'dashed',
+                                        borderWidth: '2px',
+                                        fontWeight: 'bold',
+                                        fontSize: '1rem',
+                                        textTransform: 'uppercase',
+                                        cursor: 'pointer',
+                                        textDecoration: 'none',
+                                        display: 'inline-block',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={e => {
+                                        if (activeHoverIndex !== null) return;
+                                        e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                                        e.target.style.borderColor = 'var(--c-yellow)';
+                                        e.target.style.color = 'var(--c-yellow)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        if (activeHoverIndex !== null) return;
+                                        e.target.style.backgroundColor = 'transparent';
+                                        e.target.style.borderColor = 'var(--c-white)';
+                                        e.target.style.color = 'var(--c-white)';
+                                    }}>
+                                    LinkedIn ↗
+                                </a>
                             </div>
                         </div>
                     </div>

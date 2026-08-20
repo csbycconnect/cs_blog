@@ -24,6 +24,24 @@ const blogImgStyleTag = (
             margin: 2rem auto;
             border: 2px solid var(--c-black);
         }
+        .blog-html-content table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+            margin: 2rem 0;
+        }
+        .blog-html-content table td,
+        .blog-html-content table th {
+            border: 1.5px solid var(--c-black);
+            padding: 0.6rem 0.85rem;
+            vertical-align: top;
+            word-break: break-word;
+        }
+        .blog-html-content table th {
+            background: var(--c-yellow);
+            font-weight: 700;
+            text-align: left;
+        }
     `}</style>
 );
 
@@ -250,7 +268,7 @@ export default function BlogPost() {
                                             color: '#1a1a1a',
                                             fontSize: '1.1rem'
                                         }}
-                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title'] }) }}
+                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent, { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'a', 'img', 'blockquote', 'pre', 'code', 'hr', 'div', 'span', 'table', 'thead', 'tbody', 'tr', 'th', 'td'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'colspan', 'rowspan'] }) }}
                                     />
                                 );
                             }

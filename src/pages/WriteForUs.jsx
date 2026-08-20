@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 import DOMPurify from 'dompurify';
 import { ArticlesService } from '../services/articles';
 import { EmailService } from '../services/email';
@@ -193,12 +194,12 @@ function SettingsDrawer({ form, set, inp, selectInp, baseInput, touched, errors,
             <Field label="Article Summary / Excerpt" required error={touched.excerpt && errors.excerpt} hint="Displayed on blog card. Keep it punchy." counter={{ val: form.excerpt.length, max: 150, over: form.excerpt.length > 150 }}>
                 <textarea placeholder="A 1–3 sentence hook…" value={form.excerpt} onChange={set('excerpt')} rows={3} maxLength={150} style={{ ...inp('excerpt'), resize: 'vertical', lineHeight: 1.65, width: '100%' }} />
             </Field>
-            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: wordCount > 1000 ? '#c53030' : '#555', fontWeight: wordCount > 1000 ? 700 : 400, marginTop: '0.75rem', marginBottom: wordCount > 1000 ? '0.35rem' : '2rem', paddingBottom: wordCount > 1000 ? 0 : '2rem', borderBottom: wordCount > 1000 ? 'none' : '2px solid #eee' }}>
-                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read{wordCount > 1000 ? ' — exceeds 1000 word maximum' : ''}
+            <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.72rem', color: wordCount > 3000 ? '#c53030' : '#555', fontWeight: wordCount > 1000 ? 700 : 400, marginTop: '0.75rem', marginBottom: wordCount > 3000 ? '0.35rem' : '2rem', paddingBottom: wordCount > 3000 ? 0 : '2rem', borderBottom: wordCount > 3000 ? 'none' : '2px solid #eee' }}>
+                📊 <strong>{wordCount.toLocaleString()}</strong> words · <strong>~{readTime}</strong> min read{wordCount > 3000 ? ' — exceeds 800-3000 word maximum' : ''}
             </div>
-            {wordCount > 1000 && (
+            {wordCount > 3000 && (
                 <div style={{ fontFamily: 'Space Mono, monospace', fontSize: '0.62rem', color: '#c53030', fontWeight: 700, marginBottom: '2rem', paddingBottom: '2rem', borderBottom: '2px solid #eee' }}>
-                    ⚠ Trim {wordCount - 1000} word{wordCount - 1000 === 1 ? '' : 's'} from the article body before submitting.
+                    ⚠ Trim {wordCount - 3000} word{wordCount - 3000 === 1 ? '' : 's'} from the article body before submitting.
                 </div>
             )}
         </>
@@ -300,7 +301,7 @@ export default function WriteForUs() {
         if (!form.excerpt.trim()) e.excerpt = 'A summary is required.';
         else if (form.excerpt.trim().length > 150) e.excerpt = 'Keep it under 150 characters.';
         if (!stripHtml(editorHtml)) e.content = 'Article content is required.';
-        else if (wordCount > 1000) e.content = `Only ${wordCount} words — maximum is 1000.`;
+        else if (wordCount > 3000) e.content = `Only ${wordCount} words — maximum is 3000.`;
         return e;
     };
 
@@ -405,6 +406,10 @@ export default function WriteForUs() {
             Underline,
             Image,
             Link.configure({ openOnClick: false }),
+            Table.configure({ resizable: true }),
+            TableRow,
+            TableHeader,
+            TableCell,
         ],
         content: editorHtml,
         onUpdate: ({ editor }) => {
@@ -619,6 +624,7 @@ export default function WriteForUs() {
                                                 editor.chain().focus().setImage({ src: url }).run();
                                             }
                                         }} />
+                                        <ToolbarBtn icon="⊞" label="Insert Table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} active={editor.isActive('table')} />
                                         <div style={{ width: 1, background: '#000', margin: '0 0.2rem' }} />
                                         <ToolbarBtn icon="•" label="Bullet List (Ctrl+Shift+8)" onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} />
                                         <ToolbarBtn icon="1." label="Ordered List (Ctrl+Shift+7)" onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} />
@@ -633,6 +639,10 @@ export default function WriteForUs() {
                                     .tiptap li { margin-bottom: 0.25rem; }
                                     .tiptap img { max-width: 100%; height: auto; display: block; margin: 1rem auto; padding: 0.5rem; border: 1.5px solid #ccc; }
                                     .tiptap a { color: #000; text-decoration: underline; text-decoration-color: #f7d000; text-decoration-thickness: 2px; }
+                                    .tiptap table { border-collapse: collapse; table-layout: fixed; width: 100%; margin: 1rem 0; overflow: hidden; }
+                                    .tiptap table td, .tiptap table th { border: 1.5px solid #000; padding: 0.5rem 0.75rem; vertical-align: top; position: relative; }
+                                    .tiptap table th { background: #f7d000; font-weight: 700; text-align: left; }
+                                    .tiptap .selectedCell:after { content: ''; position: absolute; inset: 0; background: rgba(247, 208, 0, 0.25); pointer-events: none; }
                                 `}</style>
                                 <EditorContent editor={editor} />
                             </div>

@@ -1,3 +1,4 @@
+//EditorialReview.jsx
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import DOMPurify from 'dompurify';
@@ -181,6 +182,24 @@ export default function EditorialReview({ canReview }) {
                     height: auto !important;
                     display: block;
                     margin: 1rem auto;
+                }
+                .admin-review-content table {
+                    border-collapse: collapse;
+                    table-layout: fixed;
+                    width: 100%;
+                    margin: 1rem 0;
+                }
+                .admin-review-content table td,
+                .admin-review-content table th {
+                    border: 1.5px solid #000;
+                    padding: 0.5rem 0.75rem;
+                    vertical-align: top;
+                    word-break: break-word;
+                }
+                .admin-review-content table th {
+                    background: var(--c-yellow);
+                    font-weight: 700;
+                    text-align: left;
                 }
             `}</style>
             {/* Rejection Modal — rendered via portal directly into document.body.

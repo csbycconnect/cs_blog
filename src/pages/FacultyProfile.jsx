@@ -4,7 +4,7 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import BackButton from '../components/shared/BackButton';
 import AnimateOnScroll from '../components/shared/AnimateOnScroll';
-import facultyDataRaw from '../data/faculty.json';
+import facultyDataRaw from '../data/faculty_updated.json';
 
 export default function FacultyProfile() {
     const { id } = useParams();
@@ -90,28 +90,60 @@ export default function FacultyProfile() {
                                     {faculty.designation}
                                 </p>
 
-                                <div style={{ display: 'flex', gap: '1rem' }}>
-                                    <button style={{
+                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                    <a href={faculty.email ? `mailto:${faculty.email}` : undefined} style={{
                                         padding: '0.75rem 1.5rem',
                                         backgroundColor: 'transparent',
                                         color: 'var(--c-white)',
                                         border: '2px solid var(--c-white)',
                                         fontFamily: 'var(--font-mono)',
                                         fontWeight: 'bold',
-                                        cursor: 'pointer',
+                                        cursor: faculty.email ? 'pointer' : 'not-allowed',
+                                        opacity: faculty.email ? 1 : 0.4,
                                         transition: 'all 0.2s',
-                                        textTransform: 'uppercase'
+                                        textTransform: 'uppercase',
+                                        textDecoration: 'none',
+                                        display: 'inline-block'
                                     }}
                                         onMouseEnter={e => {
+                                            if (!faculty.email) return;
                                             e.target.style.backgroundColor = 'var(--c-white)';
                                             e.target.style.color = 'var(--c-black)';
                                         }}
                                         onMouseLeave={e => {
+                                            if (!faculty.email) return;
                                             e.target.style.backgroundColor = 'transparent';
                                             e.target.style.color = 'var(--c-white)';
                                         }}>
                                         ✉ Contact
-                                    </button>
+                                    </a>
+
+                                    <a href={faculty.linkedin ? faculty.linkedin : undefined} target="_blank" rel="noopener noreferrer" style={{
+                                        padding: '0.75rem 1.5rem',
+                                        backgroundColor: 'transparent',
+                                        color: 'var(--c-white)',
+                                        border: '2px solid var(--c-yellow)',
+                                        fontFamily: 'var(--font-mono)',
+                                        fontWeight: 'bold',
+                                        cursor: faculty.linkedin ? 'pointer' : 'not-allowed',
+                                        opacity: faculty.linkedin ? 1 : 0.4,
+                                        transition: 'all 0.2s',
+                                        textTransform: 'uppercase',
+                                        textDecoration: 'none',
+                                        display: 'inline-block'
+                                    }}
+                                        onMouseEnter={e => {
+                                            if (!faculty.linkedin) return;
+                                            e.target.style.backgroundColor = 'var(--c-yellow)';
+                                            e.target.style.color = 'var(--c-black)';
+                                        }}
+                                        onMouseLeave={e => {
+                                            if (!faculty.linkedin) return;
+                                            e.target.style.backgroundColor = 'transparent';
+                                            e.target.style.color = 'var(--c-white)';
+                                        }}>
+                                        LinkedIn ↗
+                                    </a>
                                 </div>
                             </div>
                         </div>
