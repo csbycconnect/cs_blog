@@ -1439,6 +1439,131 @@ Please do not reply directly to this email.
 </html>`;
     }
 
+    // ==========================================
+    // TEMPLATE: General Invitation Mail
+    // (custom "Dear ___" — Faculty, Student, a name, etc.)
+    // ==========================================
+    else if (templateType === 'general_invite') {
+
+      const greeting = templateData?.greeting?.trim() || 'Reader';
+
+      subject = `TheByteBoard | Invitation to Contribute`;
+
+      htmlBody = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #1f2937;">
+
+  <table class="wrapper" style="border-spacing: 0; width: 100%; padding: 40px 15px;">
+    <tr>
+      <td align="center">
+
+        <table class="container" style="border-spacing: 0; width: 100%; max-width: 620px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e7eb;">
+
+          <!-- Header -->
+          <tr>
+            <td class="header" style="padding: 30px 40px; border-bottom: 1px solid #e5e7eb;">
+              <div class="brand" style="font-family: 'Courier New', monospace; font-size: 14px; font-weight: bold; letter-spacing: 2px; color: #111827;">
+                THEBYTEBOARD
+              </div>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td class="content" style="padding: 40px;">
+
+              <div class="title" style="font-size: 26px; line-height: 1.4; font-weight: 700; color: #111827; margin-bottom: 25px;">
+                Invitation to Contribute to TheByteBoard
+              </div>
+
+              <div class="text" style="font-size: 15px; line-height: 1.8; color: #374151;">
+                Dear ${greeting},
+                <br><br>
+                We are pleased to invite you to contribute an article to
+                <span class="highlight" style="color: #111827; font-weight: 600;">TheByteBoard</span>, the student-led
+                technical and creative publication of the Department of Computer
+                Science.
+                <br><br>
+                TheByteBoard provides a platform for sharing knowledge,
+                perspectives, experiences, and ideas with the wider
+                Computer Science community.
+              </div>
+
+              <!-- Invite Box -->
+              <div class="invite-box" style="margin: 28px 0; padding: 22px; background-color: #f9fafb; border-left: 4px solid #2563eb;">
+                <div class="invite-title" style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 10px;">
+                  ✦ We would be honoured to feature your work
+                </div>
+                <div class="invite-text" style="font-size: 14px; line-height: 1.7; color: #4b5563;">
+                  We welcome contributions on technology, computer science,
+                  research, education, industry insights, emerging trends,
+                  professional experiences, or any other topic that may be
+                  valuable to our readers.
+                </div>
+              </div>
+
+              <div class="text" style="font-size: 15px; line-height: 1.8; color: #374151;">
+                Your contribution would provide our readers with an opportunity
+                to learn from your knowledge and experience while also helping
+                create a stronger culture of knowledge sharing within our
+                department.
+                <br><br>
+                If you would like to contribute, you can submit your article
+                through our <strong>Write for Us</strong> page:
+              </div>
+
+              <!-- Button Container -->
+              <div class="button-container" style="text-align: center; padding: 25px 0;">
+                <a href="https://www.thebyteboard-csbyc.blog/write-for-us" class="button" target="_blank" style="display: inline-block; padding: 14px 28px; background-color: #111827; color: #ffffff !important; text-decoration: none; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">
+                  WRITE FOR US →
+                </a>
+              </div>
+
+              <div class="link-text" style="font-size: 12px; line-height: 1.6; color: #6b7280; word-break: break-all; text-align: center;">
+                https://www.thebyteboard-csbyc.blog/write-for-us
+              </div>
+
+              <br>
+
+              <div class="text" style="font-size: 15px; line-height: 1.8; color: #374151;">
+                We sincerely appreciate your time and consideration, and we
+                would be delighted to have your work featured on TheByteBoard.
+                <br><br>
+                Warm regards,<br>
+                <strong>Team TheByteBoard</strong><br>
+                Department of Computer Science
+              </div>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer" style="padding: 25px 40px; border-top: 1px dashed #d1d5db; font-size: 11px; line-height: 1.7; color: #6b7280;">
+              This email is being sent as an invitation to contribute to
+              TheByteBoard.
+              <br><br>
+              Visit:
+              <a href="https://www.thebyteboard-csbyc.blog/" style="color: #2563eb; text-decoration: none;">
+                www.thebyteboard-csbyc.blog
+              </a>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>`;
+    }
+
     else {
       return res.status(400).json({ error: "Invalid templateType provided" });
     }
