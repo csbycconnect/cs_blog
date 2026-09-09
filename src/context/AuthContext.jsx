@@ -201,6 +201,37 @@ export function AuthProvider({ children }) {
         });
     };
 
+    /**
+     * Step 1 of "Forgot password": ask Cognito to send a verification
+     * code to the user's email (their pool is configured to deliver it
+     * via email). Resolves with Cognito's CodeDeliveryDetails.
+     */
+    const forgotPassword = (email) => {
+        return new Promise((resolve, reject) => {
+            const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+
+            cognitoUser.forgotPassword({
+                onSuccess: (data) => resolve(data),
+                onFailure: (err) => reject(err),
+            });
+        });
+    };
+
+    /**
+     * Step 2 of "Forgot password": submit the verification code the
+     * user received by email along with their new password.
+     */
+    const confirmForgotPassword = (email, code, newPassword) => {
+        return new Promise((resolve, reject) => {
+            const cognitoUser = new CognitoUser({ Username: email, Pool: userPool });
+
+            cognitoUser.confirmPassword(code, newPassword, {
+                onSuccess: () => resolve(),
+                onFailure: (err) => reject(err),
+            });
+        });
+    };
+
     const logout = () => {
         const cognitoUser = userPool.getCurrentUser();
         if (cognitoUser) {
@@ -267,7 +298,7 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, register, confirmRegistration, login, logout, signInWithProvider, updateBio, updatePreferences }}>
+        <AuthContext.Provider value={{ user, loading, register, confirmRegistration, login, logout, signInWithProvider, updateBio, updatePreferences, forgotPassword, confirmForgotPassword }}>
             {!loading && children}
         </AuthContext.Provider>
     );

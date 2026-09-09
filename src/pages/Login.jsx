@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/layout/Navbar';
@@ -52,9 +53,130 @@ function PasswordRequirements({ password }) {
     );
 }
 
+function ResetPasswordModal({
+    stage, form, setForm, onRequestSubmit, onConfirmSubmit, onClose,
+    loading, showPw, setShowPw, pwFocused, setPwFocused,
+}) {
+    if (stage === 'closed') return null;
+
+    return createPortal(
+        <div
+            onClick={onClose}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1300, padding: '1rem' }}
+        >
+            <div
+                onClick={e => e.stopPropagation()}
+                style={{ width: 'min(440px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem' }}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                    <h3 className="serif-heading" style={{ fontSize: '1.6rem', margin: 0, color: 'var(--c-black)' }}>
+                        {stage === 'request' ? 'Reset Password' : 'Enter New Password'}
+                    </h3>
+                    <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', lineHeight: 1, color: '#555' }}>×</button>
+                </div>
+
+                {stage === 'request' ? (
+                    <form onSubmit={onRequestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#555', margin: 0 }}>
+                            Enter your account email. We'll send a verification code to reset your password.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={labelStyle}>Email</label>
+                            <input
+                                type="email"
+                                required
+                                autoFocus
+                                placeholder="you@christuniversity.in"
+                                value={form.email}
+                                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                                style={inputStyle}
+                                onFocus={e => e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'}
+                                onBlur={e => e.target.style.boxShadow = 'none'}
+                            />
+                        </div>
+                        <button type="submit" disabled={loading} style={{ ...submitBtnStyle, opacity: loading ? 0.7 : 1 }}>
+                            <ShuffleText text={loading ? "Sending..." : "Send Verification Code →"} />
+                        </button>
+                    </form>
+                ) : (
+                    <form onSubmit={onConfirmSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: '#555', margin: 0 }}>
+                            Check your email: <strong>{form.email}</strong>
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={labelStyle}>Verification Code</label>
+                            <input
+                                type="text"
+                                required
+                                autoFocus
+                                placeholder="123456"
+                                value={form.code}
+                                onChange={e => setForm(p => ({ ...p, code: e.target.value }))}
+                                style={inputStyle}
+                                onFocus={e => e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'}
+                                onBlur={e => e.target.style.boxShadow = 'none'}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={labelStyle}>New Password</label>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type={showPw ? 'text' : 'password'}
+                                    required
+                                    placeholder="••••••••"
+                                    value={form.newPassword}
+                                    onChange={e => setForm(p => ({ ...p, newPassword: e.target.value }))}
+                                    style={{ ...inputStyle, paddingRight: '3.5rem' }}
+                                    onFocus={e => { e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'; setPwFocused(true); }}
+                                    onBlur={e => e.target.style.boxShadow = 'none'}
+                                />
+                                <button type="button" onClick={() => setShowPw(v => !v)} style={eyeBtnStyle}>{showPw ? '🙈' : '👁'}</button>
+                            </div>
+                            {(pwFocused || form.newPassword.length > 0) && (
+                                <PasswordRequirements password={form.newPassword} />
+                            )}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <label style={labelStyle}>Confirm New Password</label>
+                            <input
+                                type={showPw ? 'text' : 'password'}
+                                required
+                                placeholder="••••••••"
+                                value={form.confirmNewPassword}
+                                onChange={e => setForm(p => ({ ...p, confirmNewPassword: e.target.value }))}
+                                style={{
+                                    ...inputStyle,
+                                    borderColor: form.confirmNewPassword.length > 0
+                                        ? (form.confirmNewPassword === form.newPassword ? 'green' : '#c0392b')
+                                        : 'var(--c-black)'
+                                }}
+                                onFocus={e => e.target.style.boxShadow = '4px 4px 0 var(--c-yellow)'}
+                                onBlur={e => e.target.style.boxShadow = 'none'}
+                            />
+                            {form.confirmNewPassword.length > 0 && form.confirmNewPassword !== form.newPassword && (
+                                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#c0392b', margin: 0 }}>
+                                    Passwords do not match.
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={loading || !isPasswordValid(form.newPassword) || form.newPassword !== form.confirmNewPassword}
+                            style={{ ...submitBtnStyle, opacity: (loading || !isPasswordValid(form.newPassword) || form.newPassword !== form.confirmNewPassword) ? 0.5 : 1 }}
+                        >
+                            <ShuffleText text={loading ? "Resetting..." : "Reset Password →"} />
+                        </button>
+                    </form>
+                )}
+            </div>
+        </div>,
+        document.body
+    );
+}
+
 export default function Login() {
     const navigate = useNavigate();
-    const { user, register, confirmRegistration, login, logout, signInWithProvider } = useAuth();
+    const { user, register, confirmRegistration, login, logout, signInWithProvider, forgotPassword, confirmForgotPassword } = useAuth();
     // Read optional ?register query parameter
     const queryParams = new URLSearchParams(window.location.search);
     const initialRegisterMode = queryParams.get('register') === 'true';
@@ -71,6 +193,13 @@ export default function Login() {
     const [showVerification, setShowVerification] = useState(false);
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState(null); // { title: '', message: '', type: '' }
+
+    // Forgot password flow: 'closed' | 'request' (enter email) | 'confirm' (enter code + new password)
+    const [resetStage, setResetStage] = useState('closed');
+    const [resetForm, setResetForm] = useState({ email: '', code: '', newPassword: '', confirmNewPassword: '' });
+    const [showResetPw, setShowResetPw] = useState(false);
+    const [resetPwFocused, setResetPwFocused] = useState(false);
+    const [resetLoading, setResetLoading] = useState(false);
 
     const handleStudentSubmit = async (e) => {
         e.preventDefault();
@@ -109,6 +238,50 @@ export default function Login() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleRequestReset = async (e) => {
+        e.preventDefault();
+        setResetLoading(true);
+        try {
+            await forgotPassword(resetForm.email.trim());
+            setNotification({ title: 'Check Your Inbox', message: 'A verification code has been sent to your email.', type: 'success' });
+            setResetStage('confirm');
+        } catch (error) {
+            console.error(error);
+            setNotification({ title: 'Error', message: error.message || 'Could not send verification code.', type: 'error' });
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
+    const handleConfirmReset = async (e) => {
+        e.preventDefault();
+        if (!isPasswordValid(resetForm.newPassword)) {
+            setNotification({ title: 'Weak Password', message: 'Your new password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one symbol (e.g. -,.@#).', type: 'error' });
+            return;
+        }
+        if (resetForm.newPassword !== resetForm.confirmNewPassword) {
+            setNotification({ title: 'Password Mismatch', message: 'Your new password and confirm password do not match.', type: 'error' });
+            return;
+        }
+        setResetLoading(true);
+        try {
+            await confirmForgotPassword(resetForm.email.trim(), resetForm.code.trim(), resetForm.newPassword);
+            setNotification({ title: 'Password Reset', message: 'Your password has been reset successfully. You can now log in.', type: 'success' });
+            setResetStage('closed');
+            setResetForm({ email: '', code: '', newPassword: '', confirmNewPassword: '' });
+        } catch (error) {
+            console.error(error);
+            setNotification({ title: 'Error', message: error.message || 'Could not reset password.', type: 'error' });
+        } finally {
+            setResetLoading(false);
+        }
+    };
+
+    const closeResetFlow = () => {
+        setResetStage('closed');
+        setResetForm({ email: '', code: '', newPassword: '', confirmNewPassword: '' });
     };
 
     const handleAdminSubmit = async (e) => {
@@ -159,6 +332,19 @@ export default function Login() {
                     onClose={() => setNotification(null)}
                 />
             )}
+            <ResetPasswordModal
+                stage={resetStage}
+                form={resetForm}
+                setForm={setResetForm}
+                onRequestSubmit={handleRequestReset}
+                onConfirmSubmit={handleConfirmReset}
+                onClose={closeResetFlow}
+                loading={resetLoading}
+                showPw={showResetPw}
+                setShowPw={setShowResetPw}
+                pwFocused={resetPwFocused}
+                setPwFocused={setResetPwFocused}
+            />
             <Navbar />
             <main style={{ maxWidth: '560px', margin: '0 auto', padding: '0 2.5rem 5rem' }}>
                 <BackButton />
@@ -189,7 +375,7 @@ export default function Login() {
                             {/* Tabs */}
                             <div style={{ display: 'flex', borderBottom: '2px solid var(--c-black)' }}>
                                 {[
-                                    { key: 'student', label: '01 — Student' },
+                                    { key: 'student', label: '01 — User Login' },
                                     { key: 'admin', label: '02 — Admin' },
                                 ].map(({ key, label }) => (
                                     <button
@@ -330,7 +516,16 @@ export default function Login() {
                                             )}
                                             {!isRegisterMode && (
                                                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                    <a href="#" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#555', textDecoration: 'underline' }}>Forgot password?</a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setResetForm(p => ({ ...p, email: studentForm.email }));
+                                                            setResetStage('request');
+                                                        }}
+                                                        style={{ background: 'none', border: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: '#555', textDecoration: 'underline', cursor: 'pointer' }}
+                                                    >
+                                                        Forgot password?
+                                                    </button>
                                                 </div>
                                             )}
                                             {(() => {
@@ -338,7 +533,7 @@ export default function Login() {
                                                 const isDisabled = loading || registerBlocked;
                                                 return (
                                                     <button id="student-submit-btn" type="submit" disabled={isDisabled} style={{ ...submitBtnStyle, opacity: isDisabled ? 0.5 : 1, cursor: isDisabled ? 'not-allowed' : 'pointer' }}>
-                                                        <ShuffleText text={loading ? "Processing..." : isRegisterMode ? "Register as Student →" : "Login as Student →"} />
+                                                        <ShuffleText text={loading ? "Processing..." : isRegisterMode ? "Register as User →" : "Login →"} />
                                                     </button>
                                                 );
                                             })()}

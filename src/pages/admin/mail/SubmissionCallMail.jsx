@@ -13,8 +13,16 @@ const labelStyle = {
 
 const MAX_FILE_MB = 8;
 
+const MAIL_TYPES = [
+    { value: 'class', label: 'Class Mail (Submission Call)' },
+    { value: 'general', label: 'General Mail (Invitation)' },
+];
+
+const GREETING_PRESETS = ['Faculty', 'Student', 'Reader'];
+
 export default function SubmissionCallMail() {
-    const [form, setForm] = useState({ emails: '', className: '', endDate: '' });
+    const [mailType, setMailType] = useState('class');
+    const [form, setForm] = useState({ emails: '', className: '', endDate: '', greeting: '' });
     const [poster, setPoster] = useState(null); // { filename, contentType, base64, previewUrl }
     const [dragActive, setDragActive] = useState(false);
     const [status, setStatus] = useState(null); // null | 'sending' | 'ok' | 'err'
@@ -64,21 +72,33 @@ export default function SubmissionCallMail() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const emailList = form.emails.split(',').map(s => s.trim()).filter(Boolean);
-        if (emailList.length === 0 || !form.className.trim() || !form.endDate.trim()) {
-            setStatus('err'); setErrMsg('Recipient email(s), Class, and Deadline are required.'); return;
+
+        if (emailList.length === 0) {
+            setStatus('err'); setErrMsg('Recipient email(s) are required.'); return;
         }
+
+        let templateData;
+        if (mailType === 'class') {
+            if (!form.className.trim() || !form.endDate.trim()) {
+                setStatus('err'); setErrMsg('Class and Deadline are required.'); return;
+            }
+            templateData = { className: form.className.trim(), endDate: form.endDate.trim() };
+        } else {
+            if (!form.greeting.trim()) {
+                setStatus('err'); setErrMsg('Please fill in "Dear ___" (e.g. Faculty, Student, or a name).'); return;
+            }
+            templateData = { greeting: form.greeting.trim() };
+        }
+
         setStatus('sending');
         try {
             const res = await fetch('/api/send-email', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    templateType: 'submission_call',
+                    templateType: mailType === 'class' ? 'submission_call' : 'general_invite',
                     toEmail: emailList.length === 1 ? emailList[0] : emailList,
-                    templateData: {
-                        className: form.className.trim(),
-                        endDate: form.endDate.trim(),
-                    },
+                    templateData,
                     ...(poster ? {
                         attachment: {
                             filename: poster.filename,
@@ -91,7 +111,7 @@ export default function SubmissionCallMail() {
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Unknown error');
             setStatus('ok');
-            setForm({ emails: '', className: '', endDate: '' });
+            setForm({ emails: '', className: '', endDate: '', greeting: '' });
             setPoster(null);
         } catch (err) {
             setStatus('err');
@@ -102,28 +122,60 @@ export default function SubmissionCallMail() {
     return (
         <div style={{ background: 'var(--c-white)', border: '2px solid var(--c-black)', boxShadow: '8px 8px 0 var(--c-yellow)', padding: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '2px solid #ddd', paddingBottom: '0.5rem' }}>
-                <h2 className="serif-heading" style={{ color: 'var(--c-black)', fontSize: '1.8rem', margin: 0 }}>Submission Call</h2>
+                <h2 className="serif-heading" style={{ color: 'var(--c-black)', fontSize: '1.8rem', margin: 0 }}>Send Mail</h2>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', background: 'var(--c-yellow)', padding: '3px 8px', fontWeight: 700 }}>
-                    CALL FOR SUBMISSIONS
+                    {mailType === 'class' ? 'CALL FOR SUBMISSIONS' : 'GENERAL INVITATION'}
                 </span>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={labelStyle}>Mail Type *</label>
+                    <select
+                        required
+                        style={{ ...inputStyle, cursor: 'pointer', background: '#fff' }}
+                        value={mailType}
+                        onChange={e => { setMailType(e.target.value); setStatus(null); }}
+                    >
+                        {MAIL_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <label style={labelStyle}>Recipient Email(s) * <span style={{ color: '#999', fontWeight: 400 }}>(comma separated for multiple)</span></label>
                     <input type="text" required placeholder="student1@christuniversity.in, student2@christuniversity.in" style={inputStyle} {...field('emails')} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label style={labelStyle}>Class Name *</label>
-                        <input type="text" required placeholder="e.g. BCA 5th Sem" style={inputStyle} {...field('className')} />
+                {mailType === 'class' ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <label style={labelStyle}>Class Name *</label>
+                            <input type="text" required placeholder="e.g. BCA 5th Sem" style={inputStyle} {...field('className')} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <label style={labelStyle}>Submission Deadline *</label>
+                            <input type="text" required placeholder="e.g. 30th August 2026" style={inputStyle} {...field('endDate')} />
+                        </div>
                     </div>
+                ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        <label style={labelStyle}>Submission Deadline *</label>
-                        <input type="text" required placeholder="e.g. 30th August 2026" style={inputStyle} {...field('endDate')} />
+                        <label style={labelStyle}>Dear ___ *</label>
+                        <input
+                            type="text"
+                            required
+                            list="greeting-presets"
+                            placeholder="e.g. Faculty, Student, or a name like Dr. Rao"
+                            style={inputStyle}
+                            {...field('greeting')}
+                        />
+                        <datalist id="greeting-presets">
+                            {GREETING_PRESETS.map(g => <option key={g} value={g} />)}
+                        </datalist>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: '#999' }}>
+                            This fills the "Dear ___" line in the email. Type anything — a role or a name.
+                        </span>
                     </div>
-                </div>
+                )}
 
                 {/* Poster drag & drop */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -170,7 +222,7 @@ export default function SubmissionCallMail() {
 
                 {status === 'ok' && (
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: '#16a34a', padding: '0.7rem 1rem', border: '1px solid #16a34a', background: '#f0fdf4' }}>
-                        ✔ Submission call email sent successfully.
+                        ✔ Mail sent successfully.
                     </div>
                 )}
                 {status === 'err' && (
@@ -184,7 +236,7 @@ export default function SubmissionCallMail() {
                     disabled={status === 'sending'}
                     style={{ background: status === 'sending' ? '#ddd' : 'var(--c-yellow)', border: '2px solid var(--c-black)', padding: '1rem', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1rem', cursor: status === 'sending' ? 'not-allowed' : 'pointer', boxShadow: status === 'sending' ? 'none' : '4px 4px 0 #000', marginTop: '0.5rem' }}
                 >
-                    {status === 'sending' ? 'SENDING…' : 'SEND SUBMISSION CALL'}
+                    {status === 'sending' ? 'SENDING…' : 'SEND MAIL'}
                 </button>
             </form>
         </div>
