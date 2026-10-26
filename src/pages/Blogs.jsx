@@ -4,35 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimatedList from '../components/blog/AnimatedList';
+import BlogFilters, { applyFilters, countActive, EMPTY_FILTERS } from '../components/blog/BlogFilters';
 import BackButton from '../components/shared/BackButton';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
 import ShuffleText from '../components/shared/ShuffleText';
 import { ArticlesService } from '../services/articles';
-
-const READ_TIME_RANGES = [
-    {
-        label: '< 5 min',
-        fn: rt => Number.parseInt(rt || 0, 10) < 5
-    },
-    {
-        label: '5–8 min',
-        fn: rt => {
-            const mins = Number.parseInt(rt || 0, 10);
-            return mins >= 5 && mins <= 8;
-        }
-    },
-    {
-        label: '8+ min',
-        fn: rt => Number.parseInt(rt || 0, 10) > 8
-    },
-];
-
-const SORT_OPTIONS = [
-    { label: 'Most Recent', key: 'recent' },
-    { label: 'Most Viewed', key: 'views' },
-    { label: 'Most Commented', key: 'comments' },
-];
 
 export default function Blogs() {
     const [posts, setPosts] = useState([]);
@@ -41,9 +18,7 @@ export default function Blogs() {
 
     const [search, setSearch] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [selectedAuthor, setSelectedAuthor] = useState(null);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedReadTime, setSelectedReadTime] = useState(null);
+    const [filters, setFilters] = useState(EMPTY_FILTERS);
     const [sortBy, setSortBy] = useState('recent');
     const [showGate, setShowGate] = useState(false);
 
@@ -79,69 +54,21 @@ export default function Blogs() {
         loadAcceptedArticles();
     }, []);
 
-    const authors = useMemo(
-        () => [...new Set(posts.map(p => p.author).filter(Boolean))],
-        [posts]
+    const filteredPosts = useMemo(
+        () => applyFilters(posts, { search, filters, sortBy }),
+        [posts, search, filters, sortBy]
     );
 
-    const categories = useMemo(
-        () => [...new Set(posts.map(p => p.category).filter(Boolean))],
-        [posts]
-    );
+    const activeFilterCount = countActive(filters, sortBy);
 
-    const filteredPosts = useMemo(() => {
-        let filtered = [...posts];
-
-        if (search.trim()) {
-            const query = search.toLowerCase();
-            filtered = filtered.filter(post =>
-                (post.title || '').toLowerCase().includes(query) ||
-                (post.excerpt || '').toLowerCase().includes(query) ||
-                (post.content || '').toLowerCase().includes(query)
-            );
-        }
-
-        if (selectedAuthor) {
-            filtered = filtered.filter(post => post.author === selectedAuthor);
-        }
-
-        if (selectedCategory) {
-            filtered = filtered.filter(post => post.category === selectedCategory);
-        }
-
-        if (selectedReadTime !== null) {
-            filtered = filtered.filter(post => READ_TIME_RANGES[selectedReadTime].fn(post.readTime));
-        }
-
-        if (sortBy === 'views') {
-            filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
-        }
-
-        if (sortBy === 'comments') {
-            filtered.sort((a, b) => (b.comments || 0) - (a.comments || 0));
-        }
-
-        if (sortBy === 'recent') {
-            filtered.sort(
-                (a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
-            );
-        }
-
-        return filtered;
-    }, [posts, search, selectedAuthor, selectedCategory, selectedReadTime, sortBy]);
-
-    const activeFilterCount = [
-        selectedAuthor,
-        selectedCategory,
-        selectedReadTime !== null ? true : null,
-    ].filter(Boolean).length + (sortBy !== 'recent' ? 1 : 0);
+    const clearFilters = () => {
+        setFilters(EMPTY_FILTERS);
+        setSortBy('recent');
+    };
 
     const clearAll = () => {
         setSearch('');
-        setSelectedAuthor(null);
-        setSelectedCategory(null);
-        setSelectedReadTime(null);
-        setSortBy('recent');
+        clearFilters();
     };
 
     const handlePostSelect = (post) => {
@@ -172,20 +99,25 @@ export default function Blogs() {
 
         const isLiking = !((existing.likedBy || []).includes(user.sub));
 
-        setPosts(prev => prev.map(post =>
+        const apply = (liking) => setPosts(prev => prev.map(post =>
             post.id === postId
                 ? {
                     ...post,
-                    likes: Math.max(0, (post.likes || 0) + (isLiking ? 1 : -1)),
-                    likedBy: isLiking ? [...new Set([...(post.likedBy || []), user.sub])] : (post.likedBy || []).filter(id => id !== user.sub)
+                    likes: Math.max(0, (post.likes || 0) + (liking ? 1 : -1)),
+                    likedBy: liking
+                        ? [...new Set([...(post.likedBy || []), user.sub])]
+                        : (post.likedBy || []).filter(id => id !== user.sub),
                 }
                 : post
         ));
+
+        apply(isLiking);
 
         try {
             await ArticlesService.toggleLike(postId, isLiking);
         } catch (err) {
             console.error('Like toggle failed:', err);
+            apply(!isLiking);
         }
     };
 
@@ -197,7 +129,7 @@ export default function Blogs() {
     };
 
     return (
-        <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', overflowX: 'clip' }}>
             {showGate && (
                 <AuthGateModal action="view and comment on articles" onClose={() => setShowGate(false)} />
             )}
@@ -239,11 +171,12 @@ export default function Blogs() {
                             padding: '0.75rem 1.75rem',
                             textDecoration: 'none',
                             flexShrink: 0,
+                            alignSelf: 'flex-start',
+                            marginTop: '1rem',
                             transition: 'transform 0.1s, box-shadow 0.1s',
-                            transform: 'translate(0px, 24px)',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.transform = 'translate(2px,2px)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--c-black)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'translate(0,0)'; e.currentTarget.style.boxShadow = '6px 6px 0 var(--c-black)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '6px 6px 0 var(--c-black)'; }}
                     >
                         <ShuffleText text="Write for Us →" />
                     </a>
@@ -256,7 +189,7 @@ export default function Blogs() {
                             id="blog-search"
                             type="text"
                             className="blog-search-input"
-                            placeholder="Search by title or content..."
+                            placeholder="Search title, content or author..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -280,76 +213,15 @@ export default function Blogs() {
 
                 <div className="blog-content-area">
                     <aside className={`blog-filter-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-                        <div className="blog-sidebar-header">
-                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--c-black)' }}>
-                                Filters
-                            </span>
-                            {activeFilterCount > 0 && (
-                                <button className="blog-sidebar-clear-all" onClick={clearAll}>
-                                    Clear all
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Author</span>
-                            <div className="blog-filter-chips">
-                                {authors.map(author => (
-                                    <button
-                                        key={author}
-                                        className={`blog-filter-chip ${selectedAuthor === author ? 'active' : ''}`}
-                                        onClick={() => setSelectedAuthor(selectedAuthor === author ? null : author)}
-                                    >
-                                        {author}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Category</span>
-                            <div className="blog-filter-chips">
-                                {categories.map(category => (
-                                    <button
-                                        key={category}
-                                        className={`blog-filter-chip ${selectedCategory === category ? 'active' : ''}`}
-                                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                                    >
-                                        {category}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Read Time</span>
-                            <div className="blog-filter-chips">
-                                {READ_TIME_RANGES.map((range, index) => (
-                                    <button
-                                        key={range.label}
-                                        className={`blog-filter-chip ${selectedReadTime === index ? 'active' : ''}`}
-                                        onClick={() => setSelectedReadTime(selectedReadTime === index ? null : index)}
-                                    >
-                                        {range.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Sort By</span>
-                            <div className="blog-filter-chips">
-                                {SORT_OPTIONS.map(option => (
-                                    <button
-                                        key={option.key}
-                                        className={`blog-filter-chip ${sortBy === option.key ? 'active' : ''}`}
-                                        onClick={() => setSortBy(option.key)}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <BlogFilters
+                            posts={posts}
+                            search={search}
+                            filters={filters}
+                            setFilters={setFilters}
+                            sortBy={sortBy}
+                            setSortBy={setSortBy}
+                            onClear={clearFilters}
+                        />
                     </aside>
 
                     <div className={`blog-list-area ${sidebarOpen ? 'sidebar-offset' : ''}`}>
@@ -359,19 +231,20 @@ export default function Blogs() {
                             </div>
                         ) : filteredPosts.length === 0 ? (
                             <div className="blog-no-results">
-                                <p>No dispatches match your search.</p>
-                                <button className="blog-filter-clear-all" onClick={clearAll} style={{ marginTop: '1rem' }}>
-                                    Clear Filters
-                                </button>
+                                <p>{posts.length === 0 ? 'No articles yet.' : 'No dispatches match your search.'}</p>
+                                {posts.length > 0 && (
+                                    <button className="blog-filter-clear-all" onClick={clearAll} style={{ marginTop: '1rem' }}>
+                                        Clear Filters
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <AnimatedList
                                 items={filteredPosts}
                                 onItemSelect={handlePostSelect}
                                 onLikeToggle={handleLikeToggle}
-                                showGradients={false}
+                                onAuthRequired={() => setShowGate(true)}
                                 enableArrowNavigation={true}
-                                displayScrollbar={false}
                             />
                         )}
                     </div>

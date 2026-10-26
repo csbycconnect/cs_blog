@@ -1,13 +1,12 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useInView } from 'motion/react';
-import { Heart, ThumbsUp } from 'lucide-react';
-import { ArticleAPI } from '../../lib/api';
-import '../../styles/components.css'; // ensure components.css is loaded
+import { Heart, ThumbsUp, Eye } from 'lucide-react';
+import '../../styles/components.css';
 import { useAuth } from '../../context/AuthContext';
 
 const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => {
     const ref = useRef(null);
-    const inView = useInView(ref, { amount: 0.1, once: false }); // reduced amount for larger items
+    const inView = useInView(ref, { amount: 0.1, once: false });
     return (
         <motion.div
             ref={ref}
@@ -16,7 +15,7 @@ const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => 
             onClick={onClick}
             initial={{ y: 20, opacity: 0 }}
             animate={inView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
-            transition={{ duration: 0.4, delay }}
+            transition={{ duration: 0.4, delay: Math.min(delay, 0.4) }}
             className="blog-animated-item"
         >
             {children}
@@ -24,92 +23,87 @@ const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => 
     );
 };
 
-const BlogCard = ({ post }) => {
+const formatDate = (value) => {
+    const d = new Date(value);
+    if (!value || isNaN(d)) return '';
+    return d
+        .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        .toUpperCase();
+};
+
+const BORDER_IDLE = '2px solid rgba(255,255,255,0.25)';
+
+const BlogCard = ({ post, onLikeToggle, onAuthRequired }) => {
     const { user } = useAuth();
     const [isFavorite, setIsFavorite] = useState(false);
-    const [hasLiked, setHasLiked] = useState(false);
-    const [likesCount, setLikesCount] = useState(0);
+
+    const hasLiked = !!user && (post.likedBy || []).includes(user.sub);
+    const likesCount = post.likes || 0;
+    const dateLabel = formatDate(post.date);
 
     useEffect(() => {
-        const favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
-        setIsFavorite(favs.some(f => f.id === post.id));
+        try {
+            const favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+            setIsFavorite(favs.some(f => f.id === post.id));
+        } catch {
+            setIsFavorite(false);
+        }
+    }, [post.id]);
 
-        const localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
-        setHasLiked(localLikes.includes(post.id));
-        setLikesCount(post.likes || 0);
-    }, [post]);
-
-    const handleLikeClick = async (e) => {
+    const handleLikeClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-
         if (!user) {
-            alert('Please log in to like articles.');
+            onAuthRequired?.();
             return;
         }
-
-        const newLiked = !hasLiked;
-        setHasLiked(newLiked);
-        setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
-
-        try {
-            await ArticleAPI.toggleLike(post.id, newLiked);
-
-            let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
-            if (newLiked) {
-                if (!localLikes.includes(post.id)) localLikes.push(post.id);
-            } else {
-                localLikes = localLikes.filter(id => id !== post.id);
-            }
-            localStorage.setItem('bb_likes', JSON.stringify(localLikes));
-
-            let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
-            const favIndex = favs.findIndex(f => f.id === post.id);
-            if (favIndex > -1) {
-                favs[favIndex].likes = newLiked ? (favs[favIndex].likes || 0) + 1 : (favs[favIndex].likes || 0) - 1;
-                localStorage.setItem('bb_favorites', JSON.stringify(favs));
-            }
-        } catch (error) {
-            console.error(error);
-            setHasLiked(!newLiked);
-            setLikesCount(prev => newLiked ? prev - 1 : prev + 1);
-        }
+        onLikeToggle?.(post.id);
     };
 
     const handleFavoriteClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-
         if (!user) {
-            alert('Please log in to favorite articles.');
+            onAuthRequired?.();
             return;
         }
 
-        let favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
-        const newIsFavorite = !isFavorite;
+        let favs = [];
+        try {
+            favs = JSON.parse(localStorage.getItem('bb_favorites') || '[]');
+        } catch {
+            favs = [];
+        }
 
-        if (newIsFavorite) {
-            if (!favs.some(f => f.id === post.id)) {
-                favs.push({ ...post, likes: likesCount });
-            }
+        const next = !isFavorite;
+        if (next) {
+            if (!favs.some(f => f.id === post.id)) favs.push({ ...post, likes: likesCount });
         } else {
             favs = favs.filter(f => f.id !== post.id);
         }
 
         localStorage.setItem('bb_favorites', JSON.stringify(favs));
-        setIsFavorite(newIsFavorite);
+        setIsFavorite(next);
     };
 
     return (
-        <div className="blog-card" style={{ transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+        <div
+            className="blog-card"
+            style={{ transition: 'transform 0.2s', cursor: 'pointer' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+        >
             <div className="blog-card-header">
                 <div className="blog-card-meta">
-                    {/* Removed Avatar Image */}
                     <div className="blog-meta-text">
                         <span className="blog-author">{post.author}</span>
                         <div className="blog-date-time">
-                            <span>{new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}</span>
-                            <span className="bullet">•</span>
+                            {dateLabel && (
+                                <>
+                                    <span>{dateLabel}</span>
+                                    <span className="bullet">•</span>
+                                </>
+                            )}
                             <span>{post.readTime}</span>
                         </div>
                     </div>
@@ -121,9 +115,14 @@ const BlogCard = ({ post }) => {
                 <p className="blog-excerpt">{post.excerpt}</p>
             </div>
 
-            <div className="blog-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+                className="blog-card-footer"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
                 <div className="blog-footer-stats">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>👁 {post.views || 0}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Eye size={14} /> {post.views || 0}
+                    </span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -132,16 +131,25 @@ const BlogCard = ({ post }) => {
                         title="Like this article"
                         style={{
                             background: hasLiked ? '#ff4d4d' : 'transparent',
-                            border: hasLiked ? '2px solid #000' : '2px solid rgba(0,0,0,0.2)',
-                            display: 'flex', alignItems: 'center', gap: '0.4rem',
-                            padding: '0.4rem 0.75rem', cursor: 'pointer',
-                            fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.85rem',
+                            border: hasLiked ? '2px solid #000' : BORDER_IDLE,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.4rem 0.75rem',
+                            cursor: 'pointer',
+                            fontFamily: 'var(--font-mono)',
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
                             transition: 'all 0.2s',
                             boxShadow: hasLiked ? '2px 2px 0 #000' : 'none',
-                            color: 'var(--c-white)'
+                            color: 'var(--c-white)',
                         }}
                     >
-                        <ThumbsUp size={16} color={hasLiked ? "#000" : "#ff4d4d"} fill={hasLiked ? "#000" : "none"} />
+                        <ThumbsUp
+                            size={16}
+                            color={hasLiked ? '#000' : '#ff4d4d'}
+                            fill={hasLiked ? '#000' : 'none'}
+                        />
                         <span style={{ color: hasLiked ? '#000' : 'var(--c-white)' }}>{likesCount}</span>
                     </button>
 
@@ -150,14 +158,21 @@ const BlogCard = ({ post }) => {
                         title="Save to favorites"
                         style={{
                             background: isFavorite ? '#ff4d4d' : 'transparent',
-                            border: isFavorite ? '2px solid #000' : '2px solid rgba(0,0,0,0.2)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            padding: '0.4rem', cursor: 'pointer',
+                            border: isFavorite ? '2px solid #000' : BORDER_IDLE,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.4rem',
+                            cursor: 'pointer',
                             transition: 'all 0.2s',
-                            boxShadow: isFavorite ? '2px 2px 0 #000' : 'none'
+                            boxShadow: isFavorite ? '2px 2px 0 #000' : 'none',
                         }}
                     >
-                        <Heart size={18} color={isFavorite ? "#000" : "#ff4d4d"} fill={isFavorite ? "#ff4d4d" : "none"} />
+                        <Heart
+                            size={18}
+                            color={isFavorite ? '#000' : '#ff4d4d'}
+                            fill={isFavorite ? '#ff4d4d' : 'none'}
+                        />
                     </button>
                 </div>
             </div>
@@ -168,16 +183,14 @@ const BlogCard = ({ post }) => {
 const AnimatedList = ({
     items = [],
     onItemSelect,
-    showGradients = false, // disabled by default to match clean aesthetic
+    onLikeToggle,
+    onAuthRequired,
     enableArrowNavigation = true,
-    displayScrollbar = false, // disabled to match clean aesthetic
-    initialSelectedIndex = -1
+    initialSelectedIndex = -1,
 }) => {
     const listRef = useRef(null);
     const [selectedIndex, setSelectedIndex] = useState(initialSelectedIndex);
     const [keyboardNav, setKeyboardNav] = useState(false);
-    const [topGradientOpacity, setTopGradientOpacity] = useState(0);
-    const [bottomGradientOpacity, setBottomGradientOpacity] = useState(1);
 
     const handleItemMouseEnter = useCallback((index) => {
         setSelectedIndex(index);
@@ -186,37 +199,29 @@ const AnimatedList = ({
     const handleItemClick = useCallback(
         (item, index) => {
             setSelectedIndex(index);
-            if (onItemSelect) {
-                onItemSelect(item, index);
-            }
+            onItemSelect?.(item, index);
         },
         [onItemSelect]
     );
 
-    const handleScroll = (e) => {
-        const { scrollTop, scrollHeight, clientHeight } = e.target;
-        setTopGradientOpacity(Math.min(scrollTop / 50, 1));
-        const bottomDistance = scrollHeight - (scrollTop + clientHeight);
-        setBottomGradientOpacity(scrollHeight <= clientHeight ? 0 : Math.min(bottomDistance / 50, 1));
-    };
-
     useEffect(() => {
         if (!enableArrowNavigation || items.length === 0) return;
+
         const handleKeyDown = (e) => {
-            if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
+            if (e.target.closest?.('input, textarea, button, select, a, [contenteditable]')) return;
+
+            if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 setKeyboardNav(true);
                 setSelectedIndex(prev => Math.min(prev + 1, items.length - 1));
-            } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
+            } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 setKeyboardNav(true);
                 setSelectedIndex(prev => Math.max(prev - 1, 0));
             } else if (e.key === 'Enter') {
                 if (selectedIndex >= 0 && selectedIndex < items.length) {
                     e.preventDefault();
-                    if (onItemSelect) {
-                        onItemSelect(items[selectedIndex], selectedIndex);
-                    }
+                    onItemSelect?.(items[selectedIndex], selectedIndex);
                 }
             }
         };
@@ -227,23 +232,9 @@ const AnimatedList = ({
 
     useEffect(() => {
         if (!keyboardNav || selectedIndex < 0 || !listRef.current) return;
-        const container = listRef.current;
-        const selectedItem = container.querySelector(`[data-index="${selectedIndex}"]`);
-        if (selectedItem) {
-            const extraMargin = 50;
-            const containerScrollTop = container.scrollTop;
-            const containerHeight = container.clientHeight;
-            const itemTop = selectedItem.offsetTop;
-            const itemBottom = itemTop + selectedItem.offsetHeight;
-            if (itemTop < containerScrollTop + extraMargin) {
-                container.scrollTo({ top: itemTop - extraMargin, behavior: 'smooth' });
-            } else if (itemBottom > containerScrollTop + containerHeight - extraMargin) {
-                container.scrollTo({
-                    top: itemBottom - containerHeight + extraMargin,
-                    behavior: 'smooth'
-                });
-            }
-        }
+        listRef.current
+            .querySelector(`[data-index="${selectedIndex}"]`)
+            ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         setKeyboardNav(false);
     }, [selectedIndex, keyboardNav]);
 
@@ -253,8 +244,8 @@ const AnimatedList = ({
         <div className="blog-list-container" style={{ position: 'relative', width: '100%' }}>
             <div
                 ref={listRef}
-                className={`blog-list-scrollarea ${displayScrollbar ? 'with-scrollbar' : 'scrollbar-hide'}`}
-                onScroll={handleScroll}
+                className="blog-list-scrollarea scrollbar-hide"
+                style={{ height: 'auto', maxHeight: 'none', overflow: 'visible' }}
             >
                 {items.map((item, index) => (
                     <AnimatedItem
@@ -264,22 +255,14 @@ const AnimatedList = ({
                         onMouseEnter={() => handleItemMouseEnter(index)}
                         onClick={() => handleItemClick(item, index)}
                     >
-                        <BlogCard post={item} />
+                        <BlogCard
+                            post={item}
+                            onLikeToggle={onLikeToggle}
+                            onAuthRequired={onAuthRequired}
+                        />
                     </AnimatedItem>
                 ))}
             </div>
-            {showGradients && (
-                <>
-                    <div
-                        className="scroll-gradient-top"
-                        style={{ opacity: topGradientOpacity }}
-                    ></div>
-                    <div
-                        className="scroll-gradient-bottom"
-                        style={{ opacity: bottomGradientOpacity }}
-                    ></div>
-                </>
-            )}
         </div>
     );
 };

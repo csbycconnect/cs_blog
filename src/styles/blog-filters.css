@@ -1,0 +1,194 @@
+.bf-root {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-family: var(--font-mono);
+    color: var(--c-black);
+}
+
+.bf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--c-black);
+}
+
+.bf-header-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.bf-clear {
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.7rem;
+    text-decoration: underline;
+    cursor: pointer;
+    color: inherit;
+}
+
+.bf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.bf-chip {
+    font: inherit;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    background: var(--c-yellow);
+    border: 1.5px solid var(--c-black);
+    cursor: pointer;
+    text-align: left;
+}
+
+.bf-chip:hover {
+    background: var(--c-black);
+    color: var(--c-yellow);
+}
+
+.bf-section {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.bf-section-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    padding: 0.7rem 0;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+
+.bf-section-title {
+    flex: 1;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.bf-badge {
+    background: var(--c-black);
+    color: var(--c-yellow);
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bf-caret {
+    font-size: 1rem;
+    width: 1rem;
+    text-align: center;
+}
+
+.bf-section-body {
+    padding-bottom: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bf-search,
+.bf-select {
+    width: 100%;
+    font: inherit;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.6rem;
+    border: 1.5px solid var(--c-black);
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--c-black);
+    box-sizing: border-box;
+}
+
+.bf-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.bf-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    font: inherit;
+    font-size: 0.72rem;
+    text-align: left;
+    padding: 0.35rem 0.5rem;
+    background: transparent;
+    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    color: var(--c-black);
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.bf-option:hover {
+    border-color: var(--c-black);
+}
+
+.bf-option.active {
+    background: var(--c-yellow);
+    border-color: var(--c-black);
+    font-weight: 700;
+}
+
+.bf-option.dim {
+    opacity: 0.45;
+}
+
+.bf-check {
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 1.5px solid var(--c-black);
+    font-size: 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.bf-option-label {
+    flex: 1;
+    overflow-wrap: anywhere;
+}
+
+.bf-count {
+    font-size: 0.65rem;
+    opacity: 0.65;
+}
+
+.bf-more {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.7rem;
+    text-decoration: underline;
+    cursor: pointer;
+    color: inherit;
+    padding: 0;
+}
+
+.bf-empty {
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
