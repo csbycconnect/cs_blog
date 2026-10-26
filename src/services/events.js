@@ -1,44 +1,46 @@
-export const EventService = {
-    
-    // 1. Fetch all events (Public and Admin view)
-    fetchAllEvents: async () => {
-        const response = await fetch('/api/events', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        if (!response.ok) throw new Error("Failed to fetch events");
-        return await response.json();
+// src/services/events.js
+import { authFetch } from "../lib/authFetch";
+
+const API_BASE = "/api/events";
+
+export const EventsService = {
+    // Public: visible events only
+    async getAll() {
+        const res = await authFetch(API_BASE);
+        if (!res.ok) throw new Error("Failed to load events");
+        return await res.json();
     },
 
-    // 2. Create a new event
-    createEvent: async (eventData) => {
-        const response = await fetch('/api/events', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'create', eventData })
-        });
-        if (!response.ok) throw new Error("Failed to create event");
-        return await response.json();
+    // Admin: includes hidden events
+    async getAllAdmin() {
+        const res = await authFetch(`${API_BASE}?all=1`);
+        if (!res.ok) throw new Error("Failed to load events");
+        return await res.json();
     },
 
-    // 3. Update visibility (Hide/Show)
-    updateEventStatus: async (id, status) => {
-        const response = await fetch(`/api/events/${id}/status`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
+    async create(eventData) {
+        const res = await authFetch(API_BASE, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventData }),
         });
-        if (!response.ok) throw new Error("Failed to update status");
-        return await response.json();
+        if (!res.ok) throw new Error("Failed to create event");
+        return await res.json();
     },
 
-    // 4. Delete an event
-    deleteEvent: async (id) => {
-        const response = await fetch(`/api/events/${id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
+    async setStatus(id, status) {
+        const res = await authFetch(`${API_BASE}/${encodeURIComponent(id)}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
         });
-        if (!response.ok) throw new Error("Failed to delete event");
-        return await response.json();
-    }
+        if (!res.ok) throw new Error("Failed to update event status");
+        return await res.json();
+    },
+
+    async remove(id) {
+        const res = await authFetch(`${API_BASE}/${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Failed to delete event");
+        return await res.json();
+    },
 };
