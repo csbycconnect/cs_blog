@@ -11,7 +11,7 @@ const MONTH_NAMES = [
     'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-import { ArticleAPI } from '../lib/api';
+import { EventsService } from '../services/events';
 
 const categoryColors = {
     Competition: { bg: '#f7d000', text: '#000' },
@@ -55,7 +55,7 @@ export default function Calendar() {
     useEffect(() => {
         const fetchDynamicEvents = async () => {
             try {
-                const data = await ArticleAPI.fetchAllEvents();
+                const data = await EventsService.getAll();
                 const grouped = {};
                 data.forEach(ev => {
                     const dateObj = new Date(ev.date);

@@ -105,6 +105,27 @@ export default function Blogs() {
         return () => { cancelled = true; };
     }, []);
 
+    // "Did I like this?" comes from a small private request, so the big public list
+    // stays identical for everyone and can be cached by the CDN.
+    useEffect(() => {
+        if (!user?.sub || posts.length === 0) return;
+        let cancelled = false;
+
+        ArticlesService.getMyLikes(posts.map(p => p.id).filter(Boolean))
+            .then(likedIds => {
+                if (cancelled || !likedIds.length) return;
+                const liked = new Set(likedIds);
+                setPosts(prev => prev.map(p =>
+                    liked.has(p.id)
+                        ? { ...p, likedBy: [...new Set([...(p.likedBy || []), user.sub])] }
+                        : p
+                ));
+            })
+            .catch(() => { /* likes state is non-critical */ });
+
+        return () => { cancelled = true; };
+    }, [user?.sub, posts.length]);
+
     const filteredPosts = useMemo(
         () => applyFilters(posts, { search: debouncedSearch, filters, sortBy }),
         [posts, debouncedSearch, filters, sortBy]

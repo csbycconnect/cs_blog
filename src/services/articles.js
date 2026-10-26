@@ -1,5 +1,8 @@
 // src/services/articles.jsx
+import { authFetch, getIdToken } from "../lib/authFetch";
+
 const API_BASE = "/api/articles";
+
 
 export const ArticlesService = {
     // Used by Blogs.jsx and Home.jsx to pull public approved dispatches
@@ -12,7 +15,7 @@ export const ArticlesService = {
         if (limit) params.set('limit', String(limit));
         if (cursor) params.set('cursor', String(cursor));
 
-        const res = await fetch(`${API_BASE}?${params}`, { signal });
+        const res = await authFetch(`${API_BASE}?${params}`, { signal });
         if (!res.ok) throw new Error("Failed to fetch accepted articles");
 
         const data = await res.json();
@@ -24,7 +27,7 @@ export const ArticlesService = {
         const params = new URLSearchParams({ status: 'accepted', fields: 'list', limit: String(limit) });
         if (cursor) params.set('cursor', String(cursor));
 
-        const res = await fetch(`${API_BASE}?${params}`, { signal });
+        const res = await authFetch(`${API_BASE}?${params}`, { signal });
         if (!res.ok) throw new Error("Failed to fetch accepted articles");
 
         const data = await res.json();
@@ -35,40 +38,48 @@ export const ArticlesService = {
     // Used by BlogPost.jsx to read a single post layout
     async getById(id) {
         if (!id) return null;
-        const res = await fetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
+        const res = await authFetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error("Failed to load article metadata");
         return await res.json();
     },
 
     // Used by Admin.jsx to view specific categories (e.g., status=pending)
     async fetchByStatus(status) {
-        const res = await fetch(`${API_BASE}?status=${status}`);
+        const res = await authFetch(`${API_BASE}?status=${status}`);
         if (!res.ok) throw new Error(`Failed to load articles with status ${status}`);
         return await res.json();
     },
 
     async getPending() {
-        const res = await fetch(`${API_BASE}?status=pending`);
+        const res = await authFetch(`${API_BASE}?status=pending`);
         if (!res.ok) throw new Error("Failed to load pending articles");
         return await res.json();
     },
 
     async getByAuthor(userSubId) {
         if (!userSubId) return [];
-        const res = await fetch(`${API_BASE}?author=${encodeURIComponent(userSubId)}`);
+        const res = await authFetch(`${API_BASE}?author=${encodeURIComponent(userSubId)}`);
         if (!res.ok) throw new Error("Failed to load author-specific articles");
         return await res.json();
     },
 
     // New optimized loader to grab everything for management dashboard
     async fetchAllAdminBlogs() {
-        const res = await fetch(`${API_BASE}?status=all_admin`);
+        const res = await authFetch(`${API_BASE}?status=all_admin`);
         if (!res.ok) throw new Error("Failed to grab master database record registry");
         return await res.json();
     },
 
     async fetchAll() {
         return this.fetchAllAdminBlogs();
+    },
+
+    // Ids (from `ids`) that the signed-in user has liked. Empty array when signed out.
+    async getMyLikes(ids = []) {
+        if (!ids.length || !(await getIdToken())) return [];
+        const res = await authFetch(`${API_BASE}?myLikes=${encodeURIComponent(ids.slice(0, 100).join(","))}`);
+        if (!res.ok) return [];
+        return await res.json();
     },
 
     // Used by WriteForUs.jsx to safely submit draft dispatches
@@ -100,7 +111,7 @@ export const ArticlesService = {
             readTime: payload.readTime || null
         };
 
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -116,7 +127,7 @@ export const ArticlesService = {
         const body = { action: "updateStatus", id, status };
         if (rejectionReason) body.rejectionReason = String(rejectionReason);
 
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -127,7 +138,7 @@ export const ArticlesService = {
 
     // ✅ FIXED & LINKED: Passes the explicit delete action down to API router
     async deleteArticle(id) {
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "delete", id })
@@ -144,7 +155,7 @@ export const ArticlesService = {
             sessionStorage.setItem(key, '1');
         } catch { /* storage blocked: fall through and count */ }
 
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "views", id })
@@ -154,7 +165,7 @@ export const ArticlesService = {
     },
 
     async toggleLike(id, isLiking) {
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "like", id, isLiking })
