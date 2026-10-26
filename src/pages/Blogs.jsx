@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import Navbar from '../components/layout/Navbar';
@@ -11,12 +11,53 @@ import AuthGateModal from '../components/shared/AuthGateModal';
 import ShuffleText from '../components/shared/ShuffleText';
 import { ArticlesService } from '../services/articles';
 
+// ---- DB protection: cache + request de-duplication ----
+const CACHE_KEY = 'bb_accepted_articles_v1';
+const CACHE_TTL_MS = 5 * 60 * 1000; // re-fetch from the DB at most once per 5 min per browser
+let inflightRequest = null;
+
+const readCache = () => {
+    try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const { at, items } = JSON.parse(raw);
+        return Date.now() - at < CACHE_TTL_MS ? items : null;
+    } catch {
+        return null;
+    }
+};
+
+const writeCache = (items) => {
+    try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items }));
+    } catch {
+        /* storage full or blocked: skip caching */
+    }
+};
+
+const clearCache = () => {
+    try { sessionStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+};
+
+const fetchAccepted = async () => {
+    const cached = readCache();
+    if (cached) return cached;
+    if (!inflightRequest) {
+        inflightRequest = ArticlesService.getAccepted()
+            .then(items => { writeCache(items || []); return items || []; })
+            .finally(() => { inflightRequest = null; });
+    }
+    return inflightRequest;
+};
+
 export default function Blogs() {
     const [posts, setPosts] = useState([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
     const [error, setError] = useState(null);
 
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const likingRef = useRef(new Set());
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [filters, setFilters] = useState(EMPTY_FILTERS);
     const [sortBy, setSortBy] = useState('recent');
@@ -26,12 +67,20 @@ export default function Blogs() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(search), 250);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    useEffect(() => {
+        let cancelled = false;
+
         const loadAcceptedArticles = async () => {
             setLoadingPosts(true);
             setError(null);
 
             try {
-                const items = await ArticlesService.getAccepted();
+                const items = await fetchAccepted();
+                if (cancelled) return;
                 const normalized = (items || []).map(item => ({
                     ...item,
                     author: item.name || item.authorName || 'Anonymous',
@@ -43,20 +92,22 @@ export default function Blogs() {
 
                 setPosts(normalized);
             } catch (err) {
+                if (cancelled) return;
                 console.error('Failed to load accepted articles:', err);
                 setError(err?.message || 'Unable to load articles.');
                 setPosts([]);
             } finally {
-                setLoadingPosts(false);
+                if (!cancelled) setLoadingPosts(false);
             }
         };
 
         loadAcceptedArticles();
+        return () => { cancelled = true; };
     }, []);
 
     const filteredPosts = useMemo(
-        () => applyFilters(posts, { search, filters, sortBy }),
-        [posts, search, filters, sortBy]
+        () => applyFilters(posts, { search: debouncedSearch, filters, sortBy }),
+        [posts, debouncedSearch, filters, sortBy]
     );
 
     const activeFilterCount = countActive(filters, sortBy);
@@ -97,6 +148,10 @@ export default function Blogs() {
             return;
         }
 
+        // one in-flight like request per post: blocks click-spam from hammering the DB
+        if (likingRef.current.has(postId)) return;
+        likingRef.current.add(postId);
+
         const isLiking = !((existing.likedBy || []).includes(user.sub));
 
         const apply = (liking) => setPosts(prev => prev.map(post =>
@@ -115,9 +170,12 @@ export default function Blogs() {
 
         try {
             await ArticlesService.toggleLike(postId, isLiking);
+            clearCache(); // counts changed server-side; next load fetches fresh data
         } catch (err) {
             console.error('Like toggle failed:', err);
             apply(!isLiking);
+        } finally {
+            likingRef.current.delete(postId);
         }
     };
 
@@ -215,7 +273,7 @@ export default function Blogs() {
                     <aside className={`blog-filter-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
                         <BlogFilters
                             posts={posts}
-                            search={search}
+                            search={debouncedSearch}
                             filters={filters}
                             setFilters={setFilters}
                             sortBy={sortBy}

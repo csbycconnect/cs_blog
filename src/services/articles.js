@@ -3,15 +3,33 @@ const API_BASE = "/api/articles";
 
 export const ArticlesService = {
     // Used by Blogs.jsx and Home.jsx to pull public approved dispatches
-    async getAccepted() {
-        try {
-            const res = await fetch(API_BASE);
-            if (!res.ok) throw new Error("Failed to fetch accepted articles");
-            return await res.json();
-        } catch (error) {
-            console.warn("getAccepted failed, falling back to status query:", error);
-            return await this.fetchByStatus('accepted');
-        }
+    // Works with the current API (plain array) and a paginated API ({ items, nextCursor }).
+    // `fields=list` + `limit`/`cursor` are ignored by the server until it supports them.
+    // Single request only: the old fallback fired a 2nd full query on every failure,
+    // which doubles DB load exactly when the server is struggling.
+    async getAccepted({ limit, cursor, signal } = {}) {
+        const params = new URLSearchParams({ status: 'accepted', fields: 'list' });
+        if (limit) params.set('limit', String(limit));
+        if (cursor) params.set('cursor', String(cursor));
+
+        const res = await fetch(`${API_BASE}?${params}`, { signal });
+        if (!res.ok) throw new Error("Failed to fetch accepted articles");
+
+        const data = await res.json();
+        return Array.isArray(data) ? data : (data.items || []);
+    },
+
+    // Paginated variant: returns { items, nextCursor } (nextCursor is null when done)
+    async getAcceptedPage({ limit = 10, cursor = null, signal } = {}) {
+        const params = new URLSearchParams({ status: 'accepted', fields: 'list', limit: String(limit) });
+        if (cursor) params.set('cursor', String(cursor));
+
+        const res = await fetch(`${API_BASE}?${params}`, { signal });
+        if (!res.ok) throw new Error("Failed to fetch accepted articles");
+
+        const data = await res.json();
+        if (Array.isArray(data)) return { items: data, nextCursor: null };
+        return { items: data.items || [], nextCursor: data.nextCursor || null };
     },
 
     // Used by BlogPost.jsx to read a single post layout
@@ -119,6 +137,13 @@ export const ArticlesService = {
     },
 
     async incrementViews(id) {
+        // count one view per article per browser session (refresh/spam no longer writes to the DB)
+        const key = `bb_viewed_${id}`;
+        try {
+            if (sessionStorage.getItem(key)) return { skipped: true };
+            sessionStorage.setItem(key, '1');
+        } catch { /* storage blocked: fall through and count */ }
+
         const res = await fetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

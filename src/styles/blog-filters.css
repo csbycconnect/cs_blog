@@ -1,16 +1,16 @@
 .bf-root {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
     font-family: var(--font-mono);
     color: var(--c-black);
 }
 
+/* ---------- header ---------- */
 .bf-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 0.6rem;
+    padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--c-black);
 }
 
@@ -18,45 +18,56 @@
     font-weight: 700;
     font-size: 0.8rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
 }
 
 .bf-clear {
     background: none;
     border: none;
+    padding: 0;
     font: inherit;
     font-size: 0.7rem;
     text-decoration: underline;
+    text-underline-offset: 2px;
     cursor: pointer;
     color: inherit;
 }
 
+/* ---------- active chips ---------- */
 .bf-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 .bf-chip {
     font: inherit;
     font-size: 0.65rem;
     font-weight: 700;
-    padding: 0.2rem 0.5rem;
-    background: var(--c-yellow);
-    border: 1.5px solid var(--c-black);
+    line-height: 1.2;
+    padding: 0.25rem 0.5rem;
+    background: var(--c-black);
+    color: var(--c-yellow);
+    border: none;
+    border-radius: 999px;
     cursor: pointer;
     text-align: left;
+    max-width: 100%;
 }
 
 .bf-chip:hover {
-    background: var(--c-black);
-    color: var(--c-yellow);
+    background: #333;
 }
 
+/* ---------- sections ---------- */
 .bf-section {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.bf-section:last-child {
+    border-bottom: none;
 }
 
 .bf-section-head {
@@ -66,7 +77,7 @@
     gap: 0.5rem;
     background: none;
     border: none;
-    padding: 0.7rem 0;
+    padding: 0.85rem 0 0.6rem;
     cursor: pointer;
     font: inherit;
     color: inherit;
@@ -75,120 +86,200 @@
 .bf-section-title {
     flex: 1;
     text-align: left;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
+    opacity: 0.8;
 }
 
 .bf-badge {
     background: var(--c-black);
     color: var(--c-yellow);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
-    min-width: 1.2rem;
-    height: 1.2rem;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
 .bf-caret {
-    font-size: 1rem;
+    font-size: 0.95rem;
     width: 1rem;
     text-align: center;
+    opacity: 0.6;
 }
 
 .bf-section-body {
-    padding-bottom: 0.8rem;
+    padding-bottom: 0.9rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
+/* ---------- inputs ---------- */
 .bf-search,
 .bf-select {
     width: 100%;
+    box-sizing: border-box;
     font: inherit;
     font-size: 0.75rem;
-    padding: 0.45rem 0.6rem;
-    border: 1.5px solid var(--c-black);
-    background: rgba(255, 255, 255, 0.7);
+    padding: 0.5rem 0.65rem;
+    border: 1.5px solid rgba(0, 0, 0, 0.35);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.75);
     color: var(--c-black);
-    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+.bf-search:focus,
+.bf-select:focus {
+    border-color: var(--c-black);
+    box-shadow: 0 0 0 2px var(--c-yellow);
+}
+
+.bf-select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 1.8rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+}
+
+/* ---------- option rows ---------- */
 .bf-options {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 1px;
+    max-height: 15rem;
+    overflow-y: auto;
+    margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
 }
 
 .bf-option {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: flex-start;
+    gap: 0.6rem;
     width: 100%;
     font: inherit;
     font-size: 0.72rem;
+    line-height: 1.35;
     text-align: left;
-    padding: 0.35rem 0.5rem;
+    padding: 0.4rem 0.35rem;
     background: transparent;
-    border: 1.5px solid rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 4px;
     color: var(--c-black);
     cursor: pointer;
-    transition: background 0.1s, border-color 0.1s;
+    transition: background 0.12s;
 }
 
 .bf-option:hover {
-    border-color: var(--c-black);
+    background: rgba(0, 0, 0, 0.07);
 }
 
 .bf-option.active {
-    background: var(--c-yellow);
-    border-color: var(--c-black);
+    background: rgba(0, 0, 0, 0.1);
     font-weight: 700;
 }
 
 .bf-option.dim {
-    opacity: 0.45;
+    opacity: 0.4;
 }
 
+/* checkbox / radio */
 .bf-check {
-    width: 0.9rem;
-    height: 0.9rem;
-    border: 1.5px solid var(--c-black);
-    font-size: 0.65rem;
+    flex-shrink: 0;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-top: 0.05rem;
+    box-sizing: border-box;
+    border: 1.5px solid rgba(0, 0, 0, 0.55);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.8);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.6);
+    font-size: 0.6rem;
+    line-height: 1;
+    color: var(--c-yellow);
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.bf-option.active .bf-check {
+    background: var(--c-black);
+    border-color: var(--c-black);
+}
+
+.bf-radio {
+    border-radius: 50%;
+    position: relative;
+}
+
+.bf-radio[data-on='true'] {
+    background: var(--c-black);
+    border-color: var(--c-black);
+}
+
+.bf-radio[data-on='true']::after {
+    content: '';
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 50%;
+    background: var(--c-yellow);
 }
 
 .bf-option-label {
     flex: 1;
+    min-width: 0;
     overflow-wrap: anywhere;
 }
 
 .bf-count {
-    font-size: 0.65rem;
-    opacity: 0.65;
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 700;
+    min-width: 1.3rem;
+    text-align: center;
+    padding: 0.1rem 0.3rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.08);
+    opacity: 0.8;
 }
 
+.bf-option.active .bf-count {
+    background: var(--c-black);
+    color: var(--c-yellow);
+    opacity: 1;
+}
+
+/* ---------- misc ---------- */
 .bf-more {
     align-self: flex-start;
     background: none;
     border: none;
+    padding: 0.1rem 0;
     font: inherit;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+    font-weight: 700;
     text-decoration: underline;
+    text-underline-offset: 2px;
     cursor: pointer;
     color: inherit;
-    padding: 0;
 }
 
 .bf-empty {
     font-size: 0.7rem;
     opacity: 0.6;
+    padding: 0.3rem 0.35rem;
 }

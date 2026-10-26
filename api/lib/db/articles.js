@@ -3,10 +3,50 @@ import {
     QueryCommand,
     UpdateCommand,
     GetCommand,
+    TransactWriteCommand,
+    BatchGetCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 import { dynamoDb } from "../aws/dynamodb.js";
 import { TABLES } from "../constants/tables.js";
+
+const table = () => TABLES.ARTICLES || "bb_articles";
+
+/* ------------------------------------------------ */
+/* SAFETY LIMITS                                    */
+/* ------------------------------------------------ */
+
+const MAX_LIST_ITEMS = 500;    // hard cap for any "list everything" call
+const MAX_ADMIN_ITEMS = 2000;
+const MAX_PAGE_SIZE = 50;
+
+/**
+ * Attributes needed to render the public blog list.
+ * Deliberately EXCLUDES: content, contentHTML, authorEmail, email.
+ * (Full article bodies were being sent to every visitor on every list load,
+ *  and DynamoDB bills reads by item size.)
+ */
+const LIST_FIELDS = [
+    "PK", "id", "title", "subtitle", "excerpt",
+    "name", "authorName", "authorSub", "authorId",
+    "category", "club", "tags", "readTime",
+    "createdAt", "updatedAt", "date",
+    "views", "likes", "comments", "status",
+];
+const LIST_PROJECTION = LIST_FIELDS.map((_, i) => `#f${i}`).join(", ");
+const LIST_NAMES = Object.fromEntries(LIST_FIELDS.map((f, i) => [`#f${i}`, f]));
+
+const encodeCursor = (key) =>
+    key ? Buffer.from(JSON.stringify(key)).toString("base64url") : null;
+
+const decodeCursor = (cursor) => {
+    if (!cursor) return undefined;
+    try {
+        return JSON.parse(Buffer.from(String(cursor), "base64url").toString("utf8"));
+    } catch {
+        return undefined;
+    }
+};
 
 function normalizeArticlePK(id) {
     if (!id) return null;
@@ -72,78 +112,121 @@ function normalizeArticles(articles) {
 }
 
 /* ------------------------------------------------ */
-/* GET ALL ACCEPTED ARTICLES */
+/* GET ACCEPTED ARTICLES (public blog list)         */
 /* ------------------------------------------------ */
 
-export async function getAcceptedArticles() {
-    const tableName = TABLES.ARTICLES || "bb_articles";
+const INDEX_NAMES = ["StatusIndex", "GSI3", "GSI3PK", "StatusGSI"];
+let resolvedIndex = null; // remember the index that works: no more probing 4 names per request
 
-    // Try a few index name variants to be tolerant of infra differences.
-    const triedIndexNames = ["StatusIndex", "GSI3", "GSI3PK", "StatusGSI"];
+const acceptedQuery = (indexName, startKey, limit) =>
+    new QueryCommand({
+        TableName: table(),
+        IndexName: indexName,
+        KeyConditionExpression: "GSI3PK = :status AND SK = :sk",
+        ExpressionAttributeValues: {
+            ":status": "STATUS#accepted",
+            ":sk": "METADATA",
+        },
+        ProjectionExpression: LIST_PROJECTION,
+        ExpressionAttributeNames: LIST_NAMES,
+        ExclusiveStartKey: startKey,
+        Limit: limit,
+    });
 
-    for (const idx of triedIndexNames) {
+/**
+ * - getAcceptedArticles()                 -> array (all pages, capped at MAX_LIST_ITEMS)
+ * - getAcceptedArticles({ limit, cursor }) -> { items, nextCursor }
+ *
+ * An EMPTY result from a working index is a valid answer and is returned as-is
+ * (previously it fell through to a full-table Scan).
+ */
+export async function getAcceptedArticles({ limit, cursor } = {}) {
+    const paged = Number.isInteger(limit) && limit > 0;
+    const pageSize = paged ? Math.min(limit, MAX_PAGE_SIZE) : undefined;
+    const startKey = decodeCursor(cursor);
+    const candidates = resolvedIndex ? [resolvedIndex] : INDEX_NAMES;
+
+    for (const idx of candidates) {
         try {
-            const result = await dynamoDb.send(
-                new QueryCommand({
-                    TableName: tableName,
-                    IndexName: idx,
-                    KeyConditionExpression: "GSI3PK = :status AND SK = :sk",
-                    ExpressionAttributeValues: {
-                        ":status": "STATUS#accepted",
-                        ":sk": "METADATA",
-                    },
-                })
-            );
-
-            // If we got items back, return them
-            if (result && Array.isArray(result.Items) && result.Items.length > 0) {
-                return normalizeArticles(result.Items);
+            if (paged) {
+                const r = await dynamoDb.send(acceptedQuery(idx, startKey, pageSize));
+                resolvedIndex = idx;
+                return {
+                    items: normalizeArticles(r.Items || []),
+                    nextCursor: encodeCursor(r.LastEvaluatedKey),
+                };
             }
+
+            const items = [];
+            let key = startKey;
+            do {
+                const r = await dynamoDb.send(acceptedQuery(idx, key, undefined));
+                items.push(...(r.Items || []));
+                key = r.LastEvaluatedKey;
+            } while (key && items.length < MAX_LIST_ITEMS);
+
+            resolvedIndex = idx;
+            return normalizeArticles(items.slice(0, MAX_LIST_ITEMS));
         } catch (err) {
-            // Continue trying other index name variants silently
+            if (resolvedIndex === idx) resolvedIndex = null; // index vanished: re-probe next time
             console.warn(`Status query with index ${idx} failed:`, err.message || err);
         }
     }
 
-    // Final fallback: perform a scan filtered by status attribute (slower but reliable)
+    // Last resort: every index failed (an ERROR, not an empty result).
+    // Scan is expensive: it is capped, projected and logged loudly.
+    console.error("ALERT: no accepted-articles index worked, falling back to Scan. Create the status GSI.");
     try {
-        const scanResult = await dynamoDb.send(
-            new ScanCommand({
-                TableName: tableName,
-                FilterExpression: "(#s = :accepted OR GSI3PK = :gpk) AND SK = :sk",
-                ExpressionAttributeNames: { "#s": "status" },
-                ExpressionAttributeValues: {
-                    ":accepted": "accepted",
-                    ":gpk": "STATUS#accepted",
-                    ":sk": "METADATA",
-                },
-            })
-        );
+        const items = [];
+        let key = startKey;
+        do {
+            const r = await dynamoDb.send(
+                new ScanCommand({
+                    TableName: table(),
+                    FilterExpression: "(#s = :accepted OR GSI3PK = :gpk) AND SK = :sk",
+                    ProjectionExpression: LIST_PROJECTION,
+                    ExpressionAttributeNames: { ...LIST_NAMES, "#s": "status" },
+                    ExpressionAttributeValues: {
+                        ":accepted": "accepted",
+                        ":gpk": "STATUS#accepted",
+                        ":sk": "METADATA",
+                    },
+                    ExclusiveStartKey: key,
+                })
+            );
+            items.push(...(r.Items || []));
+            key = r.LastEvaluatedKey;
+        } while (key && items.length < MAX_LIST_ITEMS);
 
-        return normalizeArticles(scanResult.Items || []);
+        const out = normalizeArticles(items.slice(0, MAX_LIST_ITEMS));
+        return paged ? { items: out.slice(0, pageSize), nextCursor: null } : out;
     } catch (scanErr) {
         console.error("Failed to fetch accepted articles via Scan fallback:", scanErr);
-        return [];
+        throw scanErr; // let the route return 5xx instead of caching an empty list
     }
 }
 
 /* ------------------------------------------------ */
-/* GET ALL ARTICLES */
+/* GET ALL ARTICLES (admin)                         */
 /* ------------------------------------------------ */
 
 export async function getAllArticles() {
-    const tableName = TABLES.ARTICLES || "bb_articles";
-    const result = await dynamoDb.send(
-        new ScanCommand({
-            TableName: tableName,
-            FilterExpression: "SK = :sk",
-            ExpressionAttributeValues: {
-                ":sk": "METADATA"
-            }
-        })
-    );
+    const items = [];
+    let key;
+    do {
+        const result = await dynamoDb.send(
+            new ScanCommand({
+                TableName: table(),
+                FilterExpression: "SK = :sk",
+                ExpressionAttributeValues: { ":sk": "METADATA" },
+                ExclusiveStartKey: key,
+            })
+        );
+        items.push(...(result.Items || []));
+        key = result.LastEvaluatedKey;
+    } while (key && items.length < MAX_ADMIN_ITEMS);
 
-    return normalizeArticles(result.Items || []);
+    return normalizeArticles(items);
 }
 
 /* ------------------------------------------------ */
@@ -155,37 +238,51 @@ export async function getArticlesByAuthor(userSubId) {
     const authorKey = `USER#${userSubId}`;
 
     try {
-        const result = await dynamoDb.send(
-            new QueryCommand({
-                TableName: TABLES.ARTICLES || "bb_articles",
-                IndexName: "AuthorIndex",
-                KeyConditionExpression: "GSI2PK = :gsi2pk AND SK = :sk",
-                ExpressionAttributeValues: {
-                    ":gsi2pk": authorKey,
-                    ":sk": "METADATA"
-                }
-            })
-        );
+        const items = [];
+        let key;
+        do {
+            const result = await dynamoDb.send(
+                new QueryCommand({
+                    TableName: table(),
+                    IndexName: "AuthorIndex",
+                    KeyConditionExpression: "GSI2PK = :gsi2pk AND SK = :sk",
+                    ExpressionAttributeValues: {
+                        ":gsi2pk": authorKey,
+                        ":sk": "METADATA",
+                    },
+                    ExclusiveStartKey: key,
+                })
+            );
+            items.push(...(result.Items || []));
+            key = result.LastEvaluatedKey;
+        } while (key && items.length < MAX_LIST_ITEMS);
 
-        if (result.Items && result.Items.length > 0) {
-            return normalizeArticles(result.Items);
-        }
+        // A user with zero articles is a valid result: do NOT fall through to a table Scan.
+        return normalizeArticles(items);
     } catch (error) {
         console.warn("DynamoDB Query AuthorIndex failed, falling back to scan:", error.message || error);
     }
 
     try {
-        const scanResult = await dynamoDb.send(
-            new ScanCommand({
-                TableName: TABLES.ARTICLES || "bb_articles",
-                FilterExpression: "(authorSub = :sub OR authorId = :sub) AND SK = :sk",
-                ExpressionAttributeValues: {
-                    ":sub": userSubId,
-                    ":sk": "METADATA"
-                }
-            })
-        );
-        return normalizeArticles(scanResult.Items || []);
+        const items = [];
+        let key;
+        do {
+            const scanResult = await dynamoDb.send(
+                new ScanCommand({
+                    TableName: table(),
+                    FilterExpression: "(authorSub = :sub OR authorId = :sub) AND SK = :sk",
+                    ExpressionAttributeValues: {
+                        ":sub": userSubId,
+                        ":sk": "METADATA",
+                    },
+                    ExclusiveStartKey: key,
+                })
+            );
+            items.push(...(scanResult.Items || []));
+            key = scanResult.LastEvaluatedKey;
+        } while (key && items.length < MAX_ADMIN_ITEMS);
+
+        return normalizeArticles(items);
     } catch (fallbackError) {
         console.error("DynamoDB Scan fallback for author query failed:", fallbackError);
         return [];
@@ -204,7 +301,7 @@ export async function getArticleById(id) {
 
     try {
         const result = await dynamoDb.send(new GetCommand({
-            TableName: TABLES.ARTICLES || "bb_articles",
+            TableName: table(),
             Key: {
                 PK: normalizedId,
                 SK: "METADATA"
@@ -220,31 +317,117 @@ export async function getArticleById(id) {
         throw error; // Propagate down to catch blocks safely
     }
 }
+
 /* ------------------------------------------------ */
-/* TOGGLE LIKE */
+/* TOGGLE LIKE                                      */
 /* ------------------------------------------------ */
 
-export async function toggleLike(id, isLiking) {
+/**
+ * toggleLike(id, isLiking, userSub)
+ *
+ * With userSub (verified from the auth token in the route):
+ *   one LIKE item per (article, user): PK=ARTICLE#..., SK=LIKE#<sub>.
+ *   The item and the counter change in ONE transaction, so a user can't like
+ *   twice, can't unlike something they never liked, and the count can't drift
+ *   or go negative. No unbounded likedBy array on the article item.
+ *
+ * Without userSub (legacy callers): old behaviour, but the count can't go below 0.
+ *
+ * Returns { changed: boolean }.
+ */
+export async function toggleLike(id, isLiking, userSub = null) {
     const partitionKey = normalizeArticlePK(id);
-    if (!partitionKey) return;
+    if (!partitionKey) return { changed: false };
 
-    const tableName = TABLES.ARTICLES || "bb_articles";
+    const TableName = table();
+    const articleKey = { PK: partitionKey, SK: "METADATA" };
 
-    await dynamoDb.send(
-        new UpdateCommand({
-            TableName: tableName,
-            Key: {
-                PK: partitionKey,
-                SK: "METADATA",
-            },
-            UpdateExpression: "ADD #l :inc",
-            ExpressionAttributeNames: {
-                "#l": "likes",
-            },
-            ExpressionAttributeValues: {
-                ":inc": isLiking ? 1 : -1,
+    if (!userSub) {
+        try {
+            await dynamoDb.send(
+                new UpdateCommand({
+                    TableName,
+                    Key: articleKey,
+                    UpdateExpression: "ADD #l :inc",
+                    ...(isLiking ? {} : { ConditionExpression: "#l > :zero" }),
+                    ExpressionAttributeNames: { "#l": "likes" },
+                    ExpressionAttributeValues: isLiking
+                        ? { ":inc": 1 }
+                        : { ":inc": -1, ":zero": 0 },
+                })
+            );
+            return { changed: true };
+        } catch (err) {
+            if (err.name === "ConditionalCheckFailedException") return { changed: false };
+            throw err;
+        }
+    }
+
+    const likeKey = { PK: partitionKey, SK: `LIKE#${userSub}` };
+
+    try {
+        await dynamoDb.send(
+            new TransactWriteCommand({
+                TransactItems: [
+                    isLiking
+                        ? {
+                            Put: {
+                                TableName,
+                                Item: { ...likeKey, likedAt: new Date().toISOString() },
+                                ConditionExpression: "attribute_not_exists(PK)",
+                            },
+                        }
+                        : {
+                            Delete: {
+                                TableName,
+                                Key: likeKey,
+                                ConditionExpression: "attribute_exists(PK)",
+                            },
+                        },
+                    {
+                        Update: {
+                            TableName,
+                            Key: articleKey,
+                            UpdateExpression: "ADD #l :inc",
+                            ConditionExpression: "attribute_exists(PK)",
+                            ExpressionAttributeNames: { "#l": "likes" },
+                            ExpressionAttributeValues: { ":inc": isLiking ? 1 : -1 },
+                        },
+                    },
+                ],
+            })
+        );
+        return { changed: true };
+    } catch (err) {
+        // already liked / not liked / article missing: nothing was written
+        if (err.name === "TransactionCanceledException") return { changed: false };
+        throw err;
+    }
+}
+
+/**
+ * Which of these articles has this user liked?  One BatchGet (max 100 keys),
+ * so the route can attach `likedBy: [userSub]` to ONLY the caller's own likes
+ * instead of exposing every liker's id to the public.
+ */
+export async function getLikedArticleIds(userSub, articleIds = []) {
+    if (!userSub || articleIds.length === 0) return new Set();
+
+    const keys = [...new Set(articleIds)]
+        .slice(0, 100)
+        .map(id => ({ PK: normalizeArticlePK(id), SK: `LIKE#${userSub}` }));
+
+    const TableName = table();
+    const res = await dynamoDb.send(
+        new BatchGetCommand({
+            RequestItems: {
+                [TableName]: { Keys: keys, ProjectionExpression: "PK" },
             },
         })
+    );
+
+    return new Set(
+        (res.Responses?.[TableName] || []).map(item => extractArticleId(item.PK))
     );
 }
 
@@ -256,16 +439,15 @@ export async function incrementViews(id) {
     const partitionKey = normalizeArticlePK(id);
     if (!partitionKey) return;
 
-    const tableName = TABLES.ARTICLES || "bb_articles";
-
     await dynamoDb.send(
         new UpdateCommand({
-            TableName: tableName,
+            TableName: table(),
             Key: {
                 PK: partitionKey,
                 SK: "METADATA",
             },
             UpdateExpression: "ADD #v :inc",
+            ConditionExpression: "attribute_exists(PK)", // never create ghost items for random ids
             ExpressionAttributeNames: {
                 "#v": "views",
             },
@@ -273,25 +455,34 @@ export async function incrementViews(id) {
                 ":inc": 1,
             },
         })
-    );
+    ).catch(err => {
+        if (err.name !== "ConditionalCheckFailedException") throw err;
+    });
 }
 
 /**
- * PRODUCTION GRADE: Instantly fetches pending submissions for a specific club 
+ * PRODUCTION GRADE: Instantly fetches pending submissions for a specific club
  * without doing a slow, table-wide database scan!
  */
 export async function getPendingSubmissionsByClub(clubName = "General") {
-    const tableName = TABLES.ARTICLES || "bb_articles";
-    const command = new QueryCommand({
-        TableName: tableName,
-        IndexName: "GSI1", // References the secondary index rule built on AWS
-        KeyConditionExpression: "GSI1PK = :gsi1pk AND SK = :sk",
-        ExpressionAttributeValues: {
-            ":gsi1pk": `STATUS#pending#CLUB#${clubName}`,
-            ":sk": "METADATA"
-        }
-    });
+    const items = [];
+    let key;
+    do {
+        const response = await dynamoDb.send(
+            new QueryCommand({
+                TableName: table(),
+                IndexName: "GSI1", // References the secondary index rule built on AWS
+                KeyConditionExpression: "GSI1PK = :gsi1pk AND SK = :sk",
+                ExpressionAttributeValues: {
+                    ":gsi1pk": `STATUS#pending#CLUB#${clubName}`,
+                    ":sk": "METADATA"
+                },
+                ExclusiveStartKey: key,
+            })
+        );
+        items.push(...(response.Items || []));
+        key = response.LastEvaluatedKey;
+    } while (key && items.length < MAX_ADMIN_ITEMS);
 
-    const response = await dynamoDb.send(command);
-    return normalizeArticles(response.Items || []);
+    return normalizeArticles(items);
 }

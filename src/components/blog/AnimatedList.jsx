@@ -187,10 +187,36 @@ const AnimatedList = ({
     onAuthRequired,
     enableArrowNavigation = true,
     initialSelectedIndex = -1,
+    pageSize = 8,
 }) => {
     const listRef = useRef(null);
+    const sentinelRef = useRef(null);
     const [selectedIndex, setSelectedIndex] = useState(initialSelectedIndex);
     const [keyboardNav, setKeyboardNav] = useState(false);
+    const [visibleCount, setVisibleCount] = useState(pageSize);
+
+    // Reset paging only when the set/order of posts changes (not on like updates).
+    const listKey = items.map(i => i.id).join('|');
+    useEffect(() => {
+        setVisibleCount(pageSize);
+    }, [listKey, pageSize]);
+
+    const hasMore = visibleCount < items.length;
+    const visibleItems = items.slice(0, visibleCount);
+
+    useEffect(() => {
+        if (!hasMore || !sentinelRef.current) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    setVisibleCount(c => Math.min(c + pageSize, items.length));
+                }
+            },
+            { rootMargin: '400px 0px' }
+        );
+        observer.observe(sentinelRef.current);
+        return () => observer.disconnect();
+    }, [hasMore, pageSize, items.length, visibleCount]);
 
     const handleItemMouseEnter = useCallback((index) => {
         setSelectedIndex(index);
@@ -213,7 +239,11 @@ const AnimatedList = ({
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 setKeyboardNav(true);
-                setSelectedIndex(prev => Math.min(prev + 1, items.length - 1));
+                setSelectedIndex(prev => {
+                    const next = Math.min(prev + 1, items.length - 1);
+                    if (next >= visibleCount - 1) setVisibleCount(c => Math.min(c + pageSize, items.length));
+                    return next;
+                });
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 setKeyboardNav(true);
@@ -228,7 +258,7 @@ const AnimatedList = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [items, selectedIndex, onItemSelect, enableArrowNavigation]);
+    }, [items, selectedIndex, onItemSelect, enableArrowNavigation, visibleCount, pageSize]);
 
     useEffect(() => {
         if (!keyboardNav || selectedIndex < 0 || !listRef.current) return;
@@ -247,10 +277,10 @@ const AnimatedList = ({
                 className="blog-list-scrollarea scrollbar-hide"
                 style={{ height: 'auto', maxHeight: 'none', overflow: 'visible' }}
             >
-                {items.map((item, index) => (
+                {visibleItems.map((item, index) => (
                     <AnimatedItem
                         key={item.id || index}
-                        delay={index * 0.1}
+                        delay={(index % pageSize) * 0.08}
                         index={index}
                         onMouseEnter={() => handleItemMouseEnter(index)}
                         onClick={() => handleItemClick(item, index)}
@@ -263,6 +293,21 @@ const AnimatedList = ({
                     </AnimatedItem>
                 ))}
             </div>
+
+            {hasMore && (
+                <div
+                    ref={sentinelRef}
+                    style={{
+                        padding: '1.5rem 0',
+                        textAlign: 'center',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.8rem',
+                        color: 'rgba(255,255,255,0.5)',
+                    }}
+                >
+                    Loading more...
+                </div>
+            )}
         </div>
     );
 };

@@ -269,7 +269,7 @@ export default function BlogFilters({
                             onClick={() => setFilters(f => ({ ...f, date: d.key }))}
                             aria-pressed={filters.date === d.key}
                         >
-                            <span className="bf-check">{filters.date === d.key ? '●' : ''}</span>
+                            <span className="bf-check bf-radio" data-on={filters.date === d.key} />
                             <span className="bf-option-label">{d.label}</span>
                             <span className="bf-count">{d.count}</span>
                         </button>
