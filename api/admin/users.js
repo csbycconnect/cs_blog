@@ -10,7 +10,7 @@ async function listAllUsers() {
     const users = [];
     let PaginationToken;
     for (let page = 0; page < MAX_PAGES; page++) {
-        const r = await cognito.send(new ListUsersCommand({ UserPoolId: USER_POOL_ID, Limit: 60, PaginationToken }));
+        const r = await cognito.send(new ListUsersCommand({ UserPoolId: VITE_COGNITO_USER_POOL_ID, Limit: 60, PaginationToken }));
         users.push(...(r.Users || []));
         PaginationToken = r.PaginationToken;
         if (!PaginationToken) break;

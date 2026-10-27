@@ -18,7 +18,7 @@ const UUID = /^[0-9a-fA-F-]{36}$/;
 async function resolveUser(id) {
     if (!UUID.test(id)) return { username: id, sub: null };
     const r = await cognito.send(new ListUsersCommand({
-        UserPoolId: USER_POOL_ID,
+        UserPoolId: VITE_COGNITO_USER_POOL_ID,
         Filter: `sub = "${id}"`,
         Limit: 1,
     }));
@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
         if (!id || !targetRole) return res.status(400).json({ error: "userId and targetRole are required." });
         if (!VALID_ROLES.includes(targetRole)) return res.status(400).json({ error: "Invalid role." });
-        if (!USER_POOL_ID) return res.status(500).json({ error: "Server is missing VITE_COGNITO_USER_POOL_ID." });
+        if (!VITE_COGNITO_USER_POOL_ID) return res.status(500).json({ error: "Server is missing VITE_COGNITO_USER_POOL_ID." });
 
         const user = await resolveUser(id);
         if (!user) return res.status(404).json({ error: "User not found." });
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
         }
 
         const current = await cognito.send(new AdminListGroupsForUserCommand({
-            UserPoolId: USER_POOL_ID,
+            UserPoolId: VITE_COGNITO_USER_POOL_ID,
             Username: user.username,
         }));
         const has = (current.Groups || []).map(g => g.GroupName).filter(g => ROLE_GROUPS.includes(g));
@@ -69,12 +69,12 @@ export default async function handler(req, res) {
         for (const group of has) {
             if (group === targetRole) continue;
             await cognito.send(new AdminRemoveUserFromGroupCommand({
-                UserPoolId: USER_POOL_ID, Username: user.username, GroupName: group,
+                UserPoolId: VITE_COGNITO_USER_POOL_ID, Username: user.username, GroupName: group,
             }));
         }
         if (targetRole !== "User" && !has.includes(targetRole)) {
             await cognito.send(new AdminAddUserToGroupCommand({
-                UserPoolId: USER_POOL_ID, Username: user.username, GroupName: targetRole,
+                UserPoolId: VITE_COGNITO_USER_POOL_ID, Username: user.username, GroupName: targetRole,
             }));
         }
 
