@@ -15,7 +15,10 @@ const SUPER_ADMIN_GROUP = (process.env.SUPER_ADMIN_GROUP || "AL0").trim();
 let verifierPromise = null;
 
 function getVerifier() {
-    if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) return null;
+    if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
+        console.error("[auth] COGNITO_USER_POOL_ID and/or COGNITO_CLIENT_ID is not set on the server");
+        return null;
+    }
     if (!verifierPromise) {
         verifierPromise = import("aws-jwt-verify")
             .then(m => m.CognitoJwtVerifier.create({
@@ -34,7 +37,7 @@ function getVerifier() {
 export async function getViewer(req) {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : null;
-    if (!token) return null;
+    if (!token) return null; // no Authorization header at all: the browser didn't send a token
 
     const verifier = await getVerifier();
     if (!verifier) return null;
@@ -49,7 +52,9 @@ export async function getViewer(req) {
             isAdmin: groups.some(g => ADMIN_GROUPS.includes(g)),
             isSuperAdmin: groups.includes(SUPER_ADMIN_GROUP),
         };
-    } catch {
+    } catch (err) {
+        // Tells you WHY a token was refused (expired, wrong client id, wrong pool...)
+        console.error("[auth] token rejected:", err.name, err.message);
         return null;
     }
 }
