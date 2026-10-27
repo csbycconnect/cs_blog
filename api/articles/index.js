@@ -19,13 +19,13 @@ import { TABLES } from "../lib/constants/tables.js";
 // Flip ENFORCE_AUTH=true in your env ONLY after the frontend sends the Cognito
 // ID token (Authorization: Bearer ...). Until then admin routes stay open (as before).
 const ENFORCE_AUTH = process.env.ENFORCE_AUTH === "true";
-const ADMIN_GROUP = process.env.ADMIN_GROUP || "admin";
+const ADMIN_GROUPS = (process.env.ADMIN_GROUP || "AL0,AL1,AL2").split(",").map(s => s.trim()).filter(Boolean);
 
 const ALLOWED_STATUSES = ["draft", "pending", "accepted", "rejected", "declined", "archived"];
 const MAX_CONTENT_CHARS = 200_000;
 const MAX_TITLE_CHARS = 300;
 
-const TABLE = () => TABLES.ARTICLES || "bb_articles";
+const TABLE = () => TABLES.ARTICLES || "bb_articl   es";
 
 /* ------------------------------------------------------------------ */
 /* AUTH (Cognito ID token)                                             */
@@ -65,7 +65,7 @@ async function getViewer(req) {
         return {
             sub: payload.sub,
             email: payload.email || null,
-            isAdmin: groups.includes(ADMIN_GROUP),
+            isAdmin: groups.some(g => ADMIN_GROUPS.includes(g)),
         };
     } catch {
         return null;

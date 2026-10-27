@@ -1,49 +1,87 @@
 // api/admin/users.js
-import { CognitoIdentityProviderClient, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider";
+// Admin-only user directory. Returns each user's `groups` so the Users tab can show roles.
+import { ListUsersCommand, ListUsersInGroupCommand } from "@aws-sdk/client-cognito-identity-provider";
+import { cognito, USER_POOL_ID, ROLE_GROUPS } from "../lib/aws/cognito.js";
+import { getViewer, requireAdmin, rateLimited } from "../lib/auth.js";
+
+const MAX_PAGES = 20;
+
+async function listAllUsers() {
+    const users = [];
+    let PaginationToken;
+    for (let page = 0; page < MAX_PAGES; page++) {
+        const r = await cognito.send(new ListUsersCommand({ UserPoolId: USER_POOL_ID, Limit: 60, PaginationToken }));
+        users.push(...(r.Users || []));
+        PaginationToken = r.PaginationToken;
+        if (!PaginationToken) break;
+    }
+    return users;
+}
+
+// username -> ["AL1", ...]
+async function groupMap() {
+    const map = new Map();
+    for (const group of ROLE_GROUPS) {
+        let NextToken;
+        try {
+            for (let page = 0; page < MAX_PAGES; page++) {
+                const r = await cognito.send(new ListUsersInGroupCommand({
+                    UserPoolId: USER_POOL_ID, GroupName: group, Limit: 60, NextToken,
+                }));
+                for (const u of r.Users || []) {
+                    map.set(u.Username, [...(map.get(u.Username) || []), group]);
+                }
+                NextToken = r.NextToken;
+                if (!NextToken) break;
+            }
+        } catch (err) {
+            // e.g. the group doesn't exist in the pool yet
+            console.error(`[admin/users] could not list group ${group}:`, err.name, err.message);
+        }
+    }
+    return map;
+}
 
 export default async function handler(req, res) {
-    res.setHeader("Access-Control-Allow-Credentials", true);
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
+    if (process.env.ALLOWED_ORIGIN) {
+        res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN);
+        res.setHeader("Vary", "Origin");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+    }
     if (req.method === "OPTIONS") return res.status(200).end();
     if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
     try {
-        const cognitoClient = new CognitoIdentityProviderClient({ 
-            region: process.env.AWS_REGION || "us-east-1" 
-        });
+        const viewer = await getViewer(req);
+        if (requireAdmin(viewer, res)) return;
+        if (rateLimited(req, "admin-users", 30)) return res.status(429).json({ error: "Too many requests" });
+        if (!USER_POOL_ID) return res.status(500).json({ error: "Server is missing COGNITO_USER_POOL_ID." });
 
-        const command = new ListUsersCommand({
-            UserPoolId: process.env.COGNITO_USER_POOL_ID
-        });
+        const [cognitoUsers, groups] = await Promise.all([listAllUsers(), groupMap()]);
 
-        const cognitoData = await cognitoClient.send(command);
-        
-        const formattedUsers = (cognitoData.Users || []).map(user => {
-            const attributes = {};
-            user.Attributes?.forEach(attr => {
-                attributes[attr.Name] = attr.Value;
-            });
-
+        const formatted = cognitoUsers.map(user => {
+            const a = {};
+            user.Attributes?.forEach(attr => { a[attr.Name] = attr.Value; });
+            const g = groups.get(user.Username) || [];
             return {
                 username: user.Username,
-                id: attributes['sub'] || user.Username,
-                email: attributes['email'] || 'N/A',
-                name: attributes['name'] || 'Anonymous User',
-                role: attributes['custom:role'] || attributes['role'] || 'User',
+                id: a.sub || user.Username,
+                email: a.email || "N/A",
+                name: a.name || "Anonymous User",
+                groups: g,
+                role: g[0] || "User",
                 status: user.UserStatus,
-                createdAt: user.UserCreateDate
+                createdAt: user.UserCreateDate,
             };
         });
 
-        // Cache the response on Vercel's Edge CDN network for extra safety
-        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
-        return res.status(200).json(formattedUsers);
-
+        // Contains every user's email: must never be cached by a CDN
+        res.setHeader("Cache-Control", "private, no-store");
+        return res.status(200).json(formatted);
     } catch (error) {
-        console.error("[Admin API Error]:", error);
-        return res.status(500).json({ error: "Failed to map user directory index." });
+        console.error("[admin/users]", error.name, error.message);
+        return res.status(500).json({ error: "Failed to load users." });
     }
 }
