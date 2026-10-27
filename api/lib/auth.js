@@ -1,6 +1,6 @@
 // api/lib/auth.js
 // Shared Cognito ID-token verification + best-effort rate limiting.
-// needs: npm i aws-jwt-verify + env COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID
+// needs: npm i aws-jwt-verify + env VITE_COGNITO_USER_POOL_ID, VITE_COGNITO_CLIENT_ID
 //
 // Your roles are Cognito GROUPS: AL0 (super admin), AL1 (editorial), AL2 (moderator).
 //   ADMIN_GROUP        comma list of groups that count as admin   (default "AL0,AL1,AL2")
@@ -15,16 +15,16 @@ const SUPER_ADMIN_GROUP = (process.env.SUPER_ADMIN_GROUP || "AL0").trim();
 let verifierPromise = null;
 
 function getVerifier() {
-    if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
-        console.error("[auth] COGNITO_USER_POOL_ID and/or COGNITO_CLIENT_ID is not set on the server");
+    if (!process.env.VITE_COGNITO_USER_POOL_ID || !process.env.VITE_COGNITO_CLIENT_ID) {
+        console.error("[auth] VITE_COGNITO_USER_POOL_ID and/or VITE_COGNITO_CLIENT_ID is not set on the server");
         return null;
     }
     if (!verifierPromise) {
         verifierPromise = import("aws-jwt-verify")
             .then(m => m.CognitoJwtVerifier.create({
-                userPoolId: process.env.COGNITO_USER_POOL_ID,
+                userPoolId: process.env.VITE_COGNITO_USER_POOL_ID,
                 tokenUse: "id",
-                clientId: process.env.COGNITO_CLIENT_ID,
+                clientId: process.env.VITE_COGNITO_CLIENT_ID,
             }))
             .catch(err => {
                 console.error("aws-jwt-verify unavailable:", err.message || err);

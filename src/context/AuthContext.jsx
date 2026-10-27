@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
                     cognitoUser.setSignInUserSession(session);
                     // store the user in local storage the same way the SDK would
                     userPool.storage.setItem(
-                        `CognitoIdentityServiceProvider.${import.meta.env.COGNITO_CLIENT_ID}.LastAuthUser`,
+                        `CognitoIdentityServiceProvider.${import.meta.env.VITE_COGNITO_CLIENT_ID}.LastAuthUser`,
                         username
                     );
                     // an immediate state update will follow below when we query the user
@@ -290,7 +290,7 @@ export function AuthProvider({ children }) {
      */
     const signInWithProvider = (provider) => {
         const domain = import.meta.env.COGNITO_DOMAIN;
-        const clientId = import.meta.env.COGNITO_CLIENT_ID;
+        const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
         const redirect = encodeURIComponent(window.location.origin + '/login');
         const scope = encodeURIComponent('email openid profile');
         const url = `${domain}/oauth2/authorize?identity_provider=${provider}&redirect_uri=${redirect}&response_type=token&client_id=${clientId}&scope=${scope}`;

@@ -29,19 +29,19 @@ const TABLE = () => TABLES.ARTICLES || "bb_articl   es";
 
 /* ------------------------------------------------------------------ */
 /* AUTH (Cognito ID token)                                             */
-/* needs: npm i aws-jwt-verify + env COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID */
+/* needs: npm i aws-jwt-verify + env VITE_COGNITO_USER_POOL_ID, VITE_COGNITO_CLIENT_ID */
 /* ------------------------------------------------------------------ */
 
 let verifierPromise = null;
 
 function getVerifier() {
-    if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) return null;
+    if (!process.env.VITE_COGNITO_USER_POOL_ID || !process.env.VITE_COGNITO_CLIENT_ID) return null;
     if (!verifierPromise) {
         verifierPromise = import("aws-jwt-verify")
             .then(m => m.CognitoJwtVerifier.create({
-                userPoolId: process.env.COGNITO_USER_POOL_ID,
+                userPoolId: process.env.VITE_COGNITO_USER_POOL_ID,
                 tokenUse: "id",
-                clientId: process.env.COGNITO_CLIENT_ID,
+                clientId: process.env.VITE_COGNITO_CLIENT_ID,
             }))
             .catch(err => {
                 console.error("aws-jwt-verify unavailable:", err.message || err);

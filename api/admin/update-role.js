@@ -49,7 +49,7 @@ export default async function handler(req, res) {
 
         if (!id || !targetRole) return res.status(400).json({ error: "userId and targetRole are required." });
         if (!VALID_ROLES.includes(targetRole)) return res.status(400).json({ error: "Invalid role." });
-        if (!USER_POOL_ID) return res.status(500).json({ error: "Server is missing COGNITO_USER_POOL_ID." });
+        if (!USER_POOL_ID) return res.status(500).json({ error: "Server is missing VITE_COGNITO_USER_POOL_ID." });
 
         const user = await resolveUser(id);
         if (!user) return res.status(404).json({ error: "User not found." });

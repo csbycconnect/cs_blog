@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         const viewer = await getViewer(req);
         if (requireAdmin(viewer, res)) return;
         if (rateLimited(req, "admin-users", 30)) return res.status(429).json({ error: "Too many requests" });
-        if (!USER_POOL_ID) return res.status(500).json({ error: "Server is missing COGNITO_USER_POOL_ID." });
+        if (!USER_POOL_ID) return res.status(500).json({ error: "Server is missing VITE_COGNITO_USER_POOL_ID." });
 
         const [cognitoUsers, groups] = await Promise.all([listAllUsers(), groupMap()]);
 

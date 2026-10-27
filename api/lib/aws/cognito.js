@@ -1,7 +1,7 @@
 // api/lib/aws/cognito.js
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 
-export const USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || "";
+export const USER_POOL_ID = process.env.VITE_COGNITO_USER_POOL_ID || "";
 
 // The pool's region is the part of its ID before the "_" (e.g. "eu-north-1_AbC123"),
 // so we never guess it wrong.
