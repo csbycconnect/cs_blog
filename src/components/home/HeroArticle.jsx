@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Heart, ThumbsUp } from 'lucide-react';
-import { ArticleAPI } from '../../lib/api';
+import { ArticlesService } from '../../services/articles';
 import '../../styles/components.css';
 
 export default function HeroArticle() {
@@ -18,7 +18,7 @@ export default function HeroArticle() {
     useEffect(() => {
         const loadHero = async () => {
             try {
-                const data = await ArticleAPI.fetchByStatus('accepted');
+                const data = await ArticlesService.getAccepted();
                 if (data.length > 0) {
                     const heroData = data[0]; // the absolute latest
                     setArticle(heroData);
@@ -53,7 +53,7 @@ export default function HeroArticle() {
         setLikesCount(prev => newLiked ? prev + 1 : prev - 1);
 
         try {
-            await ArticleAPI.toggleLike(article.id, newLiked);
+            await ArticlesService.toggleLike(article.id, newLiked);
 
             let localLikes = JSON.parse(localStorage.getItem('bb_likes') || '[]');
             if (newLiked) {

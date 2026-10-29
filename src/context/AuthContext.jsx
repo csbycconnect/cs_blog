@@ -289,7 +289,7 @@ export function AuthProvider({ children }) {
      * identity provider (Google, Facebook, LoginWithAmazon, Apple, etc.).
      */
     const signInWithProvider = (provider) => {
-        const domain = import.meta.env.VITE_COGNITO_DOMAIN;
+        const domain = import.meta.env.COGNITO_DOMAIN;
         const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID;
         const redirect = encodeURIComponent(window.location.origin + '/login');
         const scope = encodeURIComponent('email openid profile');

@@ -1,0 +1,395 @@
+/* =========================================================================
+   BlogFilters: neo-brutalist card (black borders, hard shadows, yellow accents)
+   Same class names as before, so BlogFilters.jsx needs no changes.
+   Tweak the look from the variables right below.
+   ========================================================================= */
+.bf-root {
+    --bf-ink: var(--c-black, #0b0b0b);
+    --bf-accent: var(--c-yellow, #facc15);
+    --bf-paper: #fffdf4;
+    --bf-line: rgba(0, 0, 0, 0.22);
+    --bf-hover: rgba(250, 204, 21, 0.28);
+    --bf-shadow: 6px 6px 0 var(--bf-ink);
+
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: 1rem 1.1rem 0.35rem;
+    background: var(--bf-paper);
+    color: var(--bf-ink);
+    border: 2px solid var(--bf-ink);
+    box-shadow: var(--bf-shadow);
+    font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, monospace);
+}
+
+.bf-root *,
+.bf-root *::before,
+.bf-root *::after {
+    box-sizing: border-box;
+}
+
+.bf-root button:focus-visible,
+.bf-root select:focus-visible,
+.bf-root input:focus-visible {
+    outline: 3px solid var(--bf-ink);
+    outline-offset: 2px;
+}
+
+/* ---------- header ---------- */
+.bf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 2px solid var(--bf-ink);
+}
+
+.bf-header-title {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    background: var(--bf-accent);
+    border: 2px solid var(--bf-ink);
+    box-shadow: 2px 2px 0 var(--bf-ink);
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    line-height: 1.2;
+}
+
+.bf-clear {
+    background: transparent;
+    border: 2px solid var(--bf-ink);
+    padding: 0.2rem 0.55rem;
+    font: inherit;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bf-ink);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+
+.bf-clear:hover {
+    background: var(--bf-ink);
+    color: var(--bf-accent);
+}
+
+.bf-clear:active {
+    transform: translate(1px, 1px);
+}
+
+/* ---------- active chips ---------- */
+.bf-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.85rem 0;
+    border-bottom: 1.5px dashed var(--bf-line);
+}
+
+.bf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    font: inherit;
+    font-size: 0.66rem;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 0.28rem 0.55rem;
+    background: var(--bf-ink);
+    color: var(--bf-accent);
+    border: 2px solid var(--bf-ink);
+    box-shadow: 2px 2px 0 var(--bf-accent), 2px 2px 0 1px var(--bf-ink);
+    cursor: pointer;
+    text-align: left;
+    overflow-wrap: anywhere;
+    transition: background 0.12s, color 0.12s, transform 0.12s;
+}
+
+.bf-chip:hover {
+    background: var(--bf-accent);
+    color: var(--bf-ink);
+}
+
+.bf-chip:active {
+    transform: translate(1px, 1px);
+}
+
+/* ---------- sections ---------- */
+.bf-section {
+    border-bottom: 1.5px dashed var(--bf-line);
+}
+
+.bf-section:last-child {
+    border-bottom: none;
+}
+
+.bf-section-head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: none;
+    border: none;
+    padding: 0.9rem 0 0.7rem;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+
+.bf-section-title {
+    flex: 1;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+}
+
+.bf-section-head:hover .bf-caret {
+    background: var(--bf-accent);
+}
+
+.bf-badge {
+    background: var(--bf-ink);
+    color: var(--bf-accent);
+    font-size: 0.62rem;
+    font-weight: 800;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bf-caret {
+    flex-shrink: 0;
+    width: 1.2rem;
+    height: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bf-ink);
+    font-size: 0.85rem;
+    font-weight: 800;
+    line-height: 1;
+    background: #fff;
+    transition: background 0.12s;
+}
+
+.bf-section-body {
+    padding-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+/* ---------- inputs ---------- */
+.bf-search,
+.bf-select {
+    width: 100%;
+    font: inherit;
+    font-size: 0.76rem;
+    padding: 0.55rem 0.7rem;
+    border: 2px solid var(--bf-ink);
+    border-radius: 0;
+    background: #fff;
+    color: var(--bf-ink);
+    outline: none;
+    transition: box-shadow 0.12s, transform 0.12s;
+}
+
+.bf-search::placeholder {
+    color: rgba(0, 0, 0, 0.45);
+}
+
+.bf-search:focus,
+.bf-select:focus {
+    box-shadow: 3px 3px 0 var(--bf-accent), 3px 3px 0 1.5px var(--bf-ink);
+    transform: translate(-1px, -1px);
+}
+
+.bf-select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    font-weight: 700;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
+/* ---------- option rows ---------- */
+.bf-options {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 15rem;
+    overflow-y: auto;
+    margin: 0 -0.3rem;
+    padding: 2px 0.3rem 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bf-ink) transparent;
+}
+
+.bf-options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bf-options::-webkit-scrollbar-thumb {
+    background: var(--bf-ink);
+}
+
+.bf-options::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.bf-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    font: inherit;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    text-align: left;
+    padding: 0.42rem 0.5rem;
+    background: transparent;
+    border: 2px solid transparent;
+    color: var(--bf-ink);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+
+.bf-option:hover {
+    background: var(--bf-hover);
+}
+
+.bf-option.active {
+    background: var(--bf-accent);
+    border-color: var(--bf-ink);
+    box-shadow: 2px 2px 0 var(--bf-ink);
+    font-weight: 700;
+}
+
+.bf-option.active:active {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 var(--bf-ink);
+}
+
+.bf-option.dim {
+    opacity: 0.4;
+}
+
+/* checkbox / radio */
+.bf-check {
+    flex-shrink: 0;
+    width: 1.05rem;
+    height: 1.05rem;
+    border: 2px solid var(--bf-ink);
+    background: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--bf-accent);
+    transition: background 0.12s;
+}
+
+.bf-option.active .bf-check {
+    background: var(--bf-ink);
+}
+
+.bf-radio {
+    border-radius: 50%;
+}
+
+.bf-radio[data-on='true'] {
+    background: var(--bf-ink);
+}
+
+.bf-radio[data-on='true']::after {
+    content: '';
+    width: 0.36rem;
+    height: 0.36rem;
+    border-radius: 50%;
+    background: var(--bf-accent);
+}
+
+.bf-option-label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.bf-count {
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 800;
+    min-width: 1.5rem;
+    text-align: center;
+    padding: 0.08rem 0.35rem;
+    border: 1.5px solid var(--bf-ink);
+    border-radius: 999px;
+    background: #fff;
+}
+
+.bf-option.active .bf-count {
+    background: var(--bf-ink);
+    color: var(--bf-accent);
+}
+
+/* ---------- misc ---------- */
+.bf-more {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0.15rem 0;
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    color: var(--bf-ink);
+}
+
+.bf-more:hover {
+    background: var(--bf-accent);
+}
+
+.bf-empty {
+    font-size: 0.72rem;
+    opacity: 0.6;
+    padding: 0.4rem 0.5rem;
+}
+
+/* ---------- small screens / motion ---------- */
+@media (max-width: 640px) {
+    .bf-root {
+        --bf-shadow: 4px 4px 0 var(--bf-ink);
+        padding: 0.85rem 0.9rem 0.25rem;
+    }
+
+    .bf-option {
+        padding: 0.55rem 0.5rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bf-root * {
+        transition: none !important;
+    }
+}

@@ -1,0 +1,157 @@
+/* Blog pagination: neo-brutalist, built for the dark blog page */
+.bp-root {
+    --bp-accent: var(--c-yellow, #facc15);
+    --bp-ink: var(--c-black, #0b0b0b);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 2.5rem 0 1rem;
+    padding-top: 1.75rem;
+    border-top: 1.5px dashed rgba(250, 204, 21, 0.3);
+    font-family: var(--font-mono, ui-monospace, Menlo, monospace);
+}
+
+.bp-summary {
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.bp-summary strong {
+    color: var(--bp-accent);
+    font-weight: 700;
+}
+
+.bp-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.bp-pages {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bp-gap {
+    min-width: 1.4rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.45);
+    user-select: none;
+}
+
+.bp-btn {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--bp-accent);
+    background: transparent;
+    border: 2px solid rgba(250, 204, 21, 0.55);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.bp-btn:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+}
+
+.bp-page {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    padding: 0 0.5rem;
+}
+
+.bp-page:hover:not(.is-current) {
+    background: rgba(250, 204, 21, 0.14);
+    border-color: var(--bp-accent);
+}
+
+.bp-page.is-current {
+    background: var(--bp-accent);
+    color: var(--bp-ink);
+    border-color: var(--bp-ink);
+    box-shadow: 3px 3px 0 #fff;
+    cursor: default;
+}
+
+.bp-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding: 0 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Next is the primary action: filled yellow, like "Write for Us" */
+.bp-next:not(:disabled) {
+    background: var(--bp-accent);
+    color: var(--bp-ink);
+    border-color: var(--bp-ink);
+    box-shadow: 4px 4px 0 #fff;
+}
+
+.bp-nav:hover:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #fff;
+    background: var(--bp-accent);
+    color: var(--bp-ink);
+    border-color: var(--bp-ink);
+}
+
+.bp-nav:active:not(:disabled) {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 #fff;
+}
+
+.bp-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* "Page 2 / 5" replaces the number row on small screens */
+.bp-status {
+    display: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    min-width: 5.5rem;
+    text-align: center;
+}
+
+@media (max-width: 640px) {
+    .bp-pages {
+        display: none;
+    }
+
+    .bp-status {
+        display: inline-block;
+    }
+
+    .bp-controls {
+        flex-wrap: nowrap;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .bp-nav {
+        padding: 0 0.85rem;
+        flex-shrink: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bp-btn {
+        transition: none;
+    }
+}

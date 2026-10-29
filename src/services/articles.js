@@ -1,56 +1,85 @@
 // src/services/articles.jsx
+import { authFetch, getIdToken } from "../lib/authFetch";
+
 const API_BASE = "/api/articles";
+
 
 export const ArticlesService = {
     // Used by Blogs.jsx and Home.jsx to pull public approved dispatches
-    async getAccepted() {
-        try {
-            const res = await fetch(API_BASE);
-            if (!res.ok) throw new Error("Failed to fetch accepted articles");
-            return await res.json();
-        } catch (error) {
-            console.warn("getAccepted failed, falling back to status query:", error);
-            return await this.fetchByStatus('accepted');
-        }
+    // Works with the current API (plain array) and a paginated API ({ items, nextCursor }).
+    // `fields=list` + `limit`/`cursor` are ignored by the server until it supports them.
+    // Single request only: the old fallback fired a 2nd full query on every failure,
+    // which doubles DB load exactly when the server is struggling.
+    async getAccepted({ limit, cursor, signal } = {}) {
+        const params = new URLSearchParams({ status: 'accepted', fields: 'list' });
+        if (limit) params.set('limit', String(limit));
+        if (cursor) params.set('cursor', String(cursor));
+
+        const res = await authFetch(`${API_BASE}?${params}`, { signal });
+        if (!res.ok) throw new Error("Failed to fetch accepted articles");
+
+        const data = await res.json();
+        return Array.isArray(data) ? data : (data.items || []);
+    },
+
+    // Paginated variant: returns { items, nextCursor } (nextCursor is null when done)
+    async getAcceptedPage({ limit = 10, cursor = null, signal } = {}) {
+        const params = new URLSearchParams({ status: 'accepted', fields: 'list', limit: String(limit) });
+        if (cursor) params.set('cursor', String(cursor));
+
+        const res = await authFetch(`${API_BASE}?${params}`, { signal });
+        if (!res.ok) throw new Error("Failed to fetch accepted articles");
+
+        const data = await res.json();
+        if (Array.isArray(data)) return { items: data, nextCursor: null };
+        return { items: data.items || [], nextCursor: data.nextCursor || null };
     },
 
     // Used by BlogPost.jsx to read a single post layout
     async getById(id) {
         if (!id) return null;
-        const res = await fetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
+        const res = await authFetch(`${API_BASE}?id=${encodeURIComponent(id)}`);
         if (!res.ok) throw new Error("Failed to load article metadata");
         return await res.json();
     },
 
     // Used by Admin.jsx to view specific categories (e.g., status=pending)
     async fetchByStatus(status) {
-        const res = await fetch(`${API_BASE}?status=${status}`);
+        const res = await authFetch(`${API_BASE}?status=${status}`);
         if (!res.ok) throw new Error(`Failed to load articles with status ${status}`);
         return await res.json();
     },
 
     async getPending() {
-        const res = await fetch(`${API_BASE}?status=pending`);
+        const res = await authFetch(`${API_BASE}?status=pending`);
         if (!res.ok) throw new Error("Failed to load pending articles");
         return await res.json();
     },
 
     async getByAuthor(userSubId) {
         if (!userSubId) return [];
-        const res = await fetch(`${API_BASE}?author=${encodeURIComponent(userSubId)}`);
+        const res = await authFetch(`${API_BASE}?author=${encodeURIComponent(userSubId)}`);
         if (!res.ok) throw new Error("Failed to load author-specific articles");
         return await res.json();
     },
 
     // New optimized loader to grab everything for management dashboard
     async fetchAllAdminBlogs() {
-        const res = await fetch(`${API_BASE}?status=all_admin`);
+        const res = await authFetch(`${API_BASE}?status=all_admin`);
         if (!res.ok) throw new Error("Failed to grab master database record registry");
         return await res.json();
     },
 
     async fetchAll() {
         return this.fetchAllAdminBlogs();
+    },
+
+    // Ids (from `ids`) that the signed-in user has liked. Empty array when signed out.
+    async getMyLikes(ids = []) {
+        if (!ids.length || !(await getIdToken())) return [];
+        const res = await authFetch(`${API_BASE}?myLikes=${encodeURIComponent(ids.slice(0, 100).join(","))}`);
+        if (!res.ok) return [];
+        return await res.json();
     },
 
     // Used by WriteForUs.jsx to safely submit draft dispatches
@@ -82,7 +111,7 @@ export const ArticlesService = {
             readTime: payload.readTime || null
         };
 
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -98,7 +127,7 @@ export const ArticlesService = {
         const body = { action: "updateStatus", id, status };
         if (rejectionReason) body.rejectionReason = String(rejectionReason);
 
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
@@ -109,7 +138,7 @@ export const ArticlesService = {
 
     // ✅ FIXED & LINKED: Passes the explicit delete action down to API router
     async deleteArticle(id) {
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "delete", id })
@@ -119,7 +148,14 @@ export const ArticlesService = {
     },
 
     async incrementViews(id) {
-        const res = await fetch(API_BASE, {
+        // count one view per article per browser session (refresh/spam no longer writes to the DB)
+        const key = `bb_viewed_${id}`;
+        try {
+            if (sessionStorage.getItem(key)) return { skipped: true };
+            sessionStorage.setItem(key, '1');
+        } catch { /* storage blocked: fall through and count */ }
+
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "views", id })
@@ -129,7 +165,7 @@ export const ArticlesService = {
     },
 
     async toggleLike(id, isLiking) {
-        const res = await fetch(API_BASE, {
+        const res = await authFetch(API_BASE, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "like", id, isLiking })

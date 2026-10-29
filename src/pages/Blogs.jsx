@@ -1,38 +1,57 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimatedList from '../components/blog/AnimatedList';
+import BlogFilters, { applyFilters, countActive, EMPTY_FILTERS } from '../components/blog/BlogFilters';
+import BlogPagination from '../components/blog/BlogPagination';
 import BackButton from '../components/shared/BackButton';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
 import ShuffleText from '../components/shared/ShuffleText';
 import { ArticlesService } from '../services/articles';
 
-const READ_TIME_RANGES = [
-    {
-        label: '< 5 min',
-        fn: rt => Number.parseInt(rt || 0, 10) < 5
-    },
-    {
-        label: '5–8 min',
-        fn: rt => {
-            const mins = Number.parseInt(rt || 0, 10);
-            return mins >= 5 && mins <= 8;
-        }
-    },
-    {
-        label: '8+ min',
-        fn: rt => Number.parseInt(rt || 0, 10) > 8
-    },
-];
+// ---- DB protection: cache + request de-duplication ----
+const CACHE_KEY = 'bb_accepted_articles_v1';
+const CACHE_TTL_MS = 5 * 60 * 1000; // re-fetch from the DB at most once per 5 min per browser
+let inflightRequest = null;
 
-const SORT_OPTIONS = [
-    { label: 'Most Recent', key: 'recent' },
-    { label: 'Most Viewed', key: 'views' },
-    { label: 'Most Commented', key: 'comments' },
-];
+const readCache = () => {
+    try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const { at, items } = JSON.parse(raw);
+        return Date.now() - at < CACHE_TTL_MS ? items : null;
+    } catch {
+        return null;
+    }
+};
+
+const writeCache = (items) => {
+    try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items }));
+    } catch {
+        /* storage full or blocked: skip caching */
+    }
+};
+
+const clearCache = () => {
+    try { sessionStorage.removeItem(CACHE_KEY); } catch { /* ignore */ }
+};
+
+const fetchAccepted = async () => {
+    const cached = readCache();
+    if (cached) return cached;
+    if (!inflightRequest) {
+        inflightRequest = ArticlesService.getAccepted()
+            .then(items => { writeCache(items || []); return items || []; })
+            .finally(() => { inflightRequest = null; });
+    }
+    return inflightRequest;
+};
+
+const PAGE_SIZE = 10;
 
 export default function Blogs() {
     const [posts, setPosts] = useState([]);
@@ -40,23 +59,34 @@ export default function Blogs() {
     const [error, setError] = useState(null);
 
     const [search, setSearch] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const likingRef = useRef(new Set());
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [selectedAuthor, setSelectedAuthor] = useState(null);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedReadTime, setSelectedReadTime] = useState(null);
+    const [filters, setFilters] = useState(EMPTY_FILTERS);
     const [sortBy, setSortBy] = useState('recent');
     const [showGate, setShowGate] = useState(false);
 
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const listTopRef = useRef(null);
+    const likesCheckedRef = useRef({ sub: null, ids: new Set() });
 
     useEffect(() => {
+        const t = setTimeout(() => setDebouncedSearch(search), 250);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    useEffect(() => {
+        let cancelled = false;
+
         const loadAcceptedArticles = async () => {
             setLoadingPosts(true);
             setError(null);
 
             try {
-                const items = await ArticlesService.getAccepted();
+                const items = await fetchAccepted();
+                if (cancelled) return;
                 const normalized = (items || []).map(item => ({
                     ...item,
                     author: item.name || item.authorName || 'Anonymous',
@@ -68,80 +98,98 @@ export default function Blogs() {
 
                 setPosts(normalized);
             } catch (err) {
+                if (cancelled) return;
                 console.error('Failed to load accepted articles:', err);
                 setError(err?.message || 'Unable to load articles.');
                 setPosts([]);
             } finally {
-                setLoadingPosts(false);
+                if (!cancelled) setLoadingPosts(false);
             }
         };
 
         loadAcceptedArticles();
+        return () => { cancelled = true; };
     }, []);
 
-    const authors = useMemo(
-        () => [...new Set(posts.map(p => p.author).filter(Boolean))],
-        [posts]
+    const filteredPosts = useMemo(
+        () => applyFilters(posts, { search: debouncedSearch, filters, sortBy }),
+        [posts, debouncedSearch, filters, sortBy]
     );
 
-    const categories = useMemo(
-        () => [...new Set(posts.map(p => p.category).filter(Boolean))],
-        [posts]
+    // ---- pagination ----
+    // The page lives in the URL (?page=2), so Back from an article returns to the same page.
+    const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE));
+    const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10);
+    const page = Math.min(Math.max(Number.isNaN(requestedPage) ? 1 : requestedPage, 1), totalPages);
+    const pageItems = useMemo(
+        () => filteredPosts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        [filteredPosts, page]
     );
 
-    const filteredPosts = useMemo(() => {
-        let filtered = [...posts];
+    const goToPage = (n) => {
+        setSearchParams(prev => {
+            const p = new URLSearchParams(prev);
+            if (n <= 1) p.delete('page'); else p.set('page', String(n));
+            return p;
+        });
+        // bring the top of the list into view (not the very top of the page)
+        requestAnimationFrame(() => listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    };
 
-        if (search.trim()) {
-            const query = search.toLowerCase();
-            filtered = filtered.filter(post =>
-                (post.title || '').toLowerCase().includes(query) ||
-                (post.excerpt || '').toLowerCase().includes(query) ||
-                (post.content || '').toLowerCase().includes(query)
-            );
+    // Changing search / filters / sort starts again at page 1 (but not on first load,
+    // so opening /blogs?page=3 directly still works)
+    const filterKey = `${debouncedSearch}|${sortBy}|${JSON.stringify(filters)}`;
+    const prevFilterKey = useRef(filterKey);
+    useEffect(() => {
+        if (prevFilterKey.current === filterKey) return;
+        prevFilterKey.current = filterKey;
+        setSearchParams(prev => {
+            const p = new URLSearchParams(prev);
+            p.delete('page');
+            return p;
+        }, { replace: true });
+    }, [filterKey, setSearchParams]);
+
+    // "Did I like these?" is asked only for the articles on the current page, once each.
+    // (The big public list stays identical for everyone, so the CDN can cache it.)
+    const pageIdsKey = pageItems.map(p => p.id).filter(Boolean).join(',');
+    useEffect(() => {
+        if (!user?.sub || !pageIdsKey) return;
+        if (likesCheckedRef.current.sub !== user.sub) {
+            likesCheckedRef.current = { sub: user.sub, ids: new Set() };
         }
+        const checked = likesCheckedRef.current.ids;
+        const todo = pageIdsKey.split(',').filter(id => !checked.has(id));
+        if (!todo.length) return;
 
-        if (selectedAuthor) {
-            filtered = filtered.filter(post => post.author === selectedAuthor);
-        }
+        let cancelled = false;
+        ArticlesService.getMyLikes(todo)
+            .then(likedIds => {
+                if (cancelled) return;
+                todo.forEach(id => checked.add(id));
+                if (!likedIds.length) return;
+                const liked = new Set(likedIds);
+                setPosts(prev => prev.map(p =>
+                    liked.has(p.id)
+                        ? { ...p, likedBy: [...new Set([...(p.likedBy || []), user.sub])] }
+                        : p
+                ));
+            })
+            .catch(() => { /* likes state is non-critical */ });
 
-        if (selectedCategory) {
-            filtered = filtered.filter(post => post.category === selectedCategory);
-        }
+        return () => { cancelled = true; };
+    }, [user?.sub, pageIdsKey]);
 
-        if (selectedReadTime !== null) {
-            filtered = filtered.filter(post => READ_TIME_RANGES[selectedReadTime].fn(post.readTime));
-        }
+    const activeFilterCount = countActive(filters, sortBy);
 
-        if (sortBy === 'views') {
-            filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
-        }
-
-        if (sortBy === 'comments') {
-            filtered.sort((a, b) => (b.comments || 0) - (a.comments || 0));
-        }
-
-        if (sortBy === 'recent') {
-            filtered.sort(
-                (a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0)
-            );
-        }
-
-        return filtered;
-    }, [posts, search, selectedAuthor, selectedCategory, selectedReadTime, sortBy]);
-
-    const activeFilterCount = [
-        selectedAuthor,
-        selectedCategory,
-        selectedReadTime !== null ? true : null,
-    ].filter(Boolean).length + (sortBy !== 'recent' ? 1 : 0);
+    const clearFilters = () => {
+        setFilters(EMPTY_FILTERS);
+        setSortBy('recent');
+    };
 
     const clearAll = () => {
         setSearch('');
-        setSelectedAuthor(null);
-        setSelectedCategory(null);
-        setSelectedReadTime(null);
-        setSortBy('recent');
+        clearFilters();
     };
 
     const handlePostSelect = (post) => {
@@ -170,22 +218,34 @@ export default function Blogs() {
             return;
         }
 
+        // one in-flight like request per post: blocks click-spam from hammering the DB
+        if (likingRef.current.has(postId)) return;
+        likingRef.current.add(postId);
+
         const isLiking = !((existing.likedBy || []).includes(user.sub));
 
-        setPosts(prev => prev.map(post =>
+        const apply = (liking) => setPosts(prev => prev.map(post =>
             post.id === postId
                 ? {
                     ...post,
-                    likes: Math.max(0, (post.likes || 0) + (isLiking ? 1 : -1)),
-                    likedBy: isLiking ? [...new Set([...(post.likedBy || []), user.sub])] : (post.likedBy || []).filter(id => id !== user.sub)
+                    likes: Math.max(0, (post.likes || 0) + (liking ? 1 : -1)),
+                    likedBy: liking
+                        ? [...new Set([...(post.likedBy || []), user.sub])]
+                        : (post.likedBy || []).filter(id => id !== user.sub),
                 }
                 : post
         ));
 
+        apply(isLiking);
+
         try {
             await ArticlesService.toggleLike(postId, isLiking);
+            clearCache(); // counts changed server-side; next load fetches fresh data
         } catch (err) {
             console.error('Like toggle failed:', err);
+            apply(!isLiking);
+        } finally {
+            likingRef.current.delete(postId);
         }
     };
 
@@ -197,7 +257,7 @@ export default function Blogs() {
     };
 
     return (
-        <div style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', minHeight: '100vh', overflowX: 'clip' }}>
             {showGate && (
                 <AuthGateModal action="view and comment on articles" onClose={() => setShowGate(false)} />
             )}
@@ -239,11 +299,12 @@ export default function Blogs() {
                             padding: '0.75rem 1.75rem',
                             textDecoration: 'none',
                             flexShrink: 0,
+                            alignSelf: 'flex-start',
+                            marginTop: '1rem',
                             transition: 'transform 0.1s, box-shadow 0.1s',
-                            transform: 'translate(0px, 24px)',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.transform = 'translate(2px,2px)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--c-black)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'translate(0,0)'; e.currentTarget.style.boxShadow = '6px 6px 0 var(--c-black)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '6px 6px 0 var(--c-black)'; }}
                     >
                         <ShuffleText text="Write for Us →" />
                     </a>
@@ -256,7 +317,7 @@ export default function Blogs() {
                             id="blog-search"
                             type="text"
                             className="blog-search-input"
-                            placeholder="Search by title or content..."
+                            placeholder="Search title, content or author..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -280,99 +341,49 @@ export default function Blogs() {
 
                 <div className="blog-content-area">
                     <aside className={`blog-filter-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-                        <div className="blog-sidebar-header">
-                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--c-black)' }}>
-                                Filters
-                            </span>
-                            {activeFilterCount > 0 && (
-                                <button className="blog-sidebar-clear-all" onClick={clearAll}>
-                                    Clear all
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Author</span>
-                            <div className="blog-filter-chips">
-                                {authors.map(author => (
-                                    <button
-                                        key={author}
-                                        className={`blog-filter-chip ${selectedAuthor === author ? 'active' : ''}`}
-                                        onClick={() => setSelectedAuthor(selectedAuthor === author ? null : author)}
-                                    >
-                                        {author}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Category</span>
-                            <div className="blog-filter-chips">
-                                {categories.map(category => (
-                                    <button
-                                        key={category}
-                                        className={`blog-filter-chip ${selectedCategory === category ? 'active' : ''}`}
-                                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                                    >
-                                        {category}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Read Time</span>
-                            <div className="blog-filter-chips">
-                                {READ_TIME_RANGES.map((range, index) => (
-                                    <button
-                                        key={range.label}
-                                        className={`blog-filter-chip ${selectedReadTime === index ? 'active' : ''}`}
-                                        onClick={() => setSelectedReadTime(selectedReadTime === index ? null : index)}
-                                    >
-                                        {range.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="blog-sidebar-group">
-                            <span className="blog-sidebar-label">Sort By</span>
-                            <div className="blog-filter-chips">
-                                {SORT_OPTIONS.map(option => (
-                                    <button
-                                        key={option.key}
-                                        className={`blog-filter-chip ${sortBy === option.key ? 'active' : ''}`}
-                                        onClick={() => setSortBy(option.key)}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <BlogFilters
+                            posts={posts}
+                            search={debouncedSearch}
+                            filters={filters}
+                            setFilters={setFilters}
+                            sortBy={sortBy}
+                            setSortBy={setSortBy}
+                            onClear={clearFilters}
+                        />
                     </aside>
 
-                    <div className={`blog-list-area ${sidebarOpen ? 'sidebar-offset' : ''}`}>
+                    <div ref={listTopRef} style={{ scrollMarginTop: '6rem' }} className={`blog-list-area ${sidebarOpen ? 'sidebar-offset' : ''}`}>
                         {loadingPosts ? (
                             <div style={{ color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)' }}>
                                 Loading accepted articles...
                             </div>
                         ) : filteredPosts.length === 0 ? (
                             <div className="blog-no-results">
-                                <p>No dispatches match your search.</p>
-                                <button className="blog-filter-clear-all" onClick={clearAll} style={{ marginTop: '1rem' }}>
-                                    Clear Filters
-                                </button>
+                                <p>{posts.length === 0 ? 'No articles yet.' : 'No dispatches match your search.'}</p>
+                                {posts.length > 0 && (
+                                    <button className="blog-filter-clear-all" onClick={clearAll} style={{ marginTop: '1rem' }}>
+                                        Clear Filters
+                                    </button>
+                                )}
                             </div>
                         ) : (
-                            <AnimatedList
-                                items={filteredPosts}
-                                onItemSelect={handlePostSelect}
-                                onLikeToggle={handleLikeToggle}
-                                showGradients={false}
-                                enableArrowNavigation={true}
-                                displayScrollbar={false}
-                            />
+                            <>
+                                <AnimatedList
+                                    key={page}
+                                    items={pageItems}
+                                    onItemSelect={handlePostSelect}
+                                    onLikeToggle={handleLikeToggle}
+                                    onAuthRequired={() => setShowGate(true)}
+                                    enableArrowNavigation={true}
+                                />
+                                <BlogPagination
+                                    page={page}
+                                    totalPages={totalPages}
+                                    totalItems={filteredPosts.length}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={goToPage}
+                                />
+                            </>
                         )}
                     </div>
                 </div>
