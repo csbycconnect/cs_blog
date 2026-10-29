@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import AnimatedList from '../components/blog/AnimatedList';
 import BlogFilters, { applyFilters, countActive, EMPTY_FILTERS } from '../components/blog/BlogFilters';
+import BlogPagination from '../components/blog/BlogPagination';
 import BackButton from '../components/shared/BackButton';
 import { useAuth } from '../context/AuthContext';
 import AuthGateModal from '../components/shared/AuthGateModal';
@@ -50,6 +51,8 @@ const fetchAccepted = async () => {
     return inflightRequest;
 };
 
+const PAGE_SIZE = 10;
+
 export default function Blogs() {
     const [posts, setPosts] = useState([]);
     const [loadingPosts, setLoadingPosts] = useState(true);
@@ -65,6 +68,9 @@ export default function Blogs() {
 
     const { user } = useAuth();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const listTopRef = useRef(null);
+    const likesCheckedRef = useRef({ sub: null, ids: new Set() });
 
     useEffect(() => {
         const t = setTimeout(() => setDebouncedSearch(search), 250);
@@ -105,15 +111,63 @@ export default function Blogs() {
         return () => { cancelled = true; };
     }, []);
 
-    // "Did I like this?" comes from a small private request, so the big public list
-    // stays identical for everyone and can be cached by the CDN.
-    useEffect(() => {
-        if (!user?.sub || posts.length === 0) return;
-        let cancelled = false;
+    const filteredPosts = useMemo(
+        () => applyFilters(posts, { search: debouncedSearch, filters, sortBy }),
+        [posts, debouncedSearch, filters, sortBy]
+    );
 
-        ArticlesService.getMyLikes(posts.map(p => p.id).filter(Boolean))
+    // ---- pagination ----
+    // The page lives in the URL (?page=2), so Back from an article returns to the same page.
+    const totalPages = Math.max(1, Math.ceil(filteredPosts.length / PAGE_SIZE));
+    const requestedPage = Number.parseInt(searchParams.get('page') || '1', 10);
+    const page = Math.min(Math.max(Number.isNaN(requestedPage) ? 1 : requestedPage, 1), totalPages);
+    const pageItems = useMemo(
+        () => filteredPosts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+        [filteredPosts, page]
+    );
+
+    const goToPage = (n) => {
+        setSearchParams(prev => {
+            const p = new URLSearchParams(prev);
+            if (n <= 1) p.delete('page'); else p.set('page', String(n));
+            return p;
+        });
+        // bring the top of the list into view (not the very top of the page)
+        requestAnimationFrame(() => listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    };
+
+    // Changing search / filters / sort starts again at page 1 (but not on first load,
+    // so opening /blogs?page=3 directly still works)
+    const filterKey = `${debouncedSearch}|${sortBy}|${JSON.stringify(filters)}`;
+    const prevFilterKey = useRef(filterKey);
+    useEffect(() => {
+        if (prevFilterKey.current === filterKey) return;
+        prevFilterKey.current = filterKey;
+        setSearchParams(prev => {
+            const p = new URLSearchParams(prev);
+            p.delete('page');
+            return p;
+        }, { replace: true });
+    }, [filterKey, setSearchParams]);
+
+    // "Did I like these?" is asked only for the articles on the current page, once each.
+    // (The big public list stays identical for everyone, so the CDN can cache it.)
+    const pageIdsKey = pageItems.map(p => p.id).filter(Boolean).join(',');
+    useEffect(() => {
+        if (!user?.sub || !pageIdsKey) return;
+        if (likesCheckedRef.current.sub !== user.sub) {
+            likesCheckedRef.current = { sub: user.sub, ids: new Set() };
+        }
+        const checked = likesCheckedRef.current.ids;
+        const todo = pageIdsKey.split(',').filter(id => !checked.has(id));
+        if (!todo.length) return;
+
+        let cancelled = false;
+        ArticlesService.getMyLikes(todo)
             .then(likedIds => {
-                if (cancelled || !likedIds.length) return;
+                if (cancelled) return;
+                todo.forEach(id => checked.add(id));
+                if (!likedIds.length) return;
                 const liked = new Set(likedIds);
                 setPosts(prev => prev.map(p =>
                     liked.has(p.id)
@@ -124,12 +178,7 @@ export default function Blogs() {
             .catch(() => { /* likes state is non-critical */ });
 
         return () => { cancelled = true; };
-    }, [user?.sub, posts.length]);
-
-    const filteredPosts = useMemo(
-        () => applyFilters(posts, { search: debouncedSearch, filters, sortBy }),
-        [posts, debouncedSearch, filters, sortBy]
-    );
+    }, [user?.sub, pageIdsKey]);
 
     const activeFilterCount = countActive(filters, sortBy);
 
@@ -303,7 +352,7 @@ export default function Blogs() {
                         />
                     </aside>
 
-                    <div className={`blog-list-area ${sidebarOpen ? 'sidebar-offset' : ''}`}>
+                    <div ref={listTopRef} style={{ scrollMarginTop: '6rem' }} className={`blog-list-area ${sidebarOpen ? 'sidebar-offset' : ''}`}>
                         {loadingPosts ? (
                             <div style={{ color: 'var(--c-yellow)', fontFamily: 'var(--font-mono)' }}>
                                 Loading accepted articles...
@@ -318,13 +367,23 @@ export default function Blogs() {
                                 )}
                             </div>
                         ) : (
-                            <AnimatedList
-                                items={filteredPosts}
-                                onItemSelect={handlePostSelect}
-                                onLikeToggle={handleLikeToggle}
-                                onAuthRequired={() => setShowGate(true)}
-                                enableArrowNavigation={true}
-                            />
+                            <>
+                                <AnimatedList
+                                    key={page}
+                                    items={pageItems}
+                                    onItemSelect={handlePostSelect}
+                                    onLikeToggle={handleLikeToggle}
+                                    onAuthRequired={() => setShowGate(true)}
+                                    enableArrowNavigation={true}
+                                />
+                                <BlogPagination
+                                    page={page}
+                                    totalPages={totalPages}
+                                    totalItems={filteredPosts.length}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={goToPage}
+                                />
+                            </>
                         )}
                     </div>
                 </div>

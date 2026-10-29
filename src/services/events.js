@@ -11,7 +11,7 @@ export const EventsService = {
         return await res.json();
     },
 
-    // Admin: includes hidden events
+    // Admin: includes hien events
     async getAllAdmin() {
         const res = await authFetch(`${API_BASE}?all=1`);
         if (!res.ok) throw new Error("Failed to load events");
